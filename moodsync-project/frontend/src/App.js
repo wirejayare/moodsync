@@ -44,7 +44,6 @@ function App() {
       try {
         console.log('Exchanging code for access token...');
         
-        // Send code to backend to get access token
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/callback`, {
           method: 'POST',
           headers: {
@@ -56,13 +55,9 @@ function App() {
         const data = await response.json();
         
         if (data.success) {
-          // Store the access token and user info
           setSpotifyToken(data.access_token);
           setSpotifyUser(data.user);
-          
-          // Show success message
           alert(`🎉 Welcome ${data.user.display_name}! Spotify connected successfully.`);
-          
           console.log('Spotify connected:', data.user.display_name);
         } else {
           alert('Failed to connect to Spotify: ' + data.message);
@@ -72,7 +67,6 @@ function App() {
         alert('Error connecting to Spotify: ' + error.message);
       }
       
-      // Redirect back to main app
       window.location.href = '/';
     }
   };
@@ -116,7 +110,6 @@ function App() {
       if (data.success) {
         setAnalysisResult(data.analysis);
         
-        // Auto-generate playlist name
         if (!playlistName) {
           setPlaylistName(`${data.analysis.mood} Vibes`);
         }
@@ -171,7 +164,6 @@ function App() {
     }
   };
 
-  // Show callback page
   if (isCallback) {
     return (
       <div style={{
@@ -192,7 +184,6 @@ function App() {
     );
   }
 
-  // Show normal app
   return (
     <div style={{
       minHeight: '100vh',
@@ -211,7 +202,6 @@ function App() {
           </p>
         </div>
 
-        {/* Status Section */}
         <div style={{ 
           background: 'rgba(255,255,255,0.1)', 
           borderRadius: '15px',
@@ -224,7 +214,6 @@ function App() {
           <p><strong>Spotify:</strong> {spotifyUser ? `✅ ${spotifyUser.display_name}` : '❌ Not connected'}</p>
         </div>
 
-        {/* Spotify Section */}
         {!spotifyUser && (
           <div style={{ 
             background: 'rgba(255,255,255,0.1)', 
@@ -256,7 +245,6 @@ function App() {
           </div>
         )}
 
-        {/* Pinterest Analysis Section */}
         {spotifyUser && (
           <div style={{ 
             background: 'rgba(255,255,255,0.1)', 
@@ -317,7 +305,6 @@ function App() {
           </div>
         )}
 
-        {/* Analysis Results */}
         {analysisResult && (
           <div style={{ 
             background: 'rgba(255,255,255,0.1)', 
@@ -337,8 +324,7 @@ function App() {
                       height: '40px',
                       backgroundColor: color,
                       borderRadius: '50%',
-                      border: '3px solid white',
-                      title: color
+                      border: '3px solid white'
                     }}
                   />
                 ))}
@@ -380,7 +366,6 @@ function App() {
           </div>
         )}
 
-        {/* Created Playlist */}
         {createdPlaylist && (
           <div style={{ 
             background: 'rgba(40, 167, 69, 0.2)', 
@@ -392,7 +377,7 @@ function App() {
             <div style={{ marginTop: '20px' }}>
               <h4>{createdPlaylist.playlist.name}</h4>
               <p style={{ margin: '10px 0', opacity: 0.9 }}>
-                {createdPlaylist.tracks.length} tracks • {createdPlaylist.playlist.description}
+                {createdPlaylist.tracks.length} tracks
               </p>
               
               <div style={{ marginTop: '20px' }}>
