@@ -17,7 +17,14 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
-
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'MoodSync Backend API',
+    status: 'Running',
+    endpoints: ['/health', '/api/spotify/auth-url']
+  });
+});
 // Spotify auth route
 app.get('/api/spotify/auth-url', (req, res) => {
   const authUrl = `https://accounts.spotify.com/authorize?` +
