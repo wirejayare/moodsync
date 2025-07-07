@@ -1,7 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function App() {
+  const [backendStatus, setBackendStatus] = useState('Checking...');
   const [message, setMessage] = useState('Hello from MoodSync!');
+
+  useEffect(() => {
+    // Test backend connection
+    fetch(`${process.env.REACT_APP_API_URL}/health`)
+      .then(res => res.json())
+      .then(data => {
+        setBackendStatus('✅ Connected');
+        setMessage('Backend connected successfully!');
+      })
+      .catch(() => {
+        setBackendStatus('❌ Not connected');
+        setMessage('Backend connection failed');
+      });
+  }, []);
 
   return (
     <div style={{
@@ -22,32 +37,36 @@ function App() {
         <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
           Transform Pinterest moodboards into Spotify playlists
         </p>
+        
         <div style={{
           background: 'rgba(255,255,255,0.1)',
           padding: '2rem',
           borderRadius: '15px',
           marginBottom: '2rem'
         }}>
-          <p>{message}</p>
-          <button 
-            onClick={() => setMessage('App is working perfectly!')}
-            style={{
-              background: '#1db954',
-              color: 'white',
-              border: 'none',
-              padding: '15px 30px',
-              borderRadius: '25px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              marginTop: '1rem'
-            }}
-          >
-            Test Button
-          </button>
+          <h3>System Status</h3>
+          <p><strong>Backend:</strong> {backendStatus}</p>
+          <p style={{ marginTop: '1rem' }}>{message}</p>
         </div>
-        <p style={{ opacity: 0.7 }}>
-          🚧 Building your amazing app...
+
+        <button 
+          onClick={() => setMessage('Test button clicked!')}
+          style={{
+            background: '#1db954',
+            color: 'white',
+            border: 'none',
+            padding: '15px 30px',
+            borderRadius: '25px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          Test Connection
+        </button>
+        
+        <p style={{ opacity: 0.7, marginTop: '2rem' }}>
+          🚧 Step 1: Backend connection
         </p>
       </div>
     </div>
