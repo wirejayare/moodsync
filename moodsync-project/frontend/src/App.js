@@ -21,9 +21,7 @@ function App() {
 
     fetch(`${process.env.REACT_APP_API_URL}/health`)
       .then(res => res.json())
-      .then(data => {
-        setBackendStatus('✅ Connected');
-      })
+      .then(data => setBackendStatus('✅ Connected'))
       .catch(() => setBackendStatus('❌ Not connected'));
   }, []);
 
@@ -42,9 +40,7 @@ function App() {
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/callback`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code })
         });
 
@@ -76,13 +72,8 @@ function App() {
   };
 
   const analyzePinterestBoard = async () => {
-    if (!pinterestUrl) {
-      alert('Please enter a Pinterest board URL');
-      return;
-    }
-
-    if (!pinterestUrl.includes('pinterest.com')) {
-      alert('Please enter a valid Pinterest URL');
+    if (!pinterestUrl || !pinterestUrl.includes('pinterest.com')) {
+      alert('Please enter a valid Pinterest board URL');
       return;
     }
 
@@ -93,9 +84,7 @@ function App() {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/analyze-pinterest`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pinterestUrl })
       });
 
@@ -111,9 +100,9 @@ function App() {
       }
     } catch (error) {
       alert('Error analyzing board: ' + error.message);
-    } finally {
-      setIsAnalyzing(false);
     }
+    
+    setIsAnalyzing(false);
   };
 
   const createSpotifyPlaylist = async () => {
@@ -132,9 +121,7 @@ function App() {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/create-playlist`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accessToken: spotifyToken,
           analysis: analysisResult,
@@ -152,9 +139,9 @@ function App() {
       }
     } catch (error) {
       alert('Error creating playlist: ' + error.message);
-    } finally {
-      setIsCreatingPlaylist(false);
     }
+    
+    setIsCreatingPlaylist(false);
   };
 
   if (isCallback) {
@@ -188,9 +175,7 @@ function App() {
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-            MoodSync
-          </h1>
+          <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>MoodSync</h1>
           <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>
             Transform Pinterest moodboards into Spotify playlists
           </p>
@@ -203,12 +188,12 @@ function App() {
           marginBottom: '2rem',
           textAlign: 'center'
         }}>
-        <h3>System Status</h3>
+          <h3>System Status</h3>
           <p><strong>Backend:</strong> {backendStatus}</p>
           <p><strong>Spotify:</strong> {spotifyUser ? `✅ ${spotifyUser.display_name}` : '❌ Not connected'}</p>
         </div>
 
-        {!spotifyUser && (
+        {!spotifyUser ? (
           <div style={{ 
             background: 'rgba(255,255,255,0.1)', 
             borderRadius: '15px',
@@ -237,184 +222,184 @@ function App() {
               Connect Spotify
             </button>
           </div>
-        )}
-
-        {spotifyUser && (
-          <div style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            borderRadius: '15px',
-            padding: '2rem',
-            marginBottom: '2rem'
-          }}>
-            <h3 style={{ marginBottom: '20px' }}>Analyze Pinterest Board</h3>
-            
-            <div style={{ marginBottom: '20px' }}>
-              <input
-                type="url"
-                value={pinterestUrl}
-                onChange={(e) => setPinterestUrl(e.target.value)}
-                placeholder="https://pinterest.com/username/board-name"
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '16px',
-                  marginBottom: '15px'
-                }}
-              />
+        ) : (
+          <>
+            <div style={{ 
+              background: 'rgba(255,255,255,0.1)', 
+              borderRadius: '15px',
+              padding: '2rem',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{ marginBottom: '20px' }}>Analyze Pinterest Board</h3>
               
-              <input
-                type="text"
-                value={playlistName}
-                onChange={(e) => setPlaylistName(e.target.value)}
-                placeholder="Playlist name (auto-generated if empty)"
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '16px'
-                }}
-              />
-            </div>
-
-            <button 
-              onClick={analyzePinterestBoard}
-              disabled={isAnalyzing}
-              style={{
-                background: isAnalyzing ? '#ccc' : '#e60023',
-                color: 'white',
-                border: 'none',
-                padding: '15px 30px',
-                borderRadius: '25px',
-                fontSize: '16px',
-                cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold',
-                width: '100%'
-              }}
-            >
-              {isAnalyzing ? 'Analyzing...' : 'Analyze Moodboard'}
-            </button>
-          </div>
-        )}
-
-        {analysisResult && (
-          <div style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            borderRadius: '15px',
-            padding: '2rem',
-            marginBottom: '2rem'
-          }}>
-            <h3>Analysis Results</h3>
-            <div style={{ marginTop: '20px' }}>
-              <h4>Colors Found:</h4>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-                {analysisResult.colors?.map((color, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      backgroundColor: color,
-                      borderRadius: '50%',
-                      border: '3px solid white'
-                    }}
-                  />
-                ))}
-              </div>
-              
-              <div style={{ marginTop: '20px' }}>
-                <h4>Detected Mood:</h4>
-                <p style={{ fontSize: '18px', margin: '10px 0' }}>
-                  {analysisResult.mood}
-                </p>
-              </div>
-
-              <div style={{ marginTop: '20px' }}>
-                <h4>Description:</h4>
-                <p style={{ margin: '10px 0' }}>
-                  {analysisResult.description}
-                </p>
-              </div>
-
-              <div style={{ marginTop: '30px', textAlign: 'center' }}>
-                <button 
-                  onClick={createSpotifyPlaylist}
-                  disabled={isCreatingPlaylist}
+              <div style={{ marginBottom: '20px' }}>
+                <input
+                  type="url"
+                  value={pinterestUrl}
+                  onChange={(e) => setPinterestUrl(e.target.value)}
+                  placeholder="https://pinterest.com/username/board-name"
                   style={{
-                    background: isCreatingPlaylist ? '#ccc' : '#1db954',
-                    color: 'white',
+                    width: '100%',
+                    padding: '15px',
+                    borderRadius: '10px',
                     border: 'none',
-                    padding: '15px 30px',
-                    borderRadius: '25px',
                     fontSize: '16px',
-                    cursor: isCreatingPlaylist ? 'not-allowed' : 'pointer',
-                    fontWeight: 'bold'
+                    marginBottom: '15px'
                   }}
-                >
-                  {isCreatingPlaylist ? 'Creating Playlist...' : 'Create Spotify Playlist'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {createdPlaylist && (
-          <div style={{ 
-            background: 'rgba(40, 167, 69, 0.2)', 
-            borderRadius: '15px',
-            padding: '2rem',
-            border: '2px solid rgba(40, 167, 69, 0.5)'
-          }}>
-            <h3>Playlist Created Successfully!</h3>
-            <div style={{ marginTop: '20px' }}>
-              <h4>{createdPlaylist.playlist.name}</h4>
-              <p style={{ margin: '10px 0', opacity: 0.9 }}>
-                {createdPlaylist.tracks.length} tracks
-              </p>
-              
-              <div style={{ marginTop: '20px' }}>
+                />
                 
-                  href={createdPlaylist.playlist.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <input
+                  type="text"
+                  value={playlistName}
+                  onChange={(e) => setPlaylistName(e.target.value)}
+                  placeholder="Playlist name (auto-generated if empty)"
                   style={{
-                    background: '#1db954',
-                    color: 'white',
-                    textDecoration: 'none',
-                    padding: '12px 25px',
-                    borderRadius: '25px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    display: 'inline-block'
+                    width: '100%',
+                    padding: '15px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    fontSize: '16px'
                   }}
-                >
-                  Open in Spotify
-                </a>
+                />
               </div>
 
-              <div style={{ marginTop: '20px' }}>
-                <h4>Track List:</h4>
-                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  {createdPlaylist.tracks.slice(0, 5).map((track) => (
-                    <div key={track.id} style={{ 
-                      padding: '10px 0', 
-                      borderBottom: '1px solid rgba(255,255,255,0.1)'
-                    }}>
-                      <div style={{ fontWeight: 'bold' }}>{track.name}</div>
-                      <div style={{ opacity: 0.8, fontSize: '14px' }}>{track.artist}</div>
-                    </div>
-                  ))}
-                  {createdPlaylist.tracks.length > 5 && (
-                    <div style={{ padding: '10px 0', opacity: 0.7, fontSize: '14px' }}>
-                      ...and {createdPlaylist.tracks.length - 5} more tracks
-                    </div>
-                  )}
+              <button 
+                onClick={analyzePinterestBoard}
+                disabled={isAnalyzing}
+                style={{
+                  background: isAnalyzing ? '#ccc' : '#e60023',
+                  color: 'white',
+                  border: 'none',
+                  padding: '15px 30px',
+                  borderRadius: '25px',
+                  fontSize: '16px',
+                  cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold',
+                  width: '100%'
+                }}
+              >
+                {isAnalyzing ? 'Analyzing...' : 'Analyze Moodboard'}
+              </button>
+            </div>
+
+            {analysisResult && (
+              <div style={{ 
+                background: 'rgba(255,255,255,0.1)', 
+                borderRadius: '15px',
+                padding: '2rem',
+                marginBottom: '2rem'
+              }}>
+                <h3>Analysis Results</h3>
+                <div style={{ marginTop: '20px' }}>
+                  <h4>Colors Found:</h4>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+                    {analysisResult.colors && analysisResult.colors.map((color, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          backgroundColor: color,
+                          borderRadius: '50%',
+                          border: '3px solid white'
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  <div style={{ marginTop: '20px' }}>
+                    <h4>Detected Mood:</h4>
+                    <p style={{ fontSize: '18px', margin: '10px 0' }}>
+                      {analysisResult.mood}
+                    </p>
+                  </div>
+
+                  <div style={{ marginTop: '20px' }}>
+                    <h4>Description:</h4>
+                    <p style={{ margin: '10px 0' }}>
+                      {analysisResult.description}
+                    </p>
+                  </div>
+
+                  <div style={{ marginTop: '30px', textAlign: 'center' }}>
+                    <button 
+                      onClick={createSpotifyPlaylist}
+                      disabled={isCreatingPlaylist}
+                      style={{
+                        background: isCreatingPlaylist ? '#ccc' : '#1db954',
+                        color: 'white',
+                        border: 'none',
+                        padding: '15px 30px',
+                        borderRadius: '25px',
+                        fontSize: '16px',
+                        cursor: isCreatingPlaylist ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {isCreatingPlaylist ? 'Creating Playlist...' : 'Create Spotify Playlist'}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            )}
+
+            {createdPlaylist && (
+              <div style={{ 
+                background: 'rgba(40, 167, 69, 0.2)', 
+                borderRadius: '15px',
+                padding: '2rem',
+                border: '2px solid rgba(40, 167, 69, 0.5)'
+              }}>
+                <h3>Playlist Created Successfully!</h3>
+                <div style={{ marginTop: '20px' }}>
+                  <h4>{createdPlaylist.playlist.name}</h4>
+                  <p style={{ margin: '10px 0', opacity: 0.9 }}>
+                    {createdPlaylist.tracks.length} tracks
+                  </p>
+                  
+                  <div style={{ marginTop: '20px' }}>
+                    
+                      href={createdPlaylist.playlist.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#1db954',
+                        color: 'white',
+                        textDecoration: 'none',
+                        padding: '12px 25px',
+                        borderRadius: '25px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        display: 'inline-block'
+                      }}
+                    >
+                      Open in Spotify
+                    </a>
+                  </div>
+
+                  <div style={{ marginTop: '20px' }}>
+                    <h4>Track List:</h4>
+                    <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                      {createdPlaylist.tracks.slice(0, 5).map((track) => (
+                        <div key={track.id} style={{ 
+                          padding: '10px 0', 
+                          borderBottom: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                          <div style={{ fontWeight: 'bold' }}>{track.name}</div>
+                          <div style={{ opacity: 0.8, fontSize: '14px' }}>{track.artist}</div>
+                        </div>
+                      ))}
+                      {createdPlaylist.tracks.length > 5 && (
+                        <div style={{ padding: '10px 0', opacity: 0.7, fontSize: '14px' }}>
+                          ...and {createdPlaylist.tracks.length - 5} more tracks
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
       </div>
