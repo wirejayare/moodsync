@@ -13,14 +13,12 @@ function App() {
   const [createdPlaylist, setCreatedPlaylist] = useState(null);
 
   useEffect(() => {
-    // Check if this is a callback from Spotify
     if (window.location.pathname === '/callback') {
       setIsCallback(true);
       handleSpotifyCallback();
       return;
     }
 
-    // Normal health check
     fetch(`${process.env.REACT_APP_API_URL}/health`)
       .then(res => res.json())
       .then(data => {
@@ -42,8 +40,6 @@ function App() {
 
     if (code) {
       try {
-        console.log('Exchanging code for access token...');
-        
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/callback`, {
           method: 'POST',
           headers: {
@@ -57,13 +53,11 @@ function App() {
         if (data.success) {
           setSpotifyToken(data.access_token);
           setSpotifyUser(data.user);
-          alert(`🎉 Welcome ${data.user.display_name}! Spotify connected successfully.`);
-          console.log('Spotify connected:', data.user.display_name);
+          alert(`Welcome ${data.user.display_name}! Spotify connected successfully.`);
         } else {
           alert('Failed to connect to Spotify: ' + data.message);
         }
       } catch (error) {
-        console.error('Callback error:', error);
         alert('Error connecting to Spotify: ' + error.message);
       }
       
@@ -109,7 +103,6 @@ function App() {
       
       if (data.success) {
         setAnalysisResult(data.analysis);
-        
         if (!playlistName) {
           setPlaylistName(`${data.analysis.mood} Vibes`);
         }
@@ -153,7 +146,7 @@ function App() {
       
       if (data.success) {
         setCreatedPlaylist(data);
-        alert(`🎉 Playlist "${data.playlist.name}" created successfully with ${data.tracks.length} tracks!`);
+        alert(`Playlist created successfully with ${data.tracks.length} tracks!`);
       } else {
         alert('Failed to create playlist: ' + data.message);
       }
@@ -177,7 +170,7 @@ function App() {
         textAlign: 'center'
       }}>
         <div>
-          <h1>🔄 Processing Spotify Authorization...</h1>
+          <h1>Processing Spotify Authorization...</h1>
           <p>Please wait while we connect your account.</p>
         </div>
       </div>
@@ -193,9 +186,10 @@ function App() {
       fontFamily: 'Arial, sans-serif'
     }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-            🎨 MoodSync
+            MoodSync
           </h1>
           <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>
             Transform Pinterest moodboards into Spotify playlists
@@ -209,7 +203,7 @@ function App() {
           marginBottom: '2rem',
           textAlign: 'center'
         }}>
-          <h3>System Status</h3>
+        <h3>System Status</h3>
           <p><strong>Backend:</strong> {backendStatus}</p>
           <p><strong>Spotify:</strong> {spotifyUser ? `✅ ${spotifyUser.display_name}` : '❌ Not connected'}</p>
         </div>
@@ -222,7 +216,7 @@ function App() {
             marginBottom: '2rem',
             textAlign: 'center'
           }}>
-            <h3 style={{ marginBottom: '20px' }}>🎵 Connect Spotify First</h3>
+            <h3 style={{ marginBottom: '20px' }}>Connect Spotify First</h3>
             <p style={{ marginBottom: '20px', opacity: 0.9 }}>
               Connect your Spotify account to create playlists from your Pinterest boards
             </p>
@@ -240,7 +234,7 @@ function App() {
                 fontWeight: 'bold'
               }}
             >
-              🎵 Connect Spotify
+              Connect Spotify
             </button>
           </div>
         )}
@@ -252,7 +246,7 @@ function App() {
             padding: '2rem',
             marginBottom: '2rem'
           }}>
-            <h3 style={{ marginBottom: '20px' }}>📌 Analyze Pinterest Board</h3>
+            <h3 style={{ marginBottom: '20px' }}>Analyze Pinterest Board</h3>
             
             <div style={{ marginBottom: '20px' }}>
               <input
@@ -300,7 +294,7 @@ function App() {
                 width: '100%'
               }}
             >
-              {isAnalyzing ? '🔄 Analyzing...' : '🎨 Analyze Moodboard'}
+              {isAnalyzing ? 'Analyzing...' : 'Analyze Moodboard'}
             </button>
           </div>
         )}
@@ -312,7 +306,7 @@ function App() {
             padding: '2rem',
             marginBottom: '2rem'
           }}>
-            <h3>🎭 Analysis Results</h3>
+            <h3>Analysis Results</h3>
             <div style={{ marginTop: '20px' }}>
               <h4>Colors Found:</h4>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
@@ -359,7 +353,7 @@ function App() {
                     fontWeight: 'bold'
                   }}
                 >
-                  {isCreatingPlaylist ? '🔄 Creating Playlist...' : '🎵 Create Spotify Playlist'}
+                  {isCreatingPlaylist ? 'Creating Playlist...' : 'Create Spotify Playlist'}
                 </button>
               </div>
             </div>
@@ -373,7 +367,7 @@ function App() {
             padding: '2rem',
             border: '2px solid rgba(40, 167, 69, 0.5)'
           }}>
-            <h3>🎉 Playlist Created Successfully!</h3>
+            <h3>Playlist Created Successfully!</h3>
             <div style={{ marginTop: '20px' }}>
               <h4>{createdPlaylist.playlist.name}</h4>
               <p style={{ margin: '10px 0', opacity: 0.9 }}>
@@ -396,32 +390,20 @@ function App() {
                     display: 'inline-block'
                   }}
                 >
-                  🎵 Open in Spotify
+                  Open in Spotify
                 </a>
               </div>
 
               <div style={{ marginTop: '20px' }}>
                 <h4>Track List:</h4>
                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  {createdPlaylist.tracks.slice(0, 5).map((track, index) => (
+                  {createdPlaylist.tracks.slice(0, 5).map((track) => (
                     <div key={track.id} style={{ 
                       padding: '10px 0', 
-                      borderBottom: '1px solid rgba(255,255,255,0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '15px'
+                      borderBottom: '1px solid rgba(255,255,255,0.1)'
                     }}>
-                      {track.image && (
-                        <img 
-                          src={track.image} 
-                          alt={track.album}
-                          style={{ width: '50px', height: '50px', borderRadius: '5px' }}
-                        />
-                      )}
-                      <div>
-                        <div style={{ fontWeight: 'bold' }}>{track.name}</div>
-                        <div style={{ opacity: 0.8, fontSize: '14px' }}>{track.artist}</div>
-                      </div>
+                      <div style={{ fontWeight: 'bold' }}>{track.name}</div>
+                      <div style={{ opacity: 0.8, fontSize: '14px' }}>{track.artist}</div>
                     </div>
                   ))}
                   {createdPlaylist.tracks.length > 5 && (
@@ -434,6 +416,7 @@ function App() {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
