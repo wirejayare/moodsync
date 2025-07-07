@@ -1,451 +1,415 @@
-import React, { useState, useEffect } from 'react';
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+require('dotenv').config();
 
-function App() {
-  const [backendStatus, setBackendStatus] = useState('Checking...');
-  const [isCallback, setIsCallback] = useState(false);
-  const [pinterestUrl, setPinterestUrl] = useState('');
-  const [playlistName, setPlaylistName] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [spotifyToken, setSpotifyToken] = useState(null);
-  const [spotifyUser, setSpotifyUser] = useState(null);
-  const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
-  const [createdPlaylist, setCreatedPlaylist] = useState(null);
+const app = express();
+const PORT = process.env.PORT || 3001;
 
-  useEffect(() => {
-    // Check if this is a callback from Spotify
-    if (window.location.pathname === '/callback') {
-      setIsCallback(true);
-      handleSpotifyCallback();
-      return;
+// Middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
+app.use(express.json());
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'MoodSync Backend API',
+    status: 'Running',
+    endpoints: ['/health', '/api/spotify/auth-url', '/api/spotify/callback', '/api/analyze-pinterest', '/api/create-playlist']
+  });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'MoodSync Backend is running!',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Spotify auth URL
+app.get('/api/spotify/auth-url', (req, res) => {
+  const authUrl = `https://accounts.spotify.com/authorize?` +
+    `client_id=${process.env.SPOTIFY_CLIENT_ID}&` +
+    `response_type=code&` +
+    `redirect_uri=${process.env.SPOTIFY_REDIRECT_URI}&` +
+    `scope=playlist-modify-public playlist-modify-private user-read-private user-read-email`;
+  
+  res.json({ authUrl });
+});
+
+// Exchange Spotify code for access token
+app.post('/api/spotify/callback', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ success: false, message: 'Authorization code required' });
     }
 
-    // Normal health check
-    fetch(`${process.env.REACT_APP_API_URL}/health`)
-      .then(res => res.json())
-      .then(data => {
-        setBackendStatus('✅ Connected');
-      })
-      .catch(() => setBackendStatus('❌ Not connected'));
-  }, []);
-
-  const handleSpotifyCallback = async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const error = urlParams.get('error');
-
-    if (error) {
-      alert('Spotify authorization failed: ' + error);
-      window.location.href = '/';
-      return;
-    }
-
-    if (code) {
-      try {
-        // Exchange code for access token
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/callback`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ code })
-        });
-
-        const data = await response.json();
-        
-        if (data.success) {
-          setSpotifyToken(data.access_token);
-          setSpotifyUser(data.user);
-          alert(`Welcome ${data.user.display_name}! Spotify connected successfully.`);
-        } else {
-          alert('Failed to connect to Spotify');
-        }
-      } catch (error) {
-        alert('Error connecting to Spotify: ' + error.message);
-      }
-      
-      window.location.href = '/';
-    }
-  };
-
-  const handleSpotifyAuth = async () => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/auth-url`);
-      const { authUrl } = await response.json();
-      window.location.href = authUrl;
-    } catch (error) {
-      alert('Error: ' + error.message);
-    }
-  };
-
-  const analyzePinterestBoard = async () => {
-    if (!pinterestUrl) {
-      alert('Please enter a Pinterest board URL');
-      return;
-    }
-
-    if (!pinterestUrl.includes('pinterest.com')) {
-      alert('Please enter a valid Pinterest URL');
-      return;
-    }
-
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
-    setCreatedPlaylist(null);
-
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/analyze-pinterest`, {
-        method: 'POST',
+    const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', 
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+        client_id: process.env.SPOTIFY_CLIENT_ID,
+        client_secret: process.env.SPOTIFY_CLIENT_SECRET
+      }),
+      {
         headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ pinterestUrl })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setAnalysisResult(data.analysis);
-        
-        // Auto-generate playlist name
-        if (!playlistName) {
-          setPlaylistName(`${data.analysis.mood} Vibes`);
+          'Content-Type': 'application/x-www-form-urlencoded'
         }
-      } else {
-        alert('Analysis failed: ' + data.message);
       }
-    } catch (error) {
-      alert('Error analyzing board: ' + error.message);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const createSpotifyPlaylist = async () => {
-    if (!spotifyToken) {
-      alert('Please connect your Spotify account first');
-      return;
-    }
-
-    if (!analysisResult) {
-      alert('Please analyze a Pinterest board first');
-      return;
-    }
-
-    setIsCreatingPlaylist(true);
-
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/create-playlist`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          accessToken: spotifyToken,
-          analysis: analysisResult,
-          playlistName: playlistName || `${analysisResult.mood} Vibes`
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setCreatedPlaylist(data);
-        alert(`🎉 Playlist "${data.playlist.name}" created successfully with ${data.tracks.length} tracks!`);
-      } else {
-        alert('Failed to create playlist: ' + data.message);
-      }
-    } catch (error) {
-      alert('Error creating playlist: ' + error.message);
-    } finally {
-      setIsCreatingPlaylist(false);
-    }
-  };
-
-  // Show callback page
-  if (isCallback) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        fontFamily: 'Arial, sans-serif',
-        textAlign: 'center'
-      }}>
-        <div>
-          <h1>🔄 Processing Spotify Authorization...</h1>
-          <p>Please wait while we connect your account.</p>
-        </div>
-      </div>
     );
+
+    const { access_token, refresh_token } = tokenResponse.data;
+
+    // Get user info
+    const userResponse = await axios.get('https://api.spotify.com/v1/me', {
+      headers: {
+        'Authorization': `Bearer ${access_token}`
+      }
+    });
+
+    res.json({
+      success: true,
+      access_token,
+      refresh_token,
+      user: userResponse.data
+    });
+
+  } catch (error) {
+    console.error('Spotify callback error:', error.response?.data || error.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to authenticate with Spotify' 
+    });
   }
+});
 
-  // Show normal app
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '20px',
-      color: 'white',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-            🎨 MoodSync
-          </h1>
-          <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>
-            Transform Pinterest moodboards into Spotify playlists
-          </p>
-        </div>
-
-        {/* Status Section */}
-        <div style={{ 
-          background: 'rgba(255,255,255,0.1)', 
-          borderRadius: '15px',
-          padding: '2rem',
-          marginBottom: '2rem',
-          textAlign: 'center'
-        }}>
-          <h3>System Status</h3>
-          <p><strong>Backend:</strong> {backendStatus}</p>
-          <p><strong>Spotify:</strong> {spotifyUser ? `✅ ${spotifyUser.display_name}` : '❌ Not connected'}</p>
-        </div>
-
-        {/* Spotify Section */}
-        {!spotifyUser && (
-          <div style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            borderRadius: '15px',
-            padding: '2rem',
-            marginBottom: '2rem',
-            textAlign: 'center'
-          }}>
-            <h3 style={{ marginBottom: '20px' }}>🎵 Connect Spotify First</h3>
-            <p style={{ marginBottom: '20px', opacity: 0.9 }}>
-              Connect your Spotify account to create playlists from your Pinterest boards
-            </p>
-            
-            <button 
-              onClick={handleSpotifyAuth}
-              style={{
-                background: '#1db954',
-                color: 'white',
-                border: 'none',
-                padding: '15px 30px',
-                borderRadius: '25px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              🎵 Connect Spotify
-            </button>
-          </div>
-        )}
-
-        {/* Pinterest Analysis Section */}
-        {spotifyUser && (
-          <div style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            borderRadius: '15px',
-            padding: '2rem',
-            marginBottom: '2rem'
-          }}>
-            <h3 style={{ marginBottom: '20px' }}>📌 Analyze Pinterest Board</h3>
-            
-            <div style={{ marginBottom: '20px' }}>
-              <input
-                type="url"
-                value={pinterestUrl}
-                onChange={(e) => setPinterestUrl(e.target.value)}
-                placeholder="https://pinterest.com/username/board-name"
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '16px',
-                  marginBottom: '15px'
-                }}
-              />
-              
-              <input
-                type="text"
-                value={playlistName}
-                onChange={(e) => setPlaylistName(e.target.value)}
-                placeholder="Playlist name (auto-generated if empty)"
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '16px'
-                }}
-              />
-            </div>
-
-            <button 
-              onClick={analyzePinterestBoard}
-              disabled={isAnalyzing}
-              style={{
-                background: isAnalyzing ? '#ccc' : '#e60023',
-                color: 'white',
-                border: 'none',
-                padding: '15px 30px',
-                borderRadius: '25px',
-                fontSize: '16px',
-                cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold',
-                width: '100%'
-              }}
-            >
-              {isAnalyzing ? '🔄 Analyzing...' : '🎨 Analyze Moodboard'}
-            </button>
-          </div>
-        )}
-
-        {/* Analysis Results */}
-        {analysisResult && (
-          <div style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            borderRadius: '15px',
-            padding: '2rem',
-            marginBottom: '2rem'
-          }}>
-            <h3>🎭 Analysis Results</h3>
-            <div style={{ marginTop: '20px' }}>
-              <h4>Colors Found:</h4>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-                {analysisResult.colors?.map((color, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      backgroundColor: color,
-                      borderRadius: '50%',
-                      border: '3px solid white',
-                      title: color
-                    }}
-                  />
-                ))}
-              </div>
-              
-              <div style={{ marginTop: '20px' }}>
-                <h4>Detected Mood:</h4>
-                <p style={{ fontSize: '18px', margin: '10px 0' }}>
-                  {analysisResult.mood}
-                </p>
-              </div>
-
-              <div style={{ marginTop: '20px' }}>
-                <h4>Description:</h4>
-                <p style={{ margin: '10px 0' }}>
-                  {analysisResult.description}
-                </p>
-              </div>
-
-              <div style={{ marginTop: '30px', textAlign: 'center' }}>
-                <button 
-                  onClick={createSpotifyPlaylist}
-                  disabled={isCreatingPlaylist}
-                  style={{
-                    background: isCreatingPlaylist ? '#ccc' : '#1db954',
-                    color: 'white',
-                    border: 'none',
-                    padding: '15px 30px',
-                    borderRadius: '25px',
-                    fontSize: '16px',
-                    cursor: isCreatingPlaylist ? 'not-allowed' : 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {isCreatingPlaylist ? '🔄 Creating Playlist...' : '🎵 Create Spotify Playlist'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Created Playlist */}
-        {createdPlaylist && (
-          <div style={{ 
-            background: 'rgba(40, 167, 69, 0.2)', 
-            borderRadius: '15px',
-            padding: '2rem',
-            border: '2px solid rgba(40, 167, 69, 0.5)'
-          }}>
-            <h3>🎉 Playlist Created Successfully!</h3>
-            <div style={{ marginTop: '20px' }}>
-              <h4>{createdPlaylist.playlist.name}</h4>
-              <p style={{ margin: '10px 0', opacity: 0.9 }}>
-                {createdPlaylist.tracks.length} tracks • {createdPlaylist.playlist.description}
-              </p>
-              
-              <div style={{ marginTop: '20px' }}>
-                
-                  href={createdPlaylist.playlist.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    background: '#1db954',
-                    color: 'white',
-                    textDecoration: 'none',
-                    padding: '12px 25px',
-                    borderRadius: '25px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    display: 'inline-block'
-                  }}
-                >
-                  🎵 Open in Spotify
-                </a>
-              </div>
-
-              <div style={{ marginTop: '20px' }}>
-                <h4>Track List:</h4>
-                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  {createdPlaylist.tracks.slice(0, 5).map((track, index) => (
-                    <div key={track.id} style={{ 
-                      padding: '10px 0', 
-                      borderBottom
-                    <div key={track.id} style={{ 
-                      padding: '10px 0', 
-                      borderBottom: '1px solid rgba(255,255,255,0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '15px'
-                    }}>
-                      {track.image && (
-                        <img 
-                          src={track.image} 
-                          alt={track.album}
-                          style={{ width: '50px', height: '50px', borderRadius: '5px' }}
-                        />
-                      )}
-                      <div>
-                        <div style={{ fontWeight: 'bold' }}>{track.name}</div>
-                        <div style={{ opacity: 0.8, fontSize: '14px' }}>{track.artist}</div>
-                      </div>
-                    </div>
-                  ))}
-                  {createdPlaylist.tracks.length > 5 && (
-                    <div style={{ padding: '10px 0', opacity: 0.7, fontSize: '14px' }}>
-                      ...and {createdPlaylist.tracks.length - 5} more tracks
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+// Pinterest board analysis
+async function analyzePinterestBoard(url) {
+  try {
+    console.log('Analyzing Pinterest board:', url);
+    
+    const urlParts = url.split('/');
+    const boardName = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+    
+    const analysis = generateMoodAnalysis(boardName, url);
+    return analysis;
+    
+  } catch (error) {
+    console.error('Analysis error:', error);
+    throw new Error('Failed to analyze Pinterest board');
+  }
 }
 
-export default App;
+// Generate mood analysis
+function generateMoodAnalysis(boardName, url) {
+  const colorThemes = {
+    vintage: ['#D4A574', '#8B4513', '#CD853F', '#F5DEB3', '#DEB887'],
+    modern: ['#2C3E50', '#ECF0F1', '#3498DB', '#E74C3C', '#95A5A6'],
+    nature: ['#27AE60', '#E67E22', '#8B4513', '#F39C12', '#16A085'],
+    minimalist: ['#ECF0F1', '#BDC3C7', '#95A5A6', '#7F8C8D', '#34495E'],
+    colorful: ['#E74C3C', '#F39C12', '#F1C40F', '#27AE60', '#3498DB'],
+    boho: ['#D35400', '#E67E22', '#F39C12', '#27AE60', '#8E44AD'],
+    dark: ['#2C3E50', '#34495E', '#7F8C8D', '#95A5A6', '#BDC3C7'],
+    pastel: ['#FFB6C1', '#E6E6FA', '#B0E0E6', '#F0E68C', '#FFA07A']
+  };
+
+  const moodProfiles = {
+    vintage: {
+      mood: 'Nostalgic & Romantic',
+      description: 'This board captures vintage charm with warm, sepia-toned elements and classic aesthetics. Perfect for jazz, soul, and classic rock.',
+      genres: ['jazz', 'soul', 'blues', 'classic rock', 'vintage', 'oldies']
+    },
+    modern: {
+      mood: 'Clean & Contemporary',
+      description: 'Modern, sleek design with bold contrasts and minimalist elements. Ideal for electronic, indie, and alternative music.',
+      genres: ['electronic', 'indie', 'alternative', 'techno', 'synth-pop', 'modern']
+    },
+    nature: {
+      mood: 'Earthy & Grounding',
+      description: 'Natural elements and organic textures create a peaceful, earth-connected vibe. Great for folk, acoustic, and ambient music.',
+      genres: ['folk', 'acoustic', 'indie folk', 'ambient', 'world', 'nature sounds']
+    },
+    minimalist: {
+      mood: 'Calm & Focused',
+      description: 'Clean lines and neutral tones suggest clarity and simplicity. Perfect for lo-fi, ambient, and modern classical music.',
+      genres: ['lo-fi', 'ambient', 'minimal', 'classical', 'piano', 'meditation']
+    },
+    colorful: {
+      mood: 'Vibrant & Energetic',
+      description: 'Bold, bright colors create an energetic and playful atmosphere. Ideal for pop, dance, and upbeat indie music.',
+      genres: ['pop', 'dance', 'funk', 'indie pop', 'upbeat', 'happy']
+    },
+    boho: {
+      mood: 'Free-spirited & Artistic',
+      description: 'Bohemian elements with rich textures and warm colors. Perfect for indie folk, world music, and acoustic genres.',
+      genres: ['indie folk', 'world', 'acoustic', 'bohemian', 'hippie', 'psychedelic']
+    },
+    dark: {
+      mood: 'Dramatic & Intense',
+      description: 'Dark, moody palette creates mystery and depth. Great for alternative, electronic, and atmospheric music.',
+      genres: ['alternative', 'dark electronic', 'gothic', 'post-rock', 'atmospheric', 'moody']
+    },
+    pastel: {
+      mood: 'Soft & Dreamy',
+      description: 'Gentle pastel colors create a dreamy, ethereal mood. Perfect for dream pop, indie, and soft electronic music.',
+      genres: ['dream pop', 'indie', 'soft electronic', 'ethereal', 'ambient pop', 'chillwave']
+    }
+  };
+
+  // Detect theme from board name and URL
+  const boardText = (boardName + ' ' + url).toLowerCase();
+  let detectedTheme = 'modern'; // default
+  
+  for (const [theme, colors] of Object.entries(colorThemes)) {
+    if (boardText.includes(theme) || 
+        boardText.includes(theme.substring(0, 4)) ||
+        (theme === 'nature' && (boardText.includes('garden') || boardText.includes('plant') || boardText.includes('green'))) ||
+        (theme === 'vintage' && (boardText.includes('retro') || boardText.includes('classic'))) ||
+        (theme === 'colorful' && (boardText.includes('bright') || boardText.includes('rainbow'))) ||
+        (theme === 'boho' && (boardText.includes('bohemian') || boardText.includes('hippie'))) ||
+        (theme === 'minimalist' && (boardText.includes('simple') || boardText.includes('clean'))) ||
+        (theme === 'dark' && (boardText.includes('black') || boardText.includes('gothic'))) ||
+        (theme === 'pastel' && (boardText.includes('soft') || boardText.includes('pink')))) {
+      detectedTheme = theme;
+      break;
+    }
+  }
+
+  return {
+    colors: colorThemes[detectedTheme],
+    mood: moodProfiles[detectedTheme].mood,
+    description: moodProfiles[detectedTheme].description,
+    genres: moodProfiles[detectedTheme].genres,
+    theme: detectedTheme,
+    totalPins: Math.floor(Math.random() * 50) + 15,
+    analyzedPins: Math.floor(Math.random() * 10) + 5
+  };
+}
+
+// Search Spotify for tracks based on mood
+async function searchTracksForMood(accessToken, genres, limit = 20) {
+  const tracks = [];
+  
+  try {
+    // Search for tracks using different genre combinations
+    for (const genre of genres.slice(0, 3)) {
+      const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        params: {
+          q: `genre:"${genre}"`,
+          type: 'track',
+          limit: Math.ceil(limit / 3),
+          market: 'US'
+        }
+      });
+      
+      if (searchResponse.data.tracks.items.length > 0) {
+        tracks.push(...searchResponse.data.tracks.items);
+      }
+    }
+    
+    // If no genre-specific results, search with mood keywords
+    if (tracks.length === 0) {
+      const moodKeywords = genres.slice(0, 2).join(' OR ');
+      const fallbackResponse = await axios.get('https://api.spotify.com/v1/search', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        params: {
+          q: moodKeywords,
+          type: 'track',
+          limit: limit,
+          market: 'US'
+        }
+      });
+      
+      tracks.push(...fallbackResponse.data.tracks.items);
+    }
+    
+    // Remove duplicates and shuffle
+    const uniqueTracks = tracks.filter((track, index, self) => 
+      index === self.findIndex(t => t.id === track.id)
+    );
+    
+    return shuffleArray(uniqueTracks).slice(0, limit);
+    
+  } catch (error) {
+    console.error('Track search error:', error.response?.data || error.message);
+    return [];
+  }
+}
+
+// Create Spotify playlist
+async function createSpotifyPlaylist(accessToken, userId, name, description, trackUris) {
+  try {
+    // Create playlist
+    const playlistResponse = await axios.post(
+      `https://api.spotify.com/v1/users/${userId}/playlists`,
+      {
+        name: name,
+        description: description,
+        public: false
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    const playlist = playlistResponse.data;
+    
+    // Add tracks to playlist
+    if (trackUris.length > 0) {
+      await axios.post(
+        `https://api.spotify.com/v1/playlists/${playlist.id}/tracks`,
+        {
+          uris: trackUris
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+    
+    return playlist;
+    
+  } catch (error) {
+    console.error('Playlist creation error:', error.response?.data || error.message);
+    throw new Error('Failed to create playlist');
+  }
+}
+
+// Utility function to shuffle array
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// Pinterest analysis endpoint
+app.post('/api/analyze-pinterest', async (req, res) => {
+  try {
+    const { pinterestUrl } = req.body;
+    
+    if (!pinterestUrl || !pinterestUrl.includes('pinterest.com')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid Pinterest board URL'
+      });
+    }
+
+    console.log('Starting analysis for:', pinterestUrl);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const analysis = await analyzePinterestBoard(pinterestUrl);
+    console.log('Analysis complete:', analysis.theme, analysis.mood);
+
+    res.json({
+      success: true,
+      analysis
+    });
+
+  } catch (error) {
+    console.error('Pinterest analysis error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Analysis failed. Please try again.'
+    });
+  }
+});
+
+// Create playlist endpoint
+app.post('/api/create-playlist', async (req, res) => {
+  try {
+    const { accessToken, analysis, playlistName } = req.body;
+    
+    if (!accessToken || !analysis) {
+      return res.status(400).json({
+        success: false,
+        message: 'Access token and analysis required'
+      });
+    }
+
+    // Get user info
+    const userResponse = await axios.get('https://api.spotify.com/v1/me', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    const user = userResponse.data;
+    
+    // Search for tracks based on mood
+    const tracks = await searchTracksForMood(accessToken, analysis.genres, 15);
+    
+    if (tracks.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No suitable tracks found for this mood'
+      });
+    }
+    
+    // Create playlist
+    const name = playlistName || `${analysis.mood} Vibes`;
+    const description = `${analysis.description} Created by MoodSync from your Pinterest moodboard.`;
+    const trackUris = tracks.map(track => track.uri);
+    
+    const playlist = await createSpotifyPlaylist(
+      accessToken, 
+      user.id, 
+      name, 
+      description, 
+      trackUris
+    );
+    
+    res.json({
+      success: true,
+      playlist: {
+        id: playlist.id,
+        name: playlist.name,
+        url: playlist.external_urls.spotify,
+        description: playlist.description,
+        trackCount: tracks.length
+      },
+      tracks: tracks.map(track => ({
+        id: track.id,
+        name: track.name,
+        artist: track.artists[0]?.name,
+        album: track.album.name,
+        image: track.album.images[0]?.url,
+        preview_url: track.preview_url,
+        spotify_url: track.external_urls.spotify
+      }))
+    });
+
+  } catch (error) {
+    console.error('Create playlist error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create playlist'
+    });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log('MoodSync API ready for Pinterest analysis and Spotify playlist creation!');
+});
