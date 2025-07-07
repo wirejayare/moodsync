@@ -24,23 +24,53 @@ function App() {
       .catch(() => setBackendStatus('❌ Not connected'));
   }, []);
 
-  const handleSpotifyCallback = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const error = urlParams.get('error');
+  const handleSpotifyCallback = async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const error = urlParams.get('error');
 
-    if (error) {
-      alert('Spotify authorization failed: ' + error);
-      window.location.href = '/';
-      return;
+  if (error) {
+    alert('Spotify authorization failed: ' + error);
+    window.location.href = '/';
+    return;
+  }
+
+  if (code) {
+    try {
+      console.log('Exchanging code for access token...');
+      
+      // Send code to backend to get access token
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/callback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Store the access token and user info
+        setSpotifyToken(data.access_token);
+        setSpotifyUser(data.user);
+        
+        // Show success message
+        alert(`🎉 Welcome ${data.user.display_name}! Spotify connected successfully.`);
+        
+        console.log('Spotify connected:', data.user.display_name);
+      } else {
+        alert('Failed to connect to Spotify: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Callback error:', error);
+      alert('Error connecting to Spotify: ' + error.message);
     }
-
-    if (code) {
-      alert('Spotify connected successfully! Code: ' + code.substring(0, 10) + '...');
-      window.location.href = '/';
-    }
-  };
-
+    
+    // Redirect back to main app
+    window.location.href = '/';
+  }
+};
   const handleSpotifyAuth = async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/auth-url`);
