@@ -8,15 +8,13 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
-"dependencies": {
-  "express": "^4.18.2",
-  "cors": "^2.8.5", 
-  "dotenv": "^16.3.1",
-  "axios": "^1.5.0",
-  "spotify-web-api-node": "^5.0.2",
-  "cheerio": "^1.0.0-rc.12",
-  "color-thief-node": "^1.0.4"
-    
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "axios": "^1.5.0",
+    "spotify-web-api-node": "^5.0.2",
+    "cheerio": "^1.0.0-rc.12",
+    "node-vibrant": "^3.2.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
