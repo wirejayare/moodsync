@@ -4,7 +4,7 @@ function App() {
   const [backendStatus, setBackendStatus] = useState('Checking...');
 
   useEffect(() => {
-    fetch('http://localhost:3001/health')
+    fetch(`${process.env.REACT_APP_API_URL}/health`)
       .then(res => res.json())
       .then(data => {
         setBackendStatus('✅ Connected');
