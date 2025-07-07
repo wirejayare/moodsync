@@ -12,7 +12,12 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "axios": "^1.5.0",
-    "spotify-web-api-node": "^5.0.2"
+    "spotify-web-api-node": "^5.0.2",
+    "puppeteer": "^21.1.1",
+    "sharp": "^0.32.5",
+    "node-vibrant": "^3.2.1",
+    "cheerio": "^1.0.0-rc.12"
+    
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
