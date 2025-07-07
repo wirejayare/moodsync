@@ -35,7 +35,44 @@ app.get('/api/spotify/auth-url', (req, res) => {
   
   res.json({ authUrl });
 });
+// Pinterest analysis route
+app.post('/api/analyze-pinterest', async (req, res) => {
+  try {
+    const { pinterestUrl } = req.body;
+    
+    if (!pinterestUrl || !pinterestUrl.includes('pinterest.com')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid Pinterest URL required'
+      });
+    }
 
+    // For now, return mock analysis data
+    // We'll add real Pinterest scraping next
+    const mockAnalysis = {
+      colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA726', '#AB47BC'],
+      mood: 'Vibrant and Energetic',
+      description: 'This moodboard features bright, bold colors with a modern aesthetic. The palette suggests high energy and creativity.',
+      totalPins: 25,
+      analyzedPins: 10
+    };
+
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    res.json({
+      success: true,
+      analysis: mockAnalysis
+    });
+
+  } catch (error) {
+    console.error('Pinterest analysis error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Analysis failed'
+    });
+  }
+});
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
