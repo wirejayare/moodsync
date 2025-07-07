@@ -2,8 +2,17 @@ import React, { useState, useEffect } from 'react';
 
 function App() {
   const [backendStatus, setBackendStatus] = useState('Checking...');
+  const [isCallback, setIsCallback] = useState(false);
 
   useEffect(() => {
+    // Check if this is a callback from Spotify
+    if (window.location.pathname === '/callback') {
+      setIsCallback(true);
+      handleSpotifyCallback();
+      return;
+    }
+
+    // Normal health check
     fetch(`${process.env.REACT_APP_API_URL}/health`)
       .then(res => res.json())
       .then(data => {
@@ -12,9 +21,27 @@ function App() {
       .catch(() => setBackendStatus('❌ Not connected'));
   }, []);
 
+  const handleSpotifyCallback = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const error = urlParams.get('error');
+
+    if (error) {
+      alert('Spotify authorization failed: ' + error);
+      window.location.href = '/';
+      return;
+    }
+
+    if (code) {
+      alert('Spotify connected successfully! Code: ' + code.substring(0, 10) + '...');
+      // In the future, we'll send this code to our backend
+      window.location.href = '/';
+    }
+  };
+
   const handleSpotifyAuth = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/spotify/auth-url');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/auth-url`);
       const { authUrl } = await response.json();
       window.location.href = authUrl;
     } catch (error) {
@@ -22,6 +49,28 @@ function App() {
     }
   };
 
+  // Show callback page
+  if (isCallback) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontFamily: 'Arial, sans-serif',
+        textAlign: 'center'
+      }}>
+        <div>
+          <h1>🔄 Processing Spotify Authorization...</h1>
+          <p>Please wait while we connect your account.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show normal app
   return (
     <div style={{
       minHeight: '100vh',
