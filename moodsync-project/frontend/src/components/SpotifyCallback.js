@@ -20,7 +20,7 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
         }
 
         if (code) {
-          const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/callback`, {
+    const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/spotify/callback`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code })
