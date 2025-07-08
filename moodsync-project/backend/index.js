@@ -878,6 +878,21 @@ function generateAdvancedMusicRecommendations(moodAnalysis) {
 }
 
 // NOW the main analysis function (AFTER all the helper functions)
+
+async function generateEnhancedAnalysis(pinterestUrl, options = {}) {
+  console.log('🔍 Starting comprehensive analysis for:', pinterestUrl);
+  
+  // ADD THIS DEBUG TEST:
+  console.log('🧪 Testing URL split...');
+  const testParts = pinterestUrl.split('/').filter(part => part.length > 0);
+  console.log('🧪 Test parts:', testParts);
+  console.log('🧪 Test parts type:', typeof testParts);
+  console.log('🧪 Test parts is array:', Array.isArray(testParts));
+  
+  const boardInfo = extractBoardInfo(pinterestUrl);
+  // ... rest of your function
+}
+
 async function generateEnhancedAnalysis(pinterestUrl, options = {}) {
   console.log('🔍 Starting comprehensive analysis for:', pinterestUrl);
   
