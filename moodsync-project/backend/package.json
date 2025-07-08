@@ -14,6 +14,9 @@
     "axios": "^1.5.0",
     "spotify-web-api-node": "^5.0.2",
     "cheerio": "^1.0.0-rc.12"
+    "sharp": "^0.32.0",
+    "colorthief": "^2.3.2",
+    "@tensorflow/tfjs-node": "^4.10.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
