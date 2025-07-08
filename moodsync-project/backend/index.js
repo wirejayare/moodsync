@@ -132,6 +132,496 @@ app.post('/api/spotify/callback', async (req, res) => {
   }
 });
 
+// ADD THIS PINTEREST CODE TO YOUR backend/index.js
+// Insert this code AFTER your existing Spotify endpoints and BEFORE the basic Pinterest analysis
+
+// ===== PINTEREST API INTEGRATION =====
+
+// Pinterest auth URL endpoint
+app.get('/api/pinterest/auth-url', (req, res) => {
+  try {
+    if (!process.env.PINTEREST_CLIENT_ID) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Pinterest client ID not configured' 
+      });
+    }
+
+    const authUrl = `https://www.pinterest.com/oauth/?` +
+      `client_id=${process.env.PINTEREST_CLIENT_ID}&` +
+      `redirect_uri=${encodeURIComponent(process.env.PINTEREST_REDIRECT_URI)}&` +
+      `response_type=code&` +
+      `scope=boards:read,pins:read,user_accounts:read`;
+    
+    console.log('Generated Pinterest auth URL');
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Pinterest auth URL error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate Pinterest auth URL' 
+    });
+  }
+});
+
+// Exchange Pinterest code for access token
+app.post('/api/pinterest/callback', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Pinterest authorization code required' 
+      });
+    }
+
+    if (!process.env.PINTEREST_CLIENT_ID || !process.env.PINTEREST_CLIENT_SECRET) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Pinterest credentials not configured' 
+      });
+    }
+
+    console.log('Exchanging Pinterest code for token...');
+
+    // Exchange code for access token
+    const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', {
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+      client_id: process.env.PINTEREST_CLIENT_ID,
+      client_secret: process.env.PINTEREST_CLIENT_SECRET
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const { access_token, refresh_token, token_type } = tokenResponse.data;
+    console.log('Pinterest token received successfully');
+
+    // Get user info
+    const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
+      headers: {
+        'Authorization': `Bearer ${access_token}`
+      }
+    });
+
+    console.log('Pinterest user info retrieved:', userResponse.data.username);
+
+    res.json({
+      success: true,
+      access_token,
+      refresh_token,
+      token_type,
+      user: userResponse.data
+    });
+
+  } catch (error) {
+    console.error('Pinterest callback error:', error.response?.data || error.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to authenticate with Pinterest',
+      error: error.response?.data?.message || error.message
+    });
+  }
+});
+
+// Pinterest API helper functions
+async function extractBoardIdFromUrl(boardUrl) {
+  try {
+    const urlParts = boardUrl.split('/').filter(part => part && part.length > 0);
+    
+    if (boardUrl.includes('pin.it')) {
+      return null; // Pin.it URLs need special handling
+    }
+    
+    if (boardUrl.includes('pinterest.com')) {
+      const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
+      if (pinterestIndex >= 0 && urlParts.length > pinterestIndex + 2) {
+        const username = urlParts[pinterestIndex + 1];
+        const boardSlug = urlParts[pinterestIndex + 2];
+        return { username, boardSlug };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting board ID:', error);
+    return null;
+  }
+}
+
+async function getBoardBySlug(username, boardSlug, accessToken) {
+  try {
+    console.log(`Looking up board: ${username}/${boardSlug}`);
+    
+    const boardsResponse = await axios.get(`https://api.pinterest.com/v5/boards`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      params: {
+        page_size: 100
+      }
+    });
+    
+    const board = boardsResponse.data.items.find(board => {
+      const boardSlugNormalized = board.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const targetSlugNormalized = boardSlug.toLowerCase();
+      return boardSlugNormalized.includes(targetSlugNormalized) || 
+             targetSlugNormalized.includes(boardSlugNormalized);
+    });
+    
+    if (board) {
+      console.log('Found matching board:', board.name);
+      return board;
+    }
+    
+    console.log('No matching board found');
+    return null;
+    
+  } catch (error) {
+    console.error('Error fetching boards:', error.response?.data || error.message);
+    return null;
+  }
+}
+
+async function getBoardData(boardId, accessToken) {
+  try {
+    console.log('Fetching board data for:', boardId);
+    
+    const response = await axios.get(`https://api.pinterest.com/v5/boards/${boardId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    console.log('Board data retrieved:', response.data.name);
+    return response.data;
+    
+  } catch (error) {
+    console.error('Error fetching board data:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+async function getBoardPins(boardId, accessToken, options = {}) {
+  try {
+    console.log('Fetching pins for board:', boardId);
+    
+    const response = await axios.get(`https://api.pinterest.com/v5/boards/${boardId}/pins`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      params: {
+        page_size: options.limit || 50
+      }
+    });
+    
+    console.log(`Retrieved ${response.data.items.length} pins`);
+    return response.data;
+    
+  } catch (error) {
+    console.error('Error fetching board pins:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+// Enhanced Pinterest analysis with API data
+async function generateAPIEnhancedAnalysis(boardUrl, accessToken, options = {}) {
+  console.log('🔍 Starting API-enhanced analysis for:', boardUrl);
+  
+  try {
+    const boardInfo = await extractBoardIdFromUrl(boardUrl);
+    
+    if (!boardInfo) {
+      console.log('Could not extract board info, falling back to text analysis');
+      return await generateEnhancedAnalysis(boardUrl, options);
+    }
+    
+    const board = await getBoardBySlug(boardInfo.username, boardInfo.boardSlug, accessToken);
+    
+    if (!board) {
+      console.log('Board not found via API, falling back to text analysis');
+      return await generateEnhancedAnalysis(boardUrl, options);
+    }
+    
+    const boardData = await getBoardData(board.id, accessToken);
+    const pinData = await getBoardPins(board.id, accessToken, { limit: 50 });
+    
+    // Create rich analysis text from API data
+    const richAnalysisData = {
+      boardName: boardData.name || '',
+      boardDescription: boardData.description || '',
+      pinTitles: pinData.items.map(pin => pin.title || '').filter(title => title),
+      pinDescriptions: pinData.items.map(pin => pin.description || '').filter(desc => desc),
+      pinCount: boardData.pin_count || 0,
+      followerCount: boardData.follower_count || 0
+    };
+    
+    const richAnalysisText = createRichAnalysisText(richAnalysisData);
+    console.log('📝 Rich analysis text created:', richAnalysisText.substring(0, 200) + '...');
+    
+    // Use enhanced analysis with API data
+    const analysis = await generateEnhancedAnalysisWithAPIData(boardUrl, richAnalysisText, richAnalysisData);
+    
+    console.log('✅ API-enhanced analysis completed successfully');
+    return analysis;
+    
+  } catch (error) {
+    console.error('❌ API-enhanced analysis error:', error);
+    console.log('Falling back to text-only analysis');
+    return await generateEnhancedAnalysis(boardUrl, options);
+  }
+}
+
+function createRichAnalysisText(data) {
+  const textSources = [
+    data.boardName,
+    data.boardDescription,
+    ...data.pinTitles.slice(0, 20),
+    ...data.pinDescriptions.slice(0, 15)
+  ].filter(text => text && text.trim().length > 0);
+  
+  return textSources
+    .join(' ')
+    .toLowerCase()
+    .replace(/[-_+]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function generateEnhancedAnalysisWithAPIData(boardUrl, richAnalysisText, apiData) {
+  console.log('🔍 Starting enhanced analysis with API data');
+  
+  try {
+    // Extract board info
+    const urlParts = boardUrl.split('/').filter(part => part && part.length > 0);
+    let username = 'unknown';
+    let boardName = apiData.boardName || 'unknown-board';
+    
+    if (boardUrl.includes('pinterest.com') && urlParts.length >= 4) {
+      const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
+      if (pinterestIndex >= 0) {
+        username = urlParts[pinterestIndex + 1] || 'unknown';
+      }
+    }
+    
+    // Enhanced theme detection using rich text
+    let detectedTheme = 'modern';
+    let mood = 'Peaceful';
+    let genres = ['acoustic', 'indie'];
+    let energy = 'medium';
+    
+    // More sophisticated theme detection with API data
+    if (richAnalysisText.includes('morning') || richAnalysisText.includes('sunrise') || richAnalysisText.includes('coffee')) {
+      detectedTheme = 'morning';
+      mood = 'Energetic';
+      genres = ['indie pop', 'upbeat acoustic', 'folk pop', 'coffee shop'];
+      energy = 'high';
+    } else if (richAnalysisText.includes('cozy') || richAnalysisText.includes('home') || richAnalysisText.includes('comfort')) {
+      detectedTheme = 'cozy';
+      mood = 'Cozy';
+      genres = ['acoustic', 'folk', 'lo-fi', 'indie folk'];
+      energy = 'low';
+    } else if (richAnalysisText.includes('minimal') || richAnalysisText.includes('clean') || richAnalysisText.includes('simple')) {
+      detectedTheme = 'minimalist';
+      mood = 'Peaceful';
+      genres = ['ambient', 'classical', 'minimal', 'meditation'];
+      energy = 'low';
+    } else if (richAnalysisText.includes('vintage') || richAnalysisText.includes('retro') || richAnalysisText.includes('classic')) {
+      detectedTheme = 'vintage';
+      mood = 'Nostalgic';
+      genres = ['jazz', 'soul', 'classic rock', 'oldies'];
+      energy = 'medium';
+    } else if (richAnalysisText.includes('dark') || richAnalysisText.includes('gothic') || richAnalysisText.includes('black')) {
+      detectedTheme = 'dark';
+      mood = 'Mysterious';
+      genres = ['alternative', 'gothic', 'post-rock', 'dark electronic'];
+      energy = 'medium';
+    }
+    
+    console.log('🎨 Detected theme:', detectedTheme, 'mood:', mood);
+    
+    // Calculate enhanced confidence based on API data richness
+    const baseConfidence = 0.8;
+    const dataRichnessBoost = Math.min(
+      (apiData.pinCount / 50) * 0.1 +
+      (richAnalysisText.length / 1000) * 0.05 +
+      (apiData.pinTitles.length / 20) * 0.05,
+      0.15
+    );
+    const finalConfidence = Math.min(baseConfidence + dataRichnessBoost, 0.95);
+    
+    // Generate color palette based on theme
+    const colorPalettes = {
+      morning: [
+        { hex: '#FFD700', mood: 'golden', name: 'Sunrise Gold' },
+        { hex: '#FFA500', mood: 'energetic', name: 'Morning Orange' },
+        { hex: '#FFEB3B', mood: 'bright', name: 'Sunny Yellow' },
+        { hex: '#FF9800', mood: 'warm', name: 'Amber Glow' }
+      ],
+      cozy: [
+        { hex: '#D7CCC8', mood: 'warm', name: 'Cozy Beige' },
+        { hex: '#BCAAA4', mood: 'comfortable', name: 'Warm Brown' },
+        { hex: '#8D6E63', mood: 'earthy', name: 'Coffee Brown' },
+        { hex: '#FFF3E0', mood: 'soft', name: 'Cream' }
+      ],
+      minimalist: [
+        { hex: '#FFFFFF', mood: 'pure', name: 'Pure White' },
+        { hex: '#F5F5F5', mood: 'light', name: 'Light Gray' },
+        { hex: '#E0E0E0', mood: 'neutral', name: 'Soft Gray' },
+        { hex: '#BDBDBD', mood: 'calm', name: 'Medium Gray' }
+      ],
+      vintage: [
+        { hex: '#DEB887', mood: 'nostalgic', name: 'Vintage Beige' },
+        { hex: '#D2B48C', mood: 'aged', name: 'Antique Tan' },
+        { hex: '#BC8F8F', mood: 'romantic', name: 'Rose Gold' },
+        { hex: '#F5DEB3', mood: 'sepia', name: 'Old Paper' }
+      ],
+      dark: [
+        { hex: '#2C3E50', mood: 'mysterious', name: 'Midnight' },
+        { hex: '#34495E', mood: 'dramatic', name: 'Dark Slate' },
+        { hex: '#7F8C8D', mood: 'moody', name: 'Storm Gray' },
+        { hex: '#95A5A6', mood: 'atmospheric', name: 'Mist' }
+      ],
+      modern: [
+        { hex: '#2196F3', mood: 'contemporary', name: 'Modern Blue' },
+        { hex: '#4CAF50', mood: 'fresh', name: 'Fresh Green' },
+        { hex: '#FF9800', mood: 'accent', name: 'Orange Accent' },
+        { hex: '#9E9E9E', mood: 'neutral', name: 'Cool Gray' }
+      ]
+    };
+    
+    const palette = colorPalettes[detectedTheme] || colorPalettes.modern;
+    
+    return {
+      mood: {
+        primary: mood,
+        confidence: finalConfidence,
+        secondary: ['Fresh', 'Modern'],
+        emotional_spectrum: [
+          { name: mood, confidence: finalConfidence },
+          { name: 'Fresh', confidence: finalConfidence * 0.75 },
+          { name: 'Modern', confidence: finalConfidence * 0.65 },
+          { name: 'Elegant', confidence: finalConfidence * 0.55 },
+          { name: 'Peaceful', confidence: finalConfidence * 0.45 }
+        ]
+      },
+      visual: {
+        color_palette: palette,
+        dominant_colors: palette[0],
+        color_temperature: energy === 'high' ? 'warm' : 'cool',
+        color_harmony: 'analogous',
+        aesthetic_style: detectedTheme,
+        visual_complexity: 'medium',
+        lighting_mood: energy === 'high' ? 'bright' : 'soft',
+        composition_style: 'balanced'
+      },
+      content: {
+        sentiment: { score: 0.7, label: 'positive' },
+        keywords: [
+          { word: boardName.split(' ')[0] || 'board', count: 1 }
+        ],
+        topics: ['Lifestyle', 'Design', 'Mood'],
+        themes: [detectedTheme]
+      },
+      music: {
+        primary_genres: genres,
+        energy_level: energy,
+        tempo_range: energy === 'high' ? '120-140 BPM' : energy === 'low' ? '60-80 BPM' : '80-110 BPM',
+        vocal_style: 'contemporary vocals',
+        era_preference: 'contemporary'
+      },
+      board: {
+        name: boardName,
+        description: apiData.boardDescription,
+        url: boardUrl,
+        username: username,
+        pin_count: apiData.pinCount,
+        follower_count: apiData.followerCount,
+        detected_theme: detectedTheme,
+        theme_confidence: finalConfidence,
+        estimated_pins: apiData.pinCount || 25,
+        diversity_score: 0.8,
+        cohesion_score: 0.85
+      },
+      confidence: finalConfidence,
+      analysis_quality: finalConfidence >= 0.8 ? 'excellent' : 'good',
+      analysis_method: 'pinterest_api_enhanced',
+      data_richness: {
+        pin_count: apiData.pinCount,
+        text_length: richAnalysisText.length,
+        has_descriptions: apiData.pinDescriptions.length,
+        engagement_data: true
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+  } catch (error) {
+    console.error('❌ Enhanced analysis error:', error);
+    throw new Error(`Enhanced analysis failed: ${error.message}`);
+  }
+}
+
+// New endpoint that uses Pinterest API when available
+app.post('/api/analyze-pinterest-with-api', async (req, res) => {
+  try {
+    const { url, pinterestToken, analysisOptions = {} } = req.body;
+    
+    if (!url || !url.includes('pinterest.com')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid Pinterest board URL'
+      });
+    }
+
+    console.log('Starting Pinterest analysis for:', url);
+    console.log('Pinterest token available:', !!pinterestToken);
+
+    // Add realistic delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    let analysis;
+    let method;
+
+    if (pinterestToken && process.env.PINTEREST_CLIENT_ID !== 'placeholder_until_approved') {
+      // Use API-enhanced analysis
+      try {
+        analysis = await generateAPIEnhancedAnalysis(url, pinterestToken, analysisOptions);
+        method = 'pinterest_api_enhanced';
+      } catch (apiError) {
+        console.log('API analysis failed, falling back to text analysis');
+        analysis = await generateEnhancedAnalysis(url, analysisOptions);
+        method = 'text_fallback';
+      }
+    } else {
+      // Use text-only analysis
+      analysis = await generateEnhancedAnalysis(url, analysisOptions);
+      method = 'text_only_enhanced';
+    }
+
+    res.json({
+      success: true,
+      analysis: analysis,
+      method: method,
+      api_used: !!pinterestToken && method === 'pinterest_api_enhanced',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Pinterest analysis error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Analysis failed. Please try again.',
+      error: error.message
+    });
+  }
+});
+
+// ===== END PINTEREST API INTEGRATION =====
+
 // === HELPER FUNCTIONS (DEFINED FIRST) ===
 
 // Simple board analysis function
