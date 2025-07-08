@@ -188,24 +188,22 @@ app.post('/api/pinterest/callback', async (req, res) => {
 
     console.log('Exchanging Pinterest code for token...');
 
-    const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', 
-      new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: process.env.PINTEREST_REDIRECT_URI,
-        client_id: process.env.PINTEREST_CLIENT_ID,
-        client_secret: process.env.PINTEREST_CLIENT_SECRET
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+    // Use the correct Pinterest OAuth format for trial apps
+    const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', {
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: process.env.PINTEREST_REDIRECT_URI
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${Buffer.from(`${process.env.PINTEREST_CLIENT_ID}:${process.env.PINTEREST_CLIENT_SECRET}`).toString('base64')}`
       }
-    );
+    });
 
     const { access_token, refresh_token, token_type } = tokenResponse.data;
     console.log('Pinterest token received successfully');
 
+    // Get user info
     const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
       headers: {
         'Authorization': `Bearer ${access_token}`
