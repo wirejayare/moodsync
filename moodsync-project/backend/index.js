@@ -509,30 +509,82 @@ app.post('/api/create-playlist', async (req, res) => {
   }
 });
 
-// Enhanced analysis functions (your existing code)
-async function generateEnhancedAnalysis(pinterestUrl, options = {}) {
-  const boardInfo = extractBoardInfo(pinterestUrl);
-  const boardText = (boardInfo.boardName + ' ' + boardInfo.originalUrl).toLowerCase();
-  
-  // Enhanced theme detection
-  const themeAnalysis = analyzeThemes(boardText);
-  
-  // Enhanced color analysis
-  const colorAnalysis = generateAdvancedColorAnalysis(themeAnalysis.detectedTheme);
-  
-  // Enhanced mood calculation
-  const moodAnalysis = calculateEnhancedMood(themeAnalysis, colorAnalysis, boardText);
-  
-  // Enhanced music recommendations
-  const musicAnalysis = generateAdvancedMusicRecommendations(moodAnalysis);
+// Enhanced Main Analysis Function
+// Replace the generateEnhancedAnalysis function in your backend/index.js
 
+async function generateEnhancedAnalysis(pinterestUrl, options = {}) {
+  console.log('🔍 Starting comprehensive analysis for:', pinterestUrl);
+  
+  const boardInfo = extractBoardInfo(pinterestUrl);
+  
+  // Create comprehensive text for analysis from multiple sources
+  const analysisText = [
+    boardInfo.boardName,
+    boardInfo.username,
+    boardInfo.originalUrl,
+    // Extract more context from URL parts
+    ...boardInfo.urlParts.filter(part => part.length > 2),
+    // Clean up board name for better keyword extraction
+    boardInfo.boardName.replace(/-/g, ' ').replace(/_/g, ' ').replace(/\+/g, ' ')
+  ].join(' ').toLowerCase();
+  
+  console.log('📝 Analysis text:', analysisText);
+  
+  // === COMPREHENSIVE THEME DETECTION ===
+  const themeAnalysis = analyzeThemes(analysisText);
+  console.log('🎨 Theme analysis:', {
+    primary: themeAnalysis.detectedTheme,
+    themes: themeAnalysis.allThemes.slice(0, 3).map(t => `${t.theme} (${t.score})`),
+    confidence: themeAnalysis.confidence
+  });
+  
+  // === ADVANCED COLOR ANALYSIS ===
+  const colorAnalysis = generateAdvancedColorAnalysis(themeAnalysis.detectedTheme);
+  console.log('🌈 Color analysis:', {
+    temperature: colorAnalysis.temperature,
+    lighting: colorAnalysis.lighting,
+    dominant: colorAnalysis.dominant.hex
+  });
+  
+  // === SOPHISTICATED MOOD CALCULATION ===
+  const moodAnalysis = calculateEnhancedMood(themeAnalysis, colorAnalysis, analysisText);
+  console.log('😊 Mood analysis:', {
+    primary: `${moodAnalysis.primary.name} (${Math.round(moodAnalysis.primary.confidence * 100)}%)`,
+    secondary: moodAnalysis.secondary.map(m => `${m.name} (${Math.round(m.confidence * 100)}%)`),
+    distribution: moodAnalysis.moodDistribution.slice(0, 5)
+  });
+  
+  // === COMPREHENSIVE MUSIC RECOMMENDATIONS ===
+  const musicAnalysis = generateAdvancedMusicRecommendations(moodAnalysis);
+  console.log('🎵 Music analysis:', {
+    genres: musicAnalysis.genres.slice(0, 5),
+    energy: musicAnalysis.energy,
+    tempo: musicAnalysis.tempo
+  });
+  
+  // === CALCULATE OVERALL ANALYSIS CONFIDENCE ===
+  const overallConfidence = calculateOverallConfidence({
+    themeConfidence: themeAnalysis.confidence,
+    themeMatches: themeAnalysis.totalMatches,
+    moodConfidence: moodAnalysis.primary.confidence,
+    moodDistribution: moodAnalysis.moodDistribution
+  });
+  
+  console.log('📊 Overall confidence:', Math.round(overallConfidence * 100) + '%');
+  
+  // === RETURN COMPREHENSIVE ANALYSIS ===
   return {
-    // Enhanced mood analysis
+    // Enhanced mood analysis with proper confidence values
     mood: {
       primary: moodAnalysis.primary.name,
-      confidence: moodAnalysis.primary.confidence,
+      confidence: Math.round(moodAnalysis.primary.confidence * 100) / 100, // Round to 2 decimals
       secondary: moodAnalysis.secondary.map(m => m.name),
-      emotional_spectrum: moodAnalysis.spectrum
+      emotional_spectrum: moodAnalysis.spectrum.map(mood => ({
+        name: mood.name,
+        confidence: Math.round(mood.confidence * 100) / 100 // Properly calculated confidence
+      })),
+      mood_distribution: moodAnalysis.moodDistribution,
+      detected_emotions: moodAnalysis.emotions
     },
     
     // Rich visual analysis
@@ -544,36 +596,278 @@ async function generateEnhancedAnalysis(pinterestUrl, options = {}) {
       aesthetic_style: themeAnalysis.aesthetic,
       visual_complexity: themeAnalysis.complexity,
       lighting_mood: colorAnalysis.lighting,
-      composition_style: themeAnalysis.composition
+      composition_style: themeAnalysis.composition || 'balanced'
     },
     
-    // Content analysis
+    // Comprehensive content analysis
     content: {
       themes: themeAnalysis.themes,
+      primary_theme: themeAnalysis.detectedTheme,
+      all_detected_themes: themeAnalysis.allThemes.map(t => ({
+        name: t.theme,
+        score: t.score,
+        keywords: t.matchedKeywords,
+        confidence: Math.round((t.score / Math.max(themeAnalysis.totalMatches, 1)) * 100) / 100
+      })),
       keywords: themeAnalysis.keywords,
       sentiment: themeAnalysis.sentiment,
       topics: themeAnalysis.topics,
-      emotional_tone: moodAnalysis.emotions
+      emotional_tone: moodAnalysis.emotions,
+      analysis_depth: themeAnalysis.allThemes.length
     },
     
-    // Enhanced music recommendations
+    // Comprehensive music recommendations
     music: {
       primary_genres: musicAnalysis.genres,
       energy_level: musicAnalysis.energy,
       tempo_range: musicAnalysis.tempo,
       instrumental_preference: musicAnalysis.instrumental,
       vocal_style: musicAnalysis.vocals,
-      era_preference: musicAnalysis.era
+      era_preference: musicAnalysis.era,
+      music_examples: musicAnalysis.examples || [],
+      mood_based_selection: true
     },
     
-    // Board metadata
+    // Enhanced board metadata
     board: {
       name: boardInfo.boardName,
+      url: boardInfo.originalUrl,
+      username: boardInfo.username,
+      detected_theme: themeAnalysis.detectedTheme,
+      theme_confidence: Math.round(themeAnalysis.confidence * 100) / 100,
+      theme_matches: themeAnalysis.totalMatches,
       estimated_pins: Math.floor(Math.random() * 50) + 15,
-      diversity_score: Math.random() * 0.4 + 0.6,
-      cohesion_score: Math.random() * 0.3 + 0.7
-    }
+      diversity_score: Math.round((Math.random() * 0.4 + 0.6) * 100) / 100,
+      cohesion_score: Math.round((Math.random() * 0.3 + 0.7) * 100) / 100,
+      analysis_keywords: analysisText.split(' ').filter(w => w.length > 3).slice(0, 10)
+    },
+    
+    // Analysis metadata
+    analysis_method: 'comprehensive_theme_detection',
+    confidence: Math.round(overallConfidence * 100) / 100,
+    analysis_quality: getAnalysisQuality(overallConfidence),
+    processing_details: {
+      themes_detected: themeAnalysis.allThemes.length,
+      primary_theme_score: themeAnalysis.primaryScore,
+      mood_certainty: moodAnalysis.primary.confidence,
+      color_temperature: colorAnalysis.temperature,
+      recommended_genres: musicAnalysis.genres.length
+    },
+    timestamp: new Date().toISOString()
   };
+}
+
+// Helper function to calculate overall confidence
+function calculateOverallConfidence(factors) {
+  const {
+    themeConfidence,
+    themeMatches,
+    moodConfidence,
+    moodDistribution
+  } = factors;
+  
+  // Base confidence from theme detection
+  let confidence = themeConfidence * 0.4;
+  
+  // Boost confidence based on number of theme matches
+  const matchBonus = Math.min(themeMatches / 10, 0.2);
+  confidence += matchBonus;
+  
+  // Factor in mood confidence
+  confidence += moodConfidence * 0.3;
+  
+  // Boost if mood distribution is clear (not all moods are similar)
+  const moodClarity = calculateMoodClarity(moodDistribution);
+  confidence += moodClarity * 0.1;
+  
+  // Ensure minimum and maximum bounds
+  return Math.max(0.3, Math.min(0.95, confidence));
+}
+
+// Helper function to calculate mood clarity
+function calculateMoodClarity(moodDistribution) {
+  if (!moodDistribution || moodDistribution.length < 2) return 0;
+  
+  const topMood = moodDistribution[0].score;
+  const secondMood = moodDistribution[1].score;
+  
+  // Higher clarity when there's a clear winner
+  return Math.max(0, topMood - secondMood);
+}
+
+// Helper function to determine analysis quality
+function getAnalysisQuality(confidence) {
+  if (confidence >= 0.8) return 'excellent';
+  if (confidence >= 0.6) return 'good';
+  if (confidence >= 0.4) return 'moderate';
+  return 'basic';
+}
+
+// Enhanced board info extraction with better URL parsing
+function extractBoardInfo(url) {
+  const urlParts = url.split('/').filter(part => part.length > 0);
+  
+  let username, boardName;
+  
+  // Handle different Pinterest URL formats
+  if (url.includes('pinterest.com')) {
+    const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
+    if (pinterestIndex >= 0 && urlParts.length > pinterestIndex + 2) {
+      username = urlParts[pinterestIndex + 1];
+      boardName = urlParts[pinterestIndex + 2];
+    }
+  }
+  
+  // Handle pin.it short URLs
+  if (url.includes('pin.it')) {
+    boardName = 'shared-pin';
+    username = 'pinterest-user';
+  }
+  
+  // Fallback extraction
+  if (!username || !boardName) {
+    username = urlParts[urlParts.length - 2] || urlParts[urlParts.length - 3] || 'unknown';
+    boardName = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2] || 'board';
+  }
+  
+  // Clean up board name for better analysis
+  const cleanBoardName = boardName
+    .replace(/-/g, ' ')
+    .replace(/_/g, ' ')
+    .replace(/\+/g, ' ')
+    .replace(/%20/g, ' ')
+    .replace(/[0-9]/g, '') // Remove numbers
+    .trim();
+  
+  return {
+    username: username,
+    boardName: cleanBoardName,
+    originalUrl: url,
+    urlParts: urlParts.filter(part => !part.includes('pinterest.com') && !part.includes('http'))
+  };
+}
+
+// Enhanced keyword extraction
+function extractEnhancedKeywords(text, theme) {
+  const words = text.toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 2);
+  
+  // Count word frequency
+  const wordCount = {};
+  words.forEach(word => {
+    wordCount[word] = (wordCount[word] || 0) + 1;
+  });
+  
+  // Get top keywords
+  const sortedWords = Object.entries(wordCount)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 15);
+  
+  return sortedWords.map(([word, count]) => ({
+    word,
+    count,
+    relevance: count / words.length,
+    theme_related: isThemeRelated(word, theme)
+  }));
+}
+
+// Helper function to check if word is theme-related
+function isThemeRelated(word, theme) {
+  const themeKeywords = {
+    morning: ['morning', 'sunrise', 'coffee', 'breakfast', 'early'],
+    energetic: ['energy', 'power', 'strong', 'active', 'vibrant'],
+    peaceful: ['calm', 'peace', 'zen', 'quiet', 'serene'],
+    romantic: ['love', 'romantic', 'heart', 'valentine', 'couple'],
+    // Add more as needed
+  };
+  
+  const keywords = themeKeywords[theme] || [];
+  return keywords.some(keyword => word.includes(keyword) || keyword.includes(word));
+}
+
+// Enhanced sentiment calculation
+function calculateSentiment(text) {
+  const positiveWords = ['beautiful', 'amazing', 'love', 'perfect', 'gorgeous', 'stunning', 'wonderful', 'happy', 'joy', 'bright', 'fresh', 'new', 'exciting', 'fantastic', 'awesome'];
+  const negativeWords = ['dark', 'sad', 'gloomy', 'depressing', 'ugly', 'hate', 'terrible', 'awful', 'bad', 'worst'];
+  const neutralWords = ['okay', 'fine', 'normal', 'regular', 'standard', 'basic', 'simple'];
+  
+  let positiveScore = 0;
+  let negativeScore = 0;
+  let neutralScore = 0;
+  
+  const words = text.toLowerCase().split(/\s+/);
+  
+  words.forEach(word => {
+    if (positiveWords.some(pos => word.includes(pos))) positiveScore++;
+    if (negativeWords.some(neg => word.includes(neg))) negativeScore++;
+    if (neutralWords.some(neu => word.includes(neu))) neutralScore++;
+  });
+  
+  const totalScore = positiveScore - negativeScore;
+  const confidence = Math.min((positiveScore + negativeScore) / words.length * 10, 1);
+  
+  let label = 'neutral';
+  if (totalScore > 0) label = 'positive';
+  else if (totalScore < 0) label = 'negative';
+  
+  return {
+    score: Math.max(-1, Math.min(1, totalScore / Math.max(words.length, 1))),
+    label: label,
+    confidence: confidence,
+    breakdown: { positive: positiveScore, negative: negativeScore, neutral: neutralScore }
+  };
+}
+
+// Enhanced topic categorization
+function getTopicCategories(theme) {
+  const categories = {
+    morning: ['Lifestyle', 'Wellness', 'Productivity', 'Coffee Culture', 'Daily Routines'],
+    energetic: ['Fitness', 'Motivation', 'Lifestyle', 'Sports', 'High Energy'],
+    workout: ['Health', 'Fitness', 'Wellness', 'Sports', 'Exercise'],
+    productivity: ['Work', 'Organization', 'Goals', 'Motivation', 'Business'],
+    peaceful: ['Meditation', 'Mindfulness', 'Wellness', 'Spirituality', 'Relaxation'],
+    cozy: ['Home', 'Comfort', 'Hygge', 'Relaxation', 'Interior Design'],
+    romantic: ['Relationships', 'Love', 'Romance', 'Couples', 'Dating'],
+    adventure: ['Travel', 'Exploration', 'Adventure', 'Outdoor Activities', 'Discovery'],
+    minimalist: ['Interior Design', 'Architecture', 'Lifestyle', 'Simplicity', 'Modern Living'],
+    bohemian: ['Art', 'Fashion', 'Travel', 'Culture', 'Free Spirit'],
+    vintage: ['Antiques', 'Fashion', 'History', 'Collectibles', 'Nostalgia'],
+    gothic: ['Alternative Fashion', 'Dark Aesthetics', 'Art', 'Music', 'Subculture'],
+    spring: ['Seasonal', 'Nature', 'Renewal', 'Fresh Starts', 'Gardening'],
+    summer: ['Seasonal', 'Vacation', 'Outdoor Activities', 'Beach Life', 'Travel'],
+    autumn: ['Seasonal', 'Harvest', 'Cozy Living', 'Nature', 'Comfort'],
+    winter: ['Seasonal', 'Holiday', 'Cozy Living', 'Winter Sports', 'Comfort'],
+    party: ['Entertainment', 'Social Events', 'Celebration', 'Fun', 'Music'],
+    luxury: ['High-End Fashion', 'Luxury Lifestyle', 'Fine Living', 'Elegance', 'Sophistication'],
+    food: ['Culinary', 'Cooking', 'Dining', 'Food Culture', 'Recipes'],
+    artistic: ['Art', 'Creativity', 'Design', 'Culture', 'Expression'],
+    night: ['Nightlife', 'Evening Activities', 'Urban Culture', 'Entertainment', 'Mood']
+  };
+  
+  return categories[theme] || ['Design', 'Lifestyle', 'General Interest'];
+}
+
+// Enhanced composition style mapping
+function getCompositionStyle(theme) {
+  const styles = {
+    minimalist: 'clean lines and negative space',
+    maximalist: 'rich layering and abundance',
+    bohemian: 'eclectic mixing and free-form',
+    vintage: 'classic proportions and timeless balance',
+    modern: 'geometric precision and contemporary flow',
+    romantic: 'soft curves and delicate arrangements',
+    gothic: 'dramatic contrasts and ornate details',
+    energetic: 'dynamic movement and bold arrangements',
+    peaceful: 'harmonious balance and gentle flow',
+    adventure: 'expansive views and rugged compositions',
+    luxury: 'sophisticated elegance and refined proportions',
+    artistic: 'creative expression and experimental layouts',
+    nature: 'organic flow and natural arrangements'
+  };
+  
+  return styles[theme] || 'balanced composition';
 }
 
 // Extract Pinterest board information
