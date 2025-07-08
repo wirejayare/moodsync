@@ -30,8 +30,11 @@ app.get('/', (req, res) => {
       '/health', 
       '/api/spotify/auth-url', 
       '/api/spotify/callback', 
+      '/api/pinterest/auth-url',
+      '/api/pinterest/callback',
       '/api/analyze-pinterest',
-      '/api/analyze-pinterest-enhanced', 
+      '/api/analyze-pinterest-enhanced',
+      '/api/analyze-pinterest-with-api',
       '/api/create-playlist'
     ]
   });
