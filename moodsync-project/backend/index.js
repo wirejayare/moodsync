@@ -1,5 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://moodsync-jw.netlify.app' 
+  ],
+  credentials: true
+};
 const axios = require('axios');
 require('dotenv').config();
 
