@@ -237,173 +237,902 @@ function generateMoodAnalysis(boardName, url) {
   };
 }
 
-// CLEAN Enhanced Analysis Function (No external dependencies)
+// Enhanced Pinterest Analysis Algorithm with Weighted Scoring & Multi-Theme Detection
+
 async function generateEnhancedAnalysis(pinterestUrl, options = {}) {
   console.log('🔍 Starting enhanced analysis for:', pinterestUrl);
   
   try {
-    // Safe URL parsing - inline to avoid function call issues
-    const urlParts = pinterestUrl.split('/').filter(part => part && part.length > 0);
-    let username = 'unknown';
-    let boardName = 'unknown-board';
+    // Step 1: Enhanced URL parsing
+    const boardInfo = extractBoardInfo(pinterestUrl);
+    const analysisText = createAnalysisText(boardInfo);
     
-    if (pinterestUrl.includes('pinterest.com') && urlParts.length >= 4) {
-      const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
-      if (pinterestIndex >= 0) {
-        username = urlParts[pinterestIndex + 1] || 'unknown';
-        boardName = urlParts[pinterestIndex + 2] || 'unknown-board';
-      }
-    }
+    // Step 2: Multi-theme detection with weighted scoring
+    const themeAnalysis = detectThemes(analysisText);
     
-    // Clean board name
-    const cleanBoardName = String(boardName)
-      .replace(/-/g, ' ')
-      .replace(/_/g, ' ')
-      .replace(/\+/g, ' ')
-      .trim();
+    // Step 3: Advanced mood calculation
+    const moodAnalysis = calculateMoodSpectrum(themeAnalysis, analysisText);
     
-    // Create analysis text
-    const analysisText = [cleanBoardName, username].join(' ').toLowerCase();
-    console.log('📝 Analysis text:', analysisText);
+    // Step 4: Smart music recommendations
+    const musicAnalysis = generateMusicRecommendations(themeAnalysis, moodAnalysis);
     
-    // Simple theme detection
-    let detectedTheme = 'modern';
-    let mood = 'Peaceful';
-    let genres = ['acoustic', 'indie'];
-    let energy = 'medium';
+    // Step 5: Dynamic color palette
+    const colorAnalysis = generateColorPalette(themeAnalysis);
     
-    if (analysisText.includes('morning') || analysisText.includes('person')) {
-      detectedTheme = 'morning';
-      mood = 'Energetic';
-      genres = ['pop', 'indie', 'upbeat', 'electronic'];
-      energy = 'high';
-    } else if (analysisText.includes('cozy') || analysisText.includes('home')) {
-      detectedTheme = 'cozy';
-      mood = 'Cozy';
-      genres = ['acoustic', 'folk', 'lo-fi', 'indie folk'];
-      energy = 'low';
-    } else if (analysisText.includes('minimal') || analysisText.includes('clean')) {
-      detectedTheme = 'minimalist';
-      mood = 'Peaceful';
-      genres = ['ambient', 'classical', 'minimal', 'meditation'];
-      energy = 'low';
-    } else if (analysisText.includes('vintage') || analysisText.includes('retro')) {
-      detectedTheme = 'vintage';
-      mood = 'Nostalgic';
-      genres = ['jazz', 'soul', 'classic rock', 'oldies'];
-      energy = 'medium';
-    } else if (analysisText.includes('dark') || analysisText.includes('gothic')) {
-      detectedTheme = 'dark';
-      mood = 'Mysterious';
-      genres = ['alternative', 'gothic', 'post-rock', 'dark electronic'];
-      energy = 'medium';
-    }
+    // Step 6: Content insights
+    const contentAnalysis = analyzeContent(analysisText, themeAnalysis);
     
-    console.log('🎨 Detected theme:', detectedTheme, 'mood:', mood);
+    // Step 7: Calculate overall confidence
+    const overallConfidence = calculateOverallConfidence(themeAnalysis, moodAnalysis);
     
-    // Generate color palette based on theme
-    const colorPalettes = {
-      morning: [
-        { hex: '#FFD700', mood: 'golden' },
-        { hex: '#FFA500', mood: 'sunrise' },
-        { hex: '#FFEB3B', mood: 'bright' },
-        { hex: '#FF9800', mood: 'warm' }
-      ],
-      cozy: [
-        { hex: '#D7CCC8', mood: 'warm' },
-        { hex: '#BCAAA4', mood: 'comfortable' },
-        { hex: '#8D6E63', mood: 'earthy' },
-        { hex: '#FFF3E0', mood: 'soft' }
-      ],
-      minimalist: [
-        { hex: '#FFFFFF', mood: 'pure' },
-        { hex: '#F5F5F5', mood: 'light' },
-        { hex: '#E0E0E0', mood: 'neutral' },
-        { hex: '#BDBDBD', mood: 'calm' }
-      ],
-      vintage: [
-        { hex: '#DEB887', mood: 'nostalgic' },
-        { hex: '#D2B48C', mood: 'aged' },
-        { hex: '#BC8F8F', mood: 'romantic' },
-        { hex: '#F5DEB3', mood: 'sepia' }
-      ],
-      dark: [
-        { hex: '#2C3E50', mood: 'dramatic' },
-        { hex: '#34495E', mood: 'mysterious' },
-        { hex: '#7F8C8D', mood: 'moody' },
-        { hex: '#95A5A6', mood: 'atmospheric' }
-      ],
-      modern: [
-        { hex: '#2196F3', mood: 'contemporary' },
-        { hex: '#4CAF50', mood: 'fresh' },
-        { hex: '#FF9800', mood: 'accent' },
-        { hex: '#9E9E9E', mood: 'neutral' }
-      ]
-    };
-    
-    const palette = colorPalettes[detectedTheme] || colorPalettes.modern;
-    
-    // Return comprehensive analysis
-    const analysis = {
-      mood: {
-        primary: mood,
-        confidence: 0.85,
-        secondary: ['Fresh', 'Modern'],
-        emotional_spectrum: [
-          { name: mood, confidence: 0.85 },
-          { name: 'Fresh', confidence: 0.65 },
-          { name: 'Modern', confidence: 0.55 },
-          { name: 'Elegant', confidence: 0.45 },
-          { name: 'Peaceful', confidence: 0.35 }
-        ]
-      },
-      visual: {
-        color_palette: palette,
-        dominant_colors: palette[0],
-        color_temperature: detectedTheme === 'morning' || detectedTheme === 'cozy' ? 'warm' : 'cool',
-        color_harmony: 'analogous',
-        aesthetic_style: detectedTheme,
-        visual_complexity: 'medium',
-        lighting_mood: energy === 'high' ? 'bright' : 'soft',
-        composition_style: 'balanced'
-      },
-      content: {
-        sentiment: { score: 0.6, label: 'positive' },
-        keywords: [
-          { word: cleanBoardName.split(' ')[0] || 'board', count: 1 }
-        ],
-        topics: ['Lifestyle', 'Design', 'Mood'],
-        themes: [detectedTheme]
-      },
-      music: {
-        primary_genres: genres,
-        energy_level: energy,
-        tempo_range: energy === 'high' ? '120-140 BPM' : energy === 'low' ? '60-80 BPM' : '80-110 BPM',
-        vocal_style: 'contemporary vocals',
-        era_preference: 'contemporary'
-      },
+    return {
+      mood: moodAnalysis,
+      visual: colorAnalysis,
+      content: contentAnalysis,
+      music: musicAnalysis,
       board: {
-        name: cleanBoardName,
-        url: pinterestUrl,
-        username: username,
-        detected_theme: detectedTheme,
-        theme_confidence: 0.85,
-        estimated_pins: 25,
-        diversity_score: 0.75,
-        cohesion_score: 0.80
+        ...boardInfo,
+        detected_themes: themeAnalysis.detectedThemes,
+        primary_theme: themeAnalysis.primaryTheme,
+        theme_confidence: themeAnalysis.confidence,
+        theme_breakdown: themeAnalysis.breakdown
       },
-      confidence: 0.85,
-      analysis_quality: 'excellent',
+      confidence: overallConfidence,
+      analysis_quality: getQualityRating(overallConfidence),
+      analysis_method: 'enhanced_multi_theme_v2',
       timestamp: new Date().toISOString()
     };
-    
-    console.log('✅ Enhanced analysis completed successfully');
-    return analysis;
     
   } catch (error) {
     console.error('❌ Enhanced analysis error:', error);
     throw new Error(`Enhanced analysis failed: ${error.message}`);
   }
+}
+
+// ENHANCED THEME DETECTION SYSTEM
+function detectThemes(analysisText) {
+  // Comprehensive theme database with weighted keywords
+  const themeDatabase = {
+    // LIFESTYLE & ENERGY THEMES
+    morning: {
+      keywords: {
+        // High-weight keywords (3x multiplier)
+        primary: ['morning', 'sunrise', 'dawn', 'am'],
+        // Medium-weight keywords (2x multiplier)  
+        secondary: ['early', 'wake', 'breakfast', 'coffee', 'fresh', 'start'],
+        // Standard weight keywords (1x multiplier)
+        tertiary: ['person', 'vibe', 'routine', 'energy', 'bright', 'golden hour']
+      },
+      synonyms: ['daybreak', 'early bird', 'rise', 'first light'],
+      weight: 1.2, // Theme importance multiplier
+      mood_influences: { 
+        Energetic: 0.9, Fresh: 0.8, Optimistic: 0.7, Active: 0.6 
+      }
+    },
+    
+    evening: {
+      keywords: {
+        primary: ['evening', 'sunset', 'dusk', 'twilight'],
+        secondary: ['night', 'dinner', 'wine', 'candles', 'golden'],
+        tertiary: ['romantic', 'soft', 'warm', 'intimate', 'cozy']
+      },
+      synonyms: ['nightfall', 'sundown', 'after dark'],
+      weight: 1.1,
+      mood_influences: { 
+        Romantic: 0.8, Peaceful: 0.7, Intimate: 0.8, Cozy: 0.6 
+      }
+    },
+    
+    // AESTHETIC THEMES
+    minimalist: {
+      keywords: {
+        primary: ['minimal', 'minimalist', 'simple', 'clean'],
+        secondary: ['white', 'neutral', 'less', 'space', 'zen'],
+        tertiary: ['scandinavian', 'modern', 'sleek', 'uncluttered', 'pure']
+      },
+      synonyms: ['stripped down', 'pared back', 'essential'],
+      weight: 1.0,
+      mood_influences: { 
+        Peaceful: 0.9, Elegant: 0.8, Focused: 0.7, Calm: 0.8 
+      }
+    },
+    
+    maximalist: {
+      keywords: {
+        primary: ['maximalist', 'bold', 'eclectic', 'vibrant'],
+        secondary: ['colorful', 'pattern', 'mix', 'layer', 'rich'],
+        tertiary: ['ornate', 'decorative', 'luxurious', 'dramatic', 'statement']
+      },
+      synonyms: ['over the top', 'more is more', 'abundant'],
+      weight: 1.0,
+      mood_influences: { 
+        Energetic: 0.8, Creative: 0.9, Bold: 0.9, Expressive: 0.8 
+      }
+    },
+    
+    vintage: {
+      keywords: {
+        primary: ['vintage', 'retro', 'antique', 'classic'],
+        secondary: ['old', 'aged', 'nostalgic', 'timeless', 'heritage'],
+        tertiary: ['throwback', 'historic', 'traditional', 'bygone', 'era']
+      },
+      synonyms: ['old school', 'yesteryear', 'period piece'],
+      weight: 1.0,
+      mood_influences: { 
+        Nostalgic: 0.9, Romantic: 0.6, Elegant: 0.7, Warm: 0.6 
+      }
+    },
+    
+    // SEASONAL THEMES
+    spring: {
+      keywords: {
+        primary: ['spring', 'bloom', 'blossom', 'fresh'],
+        secondary: ['new', 'growth', 'green', 'pastel', 'flower'],
+        tertiary: ['renewal', 'rebirth', 'awakening', 'flourish', 'tender']
+      },
+      synonyms: ['springtime', 'vernal', 'budding'],
+      weight: 1.1,
+      mood_influences: { 
+        Fresh: 0.9, Optimistic: 0.8, Gentle: 0.7, Renewed: 0.8 
+      }
+    },
+    
+    summer: {
+      keywords: {
+        primary: ['summer', 'sun', 'beach', 'vacation'],
+        secondary: ['hot', 'bright', 'tropical', 'festival', 'outdoor'],
+        tertiary: ['poolside', 'sunny', 'warm', 'tan', 'relax']
+      },
+      synonyms: ['summertime', 'sunny season', 'beach season'],
+      weight: 1.0,
+      mood_influences: { 
+        Energetic: 0.8, Joyful: 0.9, Carefree: 0.8, Vibrant: 0.7 
+      }
+    },
+    
+    autumn: {
+      keywords: {
+        primary: ['autumn', 'fall', 'harvest', 'cozy'],
+        secondary: ['warm', 'orange', 'red', 'comfort', 'spice'],
+        tertiary: ['rustic', 'earthy', 'golden', 'crisp', 'season']
+      },
+      synonyms: ['fall season', 'autumnal', 'harvest time'],
+      weight: 1.0,
+      mood_influences: { 
+        Cozy: 0.9, Warm: 0.8, Nostalgic: 0.6, Comfortable: 0.8 
+      }
+    },
+    
+    winter: {
+      keywords: {
+        primary: ['winter', 'snow', 'cold', 'holiday'],
+        secondary: ['cozy', 'warm', 'fireplace', 'blanket', 'hot'],
+        tertiary: ['frost', 'icy', 'crystalline', 'peaceful', 'quiet']
+      },
+      synonyms: ['wintertime', 'cold season', 'snowy'],
+      weight: 1.0,
+      mood_influences: { 
+        Peaceful: 0.8, Cozy: 0.9, Serene: 0.7, Contemplative: 0.6 
+      }
+    },
+    
+    // ACTIVITY THEMES
+    workout: {
+      keywords: {
+        primary: ['workout', 'fitness', 'gym', 'exercise'],
+        secondary: ['strong', 'health', 'active', 'training', 'sweat'],
+        tertiary: ['cardio', 'strength', 'yoga', 'run', 'athletic']
+      },
+      synonyms: ['work out', 'get fit', 'train'],
+      weight: 1.0,
+      mood_influences: { 
+        Energetic: 0.9, Motivated: 0.8, Strong: 0.8, Determined: 0.7 
+      }
+    },
+    
+    travel: {
+      keywords: {
+        primary: ['travel', 'adventure', 'explore', 'journey'],
+        secondary: ['wanderlust', 'trip', 'vacation', 'discover', 'roam'],
+        tertiary: ['nomad', 'backpack', 'expedition', 'quest', 'getaway']
+      },
+      synonyms: ['globe trotting', 'wandering', 'voyaging'],
+      weight: 1.0,
+      mood_influences: { 
+        Adventurous: 0.9, Curious: 0.8, Free: 0.7, Excited: 0.8 
+      }
+    },
+    
+    // MOOD THEMES
+    dark: {
+      keywords: {
+        primary: ['dark', 'gothic', 'black', 'mysterious'],
+        secondary: ['moody', 'dramatic', 'intense', 'shadow', 'deep'],
+        tertiary: ['brooding', 'edgy', 'alternative', 'noir', 'somber']
+      },
+      synonyms: ['darkcore', 'dark aesthetic', 'shadowy'],
+      weight: 1.0,
+      mood_influences: { 
+        Mysterious: 0.9, Dramatic: 0.8, Intense: 0.8, Contemplative: 0.6 
+      }
+    },
+    
+    light: {
+      keywords: {
+        primary: ['light', 'bright', 'airy', 'luminous'],
+        secondary: ['white', 'pure', 'clean', 'fresh', 'clear'],
+        tertiary: ['ethereal', 'glowing', 'radiant', 'transparent', 'open']
+      },
+      synonyms: ['lightcore', 'bright aesthetic', 'illuminated'],
+      weight: 1.0,
+      mood_influences: { 
+        Fresh: 0.9, Pure: 0.8, Optimistic: 0.7, Peaceful: 0.6 
+      }
+    },
+    
+    // PINTEREST-SPECIFIC THEMES
+    aesthetic: {
+      keywords: {
+        primary: ['aesthetic', 'vibe', 'mood', 'style'],
+        secondary: ['inspo', 'inspiration', 'look', 'theme', 'feel'],
+        tertiary: ['atmosphere', 'ambiance', 'energy', 'essence', 'spirit']
+      },
+      synonyms: ['vibes', 'aesthetics', 'styling'],
+      weight: 0.8, // Lower weight as it's very general
+      mood_influences: { 
+        Stylish: 0.6, Creative: 0.5, Trendy: 0.5, Artistic: 0.4 
+      }
+    }
+  };
+  
+  // Calculate theme scores
+  const themeScores = {};
+  const detectedKeywords = {};
+  
+  for (const [themeName, themeData] of Object.entries(themeDatabase)) {
+    let totalScore = 0;
+    let matchedKeywords = [];
+    
+    // Check primary keywords (weight: 3)
+    themeData.keywords.primary.forEach(keyword => {
+      const matches = countMatches(analysisText, keyword);
+      if (matches > 0) {
+        totalScore += matches * 3 * themeData.weight;
+        matchedKeywords.push({keyword, matches, weight: 'primary'});
+      }
+    });
+    
+    // Check secondary keywords (weight: 2)
+    themeData.keywords.secondary.forEach(keyword => {
+      const matches = countMatches(analysisText, keyword);
+      if (matches > 0) {
+        totalScore += matches * 2 * themeData.weight;
+        matchedKeywords.push({keyword, matches, weight: 'secondary'});
+      }
+    });
+    
+    // Check tertiary keywords (weight: 1)
+    themeData.keywords.tertiary.forEach(keyword => {
+      const matches = countMatches(analysisText, keyword);
+      if (matches > 0) {
+        totalScore += matches * 1 * themeData.weight;
+        matchedKeywords.push({keyword, matches, weight: 'tertiary'});
+      }
+    });
+    
+    // Check synonyms (weight: 1.5)
+    themeData.synonyms.forEach(synonym => {
+      const matches = countMatches(analysisText, synonym);
+      if (matches > 0) {
+        totalScore += matches * 1.5 * themeData.weight;
+        matchedKeywords.push({keyword: synonym, matches, weight: 'synonym'});
+      }
+    });
+    
+    if (totalScore > 0) {
+      themeScores[themeName] = totalScore;
+      detectedKeywords[themeName] = matchedKeywords;
+    }
+  }
+  
+  // Sort themes by score
+  const sortedThemes = Object.entries(themeScores)
+    .sort(([,a], [,b]) => b - a)
+    .map(([theme, score]) => ({
+      theme,
+      score,
+      confidence: Math.min(score / 10, 1), // Normalize to 0-1
+      keywords: detectedKeywords[theme],
+      moodInfluences: themeDatabase[theme].mood_influences
+    }));
+  
+  // Determine primary theme and confidence
+  const primaryTheme = sortedThemes[0];
+  const totalScore = Object.values(themeScores).reduce((sum, score) => sum + score, 0);
+  const overallConfidence = primaryTheme ? Math.min(primaryTheme.score / Math.max(totalScore, 5), 1) : 0.1;
+  
+  return {
+    detectedThemes: sortedThemes,
+    primaryTheme: primaryTheme?.theme || 'modern',
+    confidence: overallConfidence,
+    breakdown: sortedThemes.slice(0, 5),
+    totalMatches: totalScore,
+    analysisText: analysisText
+  };
+}
+
+// ADVANCED MOOD CALCULATION
+function calculateMoodSpectrum(themeAnalysis, analysisText) {
+  const moodMap = {
+    // Energy-based moods
+    Energetic: { baseScore: 0.1, keywords: ['energy', 'active', 'power', 'dynamic'] },
+    Peaceful: { baseScore: 0.1, keywords: ['peace', 'calm', 'quiet', 'serene'] },
+    Cozy: { baseScore: 0.1, keywords: ['cozy', 'warm', 'comfort', 'snug'] },
+    
+    // Emotional moods
+    Romantic: { baseScore: 0.1, keywords: ['love', 'romantic', 'intimate', 'tender'] },
+    Nostalgic: { baseScore: 0.1, keywords: ['nostalgic', 'memory', 'vintage', 'past'] },
+    Fresh: { baseScore: 0.1, keywords: ['fresh', 'new', 'clean', 'crisp'] },
+    
+    // Aesthetic moods
+    Elegant: { baseScore: 0.1, keywords: ['elegant', 'sophisticated', 'refined', 'classy'] },
+    Dramatic: { baseScore: 0.1, keywords: ['dramatic', 'bold', 'intense', 'striking'] },
+    Mysterious: { baseScore: 0.1, keywords: ['mysterious', 'dark', 'enigmatic', 'secretive'] },
+    
+    // Activity moods
+    Adventurous: { baseScore: 0.1, keywords: ['adventure', 'explore', 'journey', 'discover'] },
+    Creative: { baseScore: 0.1, keywords: ['creative', 'artistic', 'innovative', 'imaginative'] },
+    Playful: { baseScore: 0.1, keywords: ['playful', 'fun', 'whimsical', 'cheerful'] }
+  };
+  
+  // Initialize mood scores
+  const moodScores = {};
+  Object.keys(moodMap).forEach(mood => {
+    moodScores[mood] = moodMap[mood].baseScore;
+  });
+  
+  // Apply theme influences
+  themeAnalysis.detectedThemes.forEach((themeData, index) => {
+    const weight = Math.max(0.1, 1 - (index * 0.2)); // Diminishing returns
+    
+    if (themeData.moodInfluences) {
+      Object.entries(themeData.moodInfluences).forEach(([mood, influence]) => {
+        if (moodScores[mood] !== undefined) {
+          moodScores[mood] += influence * weight * (themeData.confidence);
+        }
+      });
+    }
+  });
+  
+  // Apply direct keyword matches
+  Object.entries(moodMap).forEach(([mood, data]) => {
+    data.keywords.forEach(keyword => {
+      const matches = countMatches(analysisText, keyword);
+      if (matches > 0) {
+        moodScores[mood] += matches * 0.2;
+      }
+    });
+  });
+  
+  // Normalize and sort
+  const maxScore = Math.max(...Object.values(moodScores));
+  const spectrum = Object.entries(moodScores)
+    .map(([mood, score]) => ({
+      name: mood,
+      confidence: Math.max(0.05, Math.min(1, score / Math.max(maxScore, 0.5)))
+    }))
+    .sort((a, b) => b.confidence - a.confidence);
+  
+  return {
+    primary: spectrum[0].name,
+    confidence: spectrum[0].confidence,
+    secondary: spectrum.slice(1, 4).map(m => m.name),
+    emotional_spectrum: spectrum,
+    mood_distribution: spectrum.map(m => ({ name: m.name, score: m.confidence }))
+  };
+}
+
+// SMART MUSIC RECOMMENDATIONS
+function generateMusicRecommendations(themeAnalysis, moodAnalysis) {
+  const musicDatabase = {
+    // Theme-based genre mapping
+    morning: {
+      genres: ['indie pop', 'upbeat acoustic', 'folk pop', 'coffee shop', 'morning jazz'],
+      energy: 'medium-high',
+      tempo: '90-120 BPM',
+      characteristics: ['uplifting', 'optimistic', 'fresh']
+    },
+    evening: {
+      genres: ['smooth jazz', 'acoustic', 'soft rock', 'ambient', 'chillout'],
+      energy: 'low-medium',
+      tempo: '60-90 BPM',
+      characteristics: ['relaxing', 'intimate', 'warm']
+    },
+    minimalist: {
+      genres: ['ambient', 'minimal techno', 'neo-classical', 'meditation', 'atmospheric'],
+      energy: 'low',
+      tempo: '60-80 BPM',
+      characteristics: ['spacious', 'clean', 'focused']
+    },
+    vintage: {
+      genres: ['jazz standards', 'classic rock', 'soul', 'doo-wop', 'big band'],
+      energy: 'medium',
+      tempo: '80-110 BPM',
+      characteristics: ['nostalgic', 'timeless', 'sophisticated']
+    },
+    workout: {
+      genres: ['electronic dance', 'hip hop', 'rock', 'pop', 'high-energy'],
+      energy: 'high',
+      tempo: '120-140 BPM',
+      characteristics: ['motivating', 'powerful', 'driving']
+    },
+    dark: {
+      genres: ['dark ambient', 'post-rock', 'gothic', 'industrial', 'alternative'],
+      energy: 'medium',
+      tempo: '70-100 BPM',
+      characteristics: ['atmospheric', 'moody', 'intense']
+    }
+  };
+  
+  // Get primary theme recommendation
+  const primaryRec = musicDatabase[themeAnalysis.primaryTheme] || musicDatabase.morning;
+  
+  // Blend with secondary themes
+  const allGenres = new Set(primaryRec.genres);
+  themeAnalysis.detectedThemes.slice(1, 3).forEach(theme => {
+    const rec = musicDatabase[theme.theme];
+    if (rec) {
+      rec.genres.forEach(genre => allGenres.add(genre));
+    }
+  });
+  
+  return {
+    primary_genres: Array.from(allGenres).slice(0, 6),
+    energy_level: primaryRec.energy,
+    tempo_range: primaryRec.tempo,
+    characteristics: primaryRec.characteristics,
+    vocal_style: 'contemporary vocals',
+    era_preference: 'contemporary with classics',
+    mood_match: moodAnalysis.primary,
+    theme_influence: themeAnalysis.primaryTheme
+  };
+}
+
+// HELPER FUNCTIONS
+function extractBoardInfo(url) {
+  const urlParts = url.split('/').filter(part => part && part.length > 0);
+  let username = 'unknown';
+  let boardName = 'unknown-board';
+  
+  if (url.includes('pinterest.com') && urlParts.length >= 4) {
+    const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
+    if (pinterestIndex >= 0) {
+      username = urlParts[pinterestIndex + 1] || 'unknown';
+      boardName = urlParts[pinterestIndex + 2] || 'unknown-board';
+    }
+  }
+  
+  const cleanBoardName = String(boardName)
+    .replace(/-/g, ' ')
+    .replace(/_/g, ' ')
+    .replace(/\+/g, ' ')
+    .replace(/%20/g, ' ')
+    .trim();
+  
+  return {
+    username: username,
+    boardName: cleanBoardName,
+    originalUrl: url,
+    urlParts: urlParts.filter(part => !part.includes('pinterest') && !part.includes('http')) || []
+  };
+}
+
+function createAnalysisText(boardInfo) {
+  // Create comprehensive analysis text from multiple sources
+  const textSources = [
+    boardInfo.boardName,
+    boardInfo.username,
+    ...boardInfo.urlParts
+  ];
+  
+  // Add common Pinterest board name patterns
+  const expandedText = textSources.join(' ').toLowerCase()
+    // Handle common separators
+    .replace(/[-_+]/g, ' ')
+    // Expand common abbreviations
+    .replace(/\binspo\b/g, 'inspiration')
+    .replace(/\baesthetic\b/g, 'aesthetic vibe')
+    .replace(/\bcore\b/g, 'core aesthetic')
+    .replace(/\bfit\b/g, 'outfit fitness')
+    .replace(/\bdiy\b/g, 'do it yourself craft')
+    // Clean up
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  return expandedText;
+}
+
+function countMatches(text, keyword) {
+  // Enhanced matching that handles word boundaries and variations
+  const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\  return {
+    username')}\\b`, 'gi');
+  const matches = text.match(regex) || [];
+  return matches.length;
+}
+
+function generateColorPalette(themeAnalysis) {
+  const colorDatabase = {
+    morning: {
+      palette: [
+        { hex: '#FFD700', mood: 'golden', name: 'Sunrise Gold' },
+        { hex: '#FFA500', mood: 'energetic', name: 'Morning Orange' },
+        { hex: '#FFEB3B', mood: 'bright', name: 'Sunny Yellow' },
+        { hex: '#FF9800', mood: 'warm', name: 'Amber Glow' },
+        { hex: '#FFF8DC', mood: 'soft', name: 'Cream Light' }
+      ],
+      temperature: 'warm',
+      harmony: 'analogous',
+      lighting: 'bright'
+    },
+    evening: {
+      palette: [
+        { hex: '#8E4EC6', mood: 'romantic', name: 'Twilight Purple' },
+        { hex: '#FF6B6B', mood: 'warm', name: 'Sunset Coral' },
+        { hex: '#4ECDC4', mood: 'calming', name: 'Evening Teal' },
+        { hex: '#45B7D1', mood: 'peaceful', name: 'Dusk Blue' },
+        { hex: '#F7DC6F', mood: 'golden', name: 'Evening Gold' }
+      ],
+      temperature: 'warm',
+      harmony: 'complementary',
+      lighting: 'soft'
+    },
+    minimalist: {
+      palette: [
+        { hex: '#FFFFFF', mood: 'pure', name: 'Pure White' },
+        { hex: '#F8F9FA', mood: 'light', name: 'Off White' },
+        { hex: '#E9ECEF', mood: 'neutral', name: 'Light Gray' },
+        { hex: '#DEE2E6', mood: 'calm', name: 'Silver Gray' },
+        { hex: '#ADB5BD', mood: 'sophisticated', name: 'Cool Gray' }
+      ],
+      temperature: 'neutral',
+      harmony: 'monochromatic',
+      lighting: 'bright'
+    },
+    maximalist: {
+      palette: [
+        { hex: '#E74C3C', mood: 'bold', name: 'Vibrant Red' },
+        { hex: '#F39C12', mood: 'energetic', name: 'Electric Orange' },
+        { hex: '#F1C40F', mood: 'bright', name: 'Bold Yellow' },
+        { hex: '#27AE60', mood: 'fresh', name: 'Vivid Green' },
+        { hex: '#3498DB', mood: 'dynamic', name: 'Bright Blue' }
+      ],
+      temperature: 'warm',
+      harmony: 'triadic',
+      lighting: 'bright'
+    },
+    vintage: {
+      palette: [
+        { hex: '#DEB887', mood: 'nostalgic', name: 'Vintage Beige' },
+        { hex: '#D2B48C', mood: 'aged', name: 'Antique Tan' },
+        { hex: '#BC8F8F', mood: 'romantic', name: 'Rose Gold' },
+        { hex: '#F5DEB3', mood: 'sepia', name: 'Old Paper' },
+        { hex: '#CD853F', mood: 'warm', name: 'Vintage Brown' }
+      ],
+      temperature: 'warm',
+      harmony: 'analogous',
+      lighting: 'soft'
+    },
+    spring: {
+      palette: [
+        { hex: '#98FB98', mood: 'fresh', name: 'Spring Green' },
+        { hex: '#FFB6C1', mood: 'gentle', name: 'Cherry Blossom' },
+        { hex: '#E6E6FA', mood: 'soft', name: 'Lavender Mist' },
+        { hex: '#F0E68C', mood: 'bright', name: 'Spring Yellow' },
+        { hex: '#B0E0E6', mood: 'peaceful', name: 'Sky Blue' }
+      ],
+      temperature: 'cool',
+      harmony: 'analogous',
+      lighting: 'soft'
+    },
+    summer: {
+      palette: [
+        { hex: '#FF7F50', mood: 'vibrant', name: 'Coral Sunset' },
+        { hex: '#20B2AA', mood: 'tropical', name: 'Turquoise' },
+        { hex: '#FFD700', mood: 'sunny', name: 'Beach Gold' },
+        { hex: '#FF69B4', mood: 'playful', name: 'Hot Pink' },
+        { hex: '#00CED1', mood: 'refreshing', name: 'Ocean Blue' }
+      ],
+      temperature: 'warm',
+      harmony: 'complementary',
+      lighting: 'bright'
+    },
+    autumn: {
+      palette: [
+        { hex: '#D2691E', mood: 'warm', name: 'Autumn Orange' },
+        { hex: '#B22222', mood: 'rich', name: 'Maple Red' },
+        { hex: '#DAA520', mood: 'golden', name: 'Harvest Gold' },
+        { hex: '#8B4513', mood: 'earthy', name: 'Chestnut Brown' },
+        { hex: '#A0522D', mood: 'rustic', name: 'Sienna' }
+      ],
+      temperature: 'warm',
+      harmony: 'analogous',
+      lighting: 'warm'
+    },
+    winter: {
+      palette: [
+        { hex: '#4682B4', mood: 'cool', name: 'Winter Blue' },
+        { hex: '#708090', mood: 'crisp', name: 'Frost Gray' },
+        { hex: '#F0F8FF', mood: 'pure', name: 'Snow White' },
+        { hex: '#2F4F4F', mood: 'deep', name: 'Winter Pine' },
+        { hex: '#B0C4DE', mood: 'serene', name: 'Ice Blue' }
+      ],
+      temperature: 'cool',
+      harmony: 'monochromatic',
+      lighting: 'soft'
+    },
+    dark: {
+      palette: [
+        { hex: '#2C3E50', mood: 'mysterious', name: 'Midnight Blue' },
+        { hex: '#34495E', mood: 'dramatic', name: 'Dark Slate' },
+        { hex: '#7F8C8D', mood: 'moody', name: 'Shadow Gray' },
+        { hex: '#95A5A6', mood: 'atmospheric', name: 'Storm Cloud' },
+        { hex: '#BDC3C7', mood: 'subtle', name: 'Mist Gray' }
+      ],
+      temperature: 'cool',
+      harmony: 'monochromatic',
+      lighting: 'dim'
+    },
+    light: {
+      palette: [
+        { hex: '#FFFAF0', mood: 'pure', name: 'Ivory Light' },
+        { hex: '#F0F8FF', mood: 'airy', name: 'Cloud White' },
+        { hex: '#F5F5DC', mood: 'soft', name: 'Cream Beige' },
+        { hex: '#FFEFD5', mood: 'gentle', name: 'Papaya Whip' },
+        { hex: '#FDF5E6', mood: 'warm', name: 'Linen White' }
+      ],
+      temperature: 'neutral',
+      harmony: 'monochromatic',
+      lighting: 'bright'
+    }
+  };
+  
+  // Get primary theme colors
+  const primaryColors = colorDatabase[themeAnalysis.primaryTheme] || colorDatabase.morning;
+  
+  // Blend with secondary themes if present
+  const blendedPalette = [...primaryColors.palette];
+  
+  // Add accent colors from secondary themes
+  themeAnalysis.detectedThemes.slice(1, 2).forEach(theme => {
+    const secondaryColors = colorDatabase[theme.theme];
+    if (secondaryColors && secondaryColors.palette.length > 0) {
+      // Add one accent color from secondary theme
+      blendedPalette.push(secondaryColors.palette[0]);
+    }
+  });
+  
+  return {
+    color_palette: blendedPalette.slice(0, 6), // Limit to 6 colors
+    dominant_colors: primaryColors.palette[0],
+    color_temperature: primaryColors.temperature,
+    color_harmony: primaryColors.harmony,
+    aesthetic_style: themeAnalysis.primaryTheme,
+    visual_complexity: themeAnalysis.detectedThemes.length > 2 ? 'high' : 'medium',
+    lighting_mood: primaryColors.lighting,
+    composition_style: getCompositionStyle(themeAnalysis.primaryTheme)
+  };
+}
+
+function analyzeContent(analysisText, themeAnalysis) {
+  // Enhanced sentiment analysis
+  const sentiment = calculateAdvancedSentiment(analysisText);
+  
+  // Extract meaningful keywords
+  const keywords = extractMeaningfulKeywords(analysisText, themeAnalysis);
+  
+  // Determine topic categories
+  const topics = getTopicCategories(themeAnalysis.primaryTheme, themeAnalysis.detectedThemes);
+  
+  return {
+    sentiment: sentiment,
+    keywords: keywords,
+    topics: topics,
+    themes: themeAnalysis.detectedThemes.map(t => t.theme),
+    emotional_tone: themeAnalysis.detectedThemes.slice(0, 3).map(t => t.theme),
+    analysis_depth: themeAnalysis.detectedThemes.length,
+    content_richness: keywords.length > 5 ? 'high' : 'medium'
+  };
+}
+
+function calculateAdvancedSentiment(text) {
+  const sentimentWords = {
+    positive: {
+      strong: ['amazing', 'beautiful', 'gorgeous', 'stunning', 'perfect', 'fantastic'],
+      medium: ['good', 'nice', 'pretty', 'lovely', 'great', 'wonderful'],
+      mild: ['okay', 'fine', 'decent', 'pleasant', 'bright', 'fresh']
+    },
+    negative: {
+      strong: ['terrible', 'awful', 'horrible', 'disgusting', 'hate'],
+      medium: ['bad', 'ugly', 'wrong', 'sad', 'dark'],
+      mild: ['meh', 'boring', 'plain', 'dull', 'bland']
+    },
+    neutral: ['normal', 'regular', 'standard', 'basic', 'simple', 'average']
+  };
+  
+  let positiveScore = 0;
+  let negativeScore = 0;
+  let neutralScore = 0;
+  
+  const words = text.toLowerCase().split(/\s+/);
+  
+  // Calculate weighted scores
+  words.forEach(word => {
+    // Strong positive (weight: 3)
+    if (sentimentWords.positive.strong.some(pos => word.includes(pos))) positiveScore += 3;
+    // Medium positive (weight: 2)
+    else if (sentimentWords.positive.medium.some(pos => word.includes(pos))) positiveScore += 2;
+    // Mild positive (weight: 1)
+    else if (sentimentWords.positive.mild.some(pos => word.includes(pos))) positiveScore += 1;
+    
+    // Strong negative (weight: 3)
+    if (sentimentWords.negative.strong.some(neg => word.includes(neg))) negativeScore += 3;
+    // Medium negative (weight: 2)
+    else if (sentimentWords.negative.medium.some(neg => word.includes(neg))) negativeScore += 2;
+    // Mild negative (weight: 1)
+    else if (sentimentWords.negative.mild.some(neg => word.includes(neg))) negativeScore += 1;
+    
+    // Neutral
+    if (sentimentWords.neutral.some(neu => word.includes(neu))) neutralScore += 1;
+  });
+  
+  const totalScore = positiveScore - negativeScore;
+  const totalWords = words.length;
+  const confidence = Math.min((positiveScore + negativeScore) / totalWords * 5, 1);
+  
+  let label = 'neutral';
+  if (totalScore > 1) label = 'positive';
+  else if (totalScore < -1) label = 'negative';
+  
+  return {
+    score: Math.max(-1, Math.min(1, totalScore / Math.max(totalWords, 5))),
+    label: label,
+    confidence: confidence,
+    breakdown: { 
+      positive: positiveScore, 
+      negative: negativeScore, 
+      neutral: neutralScore 
+    }
+  };
+}
+
+function extractMeaningfulKeywords(text, themeAnalysis) {
+  const words = text.toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 2);
+  
+  // Filter out common words
+  const commonWords = ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'man', 'men', 'put', 'say', 'she', 'too', 'use'];
+  
+  // Count word frequency
+  const wordCount = {};
+  words.filter(word => !commonWords.includes(word)).forEach(word => {
+    wordCount[word] = (wordCount[word] || 0) + 1;
+  });
+  
+  // Get top keywords with theme relevance
+  const sortedWords = Object.entries(wordCount)
+    .map(([word, count]) => ({
+      word,
+      count,
+      relevance: count / words.length,
+      theme_related: isThemeRelated(word, themeAnalysis.primaryTheme)
+    }))
+    .sort((a, b) => {
+      // Prioritize theme-related words and frequency
+      if (a.theme_related && !b.theme_related) return -1;
+      if (!a.theme_related && b.theme_related) return 1;
+      return b.count - a.count;
+    })
+    .slice(0, 10);
+  
+  return sortedWords;
+}
+
+function isThemeRelated(word, primaryTheme) {
+  const themeKeywords = {
+    morning: ['morning', 'sunrise', 'coffee', 'breakfast', 'early', 'fresh', 'energy'],
+    evening: ['evening', 'sunset', 'dinner', 'wine', 'candles', 'romantic', 'soft'],
+    minimalist: ['minimal', 'simple', 'clean', 'white', 'space', 'zen'],
+    vintage: ['vintage', 'retro', 'old', 'classic', 'antique', 'nostalgic'],
+    spring: ['spring', 'bloom', 'fresh', 'green', 'flower', 'new'],
+    summer: ['summer', 'sun', 'beach', 'hot', 'bright', 'vacation'],
+    autumn: ['autumn', 'fall', 'warm', 'cozy', 'harvest', 'orange'],
+    winter: ['winter', 'snow', 'cold', 'cozy', 'fireplace', 'white'],
+    dark: ['dark', 'black', 'gothic', 'mysterious', 'shadow', 'dramatic'],
+    workout: ['fitness', 'gym', 'strong', 'exercise', 'health', 'active']
+  };
+  
+  const keywords = themeKeywords[primaryTheme] || [];
+  return keywords.some(keyword => word.includes(keyword) || keyword.includes(word));
+}
+
+function getTopicCategories(primaryTheme, allThemes) {
+  const topicDatabase = {
+    morning: ['Lifestyle', 'Wellness', 'Daily Routines', 'Productivity', 'Coffee Culture'],
+    evening: ['Lifestyle', 'Romance', 'Dining', 'Entertainment', 'Relaxation'],
+    minimalist: ['Interior Design', 'Architecture', 'Lifestyle', 'Simplicity', 'Modern Living'],
+    maximalist: ['Interior Design', 'Art', 'Fashion', 'Expression', 'Bold Design'],
+    vintage: ['Fashion', 'History', 'Collectibles', 'Nostalgia', 'Classic Style'],
+    spring: ['Seasonal', 'Nature', 'Renewal', 'Gardening', 'Fresh Starts'],
+    summer: ['Seasonal', 'Travel', 'Outdoor Activities', 'Beach Life', 'Recreation'],
+    autumn: ['Seasonal', 'Cozy Living', 'Harvest', 'Comfort', 'Nature'],
+    winter: ['Seasonal', 'Holiday', 'Cozy Living', 'Winter Sports', 'Comfort'],
+    workout: ['Health', 'Fitness', 'Wellness', 'Sports', 'Active Lifestyle'],
+    travel: ['Travel', 'Adventure', 'Culture', 'Exploration', 'Discovery'],
+    dark: ['Alternative Culture', 'Art', 'Gothic Aesthetic', 'Mystery', 'Drama'],
+    light: ['Minimalism', 'Purity', 'Serenity', 'Clean Living', 'Brightness']
+  };
+  
+  // Combine categories from all detected themes
+  const allCategories = new Set();
+  
+  // Add primary theme categories
+  const primaryCategories = topicDatabase[primaryTheme] || ['Design', 'Lifestyle'];
+  primaryCategories.forEach(cat => allCategories.add(cat));
+  
+  // Add categories from secondary themes
+  allThemes.slice(1, 3).forEach(theme => {
+    const categories = topicDatabase[theme.theme] || [];
+    categories.slice(0, 2).forEach(cat => allCategories.add(cat)); // Limit secondary contributions
+  });
+  
+  return Array.from(allCategories).slice(0, 6); // Limit total categories
+}
+
+function getCompositionStyle(theme) {
+  const styles = {
+    morning: 'bright and uplifting with natural flow',
+    evening: 'intimate and warm with soft transitions',
+    minimalist: 'clean lines and abundant negative space',
+    maximalist: 'rich layering and abundant visual elements',
+    vintage: 'classic proportions with timeless balance',
+    spring: 'fresh and organic with gentle movement',
+    summer: 'vibrant and dynamic with energetic flow',
+    autumn: 'warm and grounded with natural harmony',
+    winter: 'serene and spacious with peaceful balance',
+    dark: 'dramatic contrasts with mysterious depth',
+    light: 'airy and luminous with ethereal quality',
+    workout: 'dynamic and powerful with strong lines',
+    travel: 'expansive and adventurous with bold perspectives'
+  };
+  
+  return styles[theme] || 'balanced and harmonious composition';
+}
+
+function calculateOverallConfidence(themeAnalysis, moodAnalysis) {
+  // Factor in multiple confidence indicators
+  const themeConfidence = themeAnalysis.confidence;
+  const moodConfidence = moodAnalysis.confidence;
+  const themeDepth = Math.min(themeAnalysis.detectedThemes.length / 3, 1); // More themes = higher confidence
+  const scoreStrength = Math.min(themeAnalysis.totalMatches / 10, 1); // More matches = higher confidence
+  
+  // Weighted average
+  const overallConfidence = (
+    themeConfidence * 0.4 +
+    moodConfidence * 0.3 +
+    themeDepth * 0.2 +
+    scoreStrength * 0.1
+  );
+  
+  return Math.max(0.1, Math.min(0.95, overallConfidence));
+}
+
+function getQualityRating(confidence) {
+  if (confidence >= 0.8) return 'excellent';
+  if (confidence >= 0.6) return 'good';
+  if (confidence >= 0.4) return 'moderate';
+  return 'basic';
 }
 
 // Search Spotify for tracks based on mood
