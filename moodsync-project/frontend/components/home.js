@@ -1,3 +1,12 @@
+const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
+  const [backendStatus, setBackendStatus] = useState('Checking...');
+
+  // Add these debug lines
+  console.log('All environment variables:', process.env);
+  console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+
+  useEffect(() => {
 // src/components/Home.js
 import React, { useState, useEffect } from 'react';
 
