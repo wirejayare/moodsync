@@ -1,6 +1,6 @@
 // src/components/Home.js - Updated with full MoodSync features
 import React, { useState, useEffect } from 'react';
-import PinterestAnalyzer from './PinterestAnalyzer';
+import EnhancedPinterestAnalyzer from './EnhancedPinterestAnalyzer';
 import PlaylistCreator from './PlaylistCreator';
 
 const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
@@ -111,7 +111,7 @@ const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
               <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>
                 📌 Step 2: Analyze Pinterest Board
               </h3>
-              <PinterestAnalyzer 
+              <EnhancedPinterestAnalyzer 
                 spotifyToken={spotifyToken}
                 onAnalysisComplete={handleAnalysisComplete}
               />
