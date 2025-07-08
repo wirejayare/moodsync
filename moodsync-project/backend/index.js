@@ -819,6 +819,387 @@ function generateAdvancedMusicRecommendations(moodAnalysis) {
     era: 'contemporary'
   };
 }
+// Enhanced Pinterest analysis endpoint
+app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
+  try {
+    const { pinterestUrl, analysisOptions = {} } = req.body;
+    
+    if (!pinterestUrl || !pinterestUrl.includes('pinterest.com')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid Pinterest board URL'
+      });
+    }
+
+    console.log('Starting enhanced analysis for:', pinterestUrl);
+
+    // For now, we'll generate enhanced analysis based on URL patterns
+    // In production, this would involve real image processing and NLP
+    const enhancedAnalysis = await generateEnhancedAnalysis(pinterestUrl, analysisOptions);
+
+    res.json({
+      success: true,
+      analysis: enhancedAnalysis
+    });
+
+  } catch (error) {
+    console.error('Enhanced Pinterest analysis error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Enhanced analysis failed. Please try again.'
+    });
+  }
+});
+
+// Generate enhanced analysis (expanded version of existing function)
+async function generateEnhancedAnalysis(pinterestUrl, options = {}) {
+  const boardInfo = extractBoardInfo(pinterestUrl);
+  const boardText = (boardInfo.boardName + ' ' + boardInfo.originalUrl).toLowerCase();
+  
+  // Enhanced theme detection
+  const themeAnalysis = analyzeThemes(boardText);
+  
+  // Enhanced color analysis
+  const colorAnalysis = generateAdvancedColorAnalysis(themeAnalysis.detectedTheme);
+  
+  // Enhanced mood calculation
+  const moodAnalysis = calculateEnhancedMood(themeAnalysis, colorAnalysis, boardText);
+  
+  // Enhanced music recommendations
+  const musicAnalysis = generateAdvancedMusicRecommendations(moodAnalysis);
+
+  return {
+    // Enhanced mood analysis
+    mood: {
+      primary: moodAnalysis.primary.name,
+      confidence: moodAnalysis.primary.confidence,
+      secondary: moodAnalysis.secondary.map(m => m.name),
+      emotional_spectrum: moodAnalysis.spectrum
+    },
+    
+    // Rich visual analysis
+    visual: {
+      color_palette: colorAnalysis.palette,
+      dominant_colors: colorAnalysis.dominant,
+      color_temperature: colorAnalysis.temperature,
+      color_harmony: colorAnalysis.harmony,
+      aesthetic_style: themeAnalysis.aesthetic,
+      visual_complexity: themeAnalysis.complexity,
+      lighting_mood: colorAnalysis.lighting,
+      composition_style: themeAnalysis.composition
+    },
+    
+    // Content analysis
+    content: {
+      themes: themeAnalysis.themes,
+      keywords: themeAnalysis.keywords,
+      sentiment: themeAnalysis.sentiment,
+      topics: themeAnalysis.topics,
+      emotional_tone: moodAnalysis.emotions
+    },
+    
+    // Enhanced music recommendations
+    music: {
+      primary_genres: musicAnalysis.genres,
+      energy_level: musicAnalysis.energy,
+      tempo_range: musicAnalysis.tempo,
+      instrumental_preference: musicAnalysis.instrumental,
+      vocal_style: musicAnalysis.vocals,
+      era_preference: musicAnalysis.era
+    },
+    
+    // Board metadata
+    board: {
+      name: boardInfo.boardName,
+      estimated_pins: Math.floor(Math.random() * 50) + 15,
+      diversity_score: Math.random() * 0.4 + 0.6, // 0.6-1.0
+      cohesion_score: Math.random() * 0.3 + 0.7   // 0.7-1.0
+    }
+  };
+}
+
+// Extract Pinterest board information (if not already in your code)
+function extractBoardInfo(url) {
+  const urlParts = url.split('/');
+  const username = urlParts[urlParts.length - 2] || urlParts[urlParts.length - 3];
+  const boardName = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+  
+  return {
+    username,
+    boardName: boardName.replace(/-/g, ' '),
+    originalUrl: url
+  };
+}
+
+// Enhanced theme analysis
+function analyzeThemes(boardText) {
+  const themePatterns = {
+    minimalist: ['minimalist', 'simple', 'clean', 'white', 'minimal', 'scandinavian'],
+    bohemian: ['boho', 'bohemian', 'eclectic', 'hippie', 'free', 'artistic', 'macrame'],
+    vintage: ['vintage', 'retro', 'antique', 'classic', 'old', 'nostalgic'],
+    modern: ['modern', 'contemporary', 'sleek', 'geometric', 'industrial'],
+    natural: ['natural', 'organic', 'wood', 'plant', 'green', 'earth', 'sustainable'],
+    luxury: ['luxury', 'elegant', 'gold', 'marble', 'sophisticated', 'glamorous'],
+    rustic: ['rustic', 'farmhouse', 'country', 'barn', 'distressed', 'cottage'],
+    tropical: ['tropical', 'palm', 'beach', 'ocean', 'paradise', 'exotic'],
+    gothic: ['gothic', 'dark', 'black', 'mysterious', 'dramatic', 'ornate'],
+    pastel: ['pastel', 'soft', 'pink', 'lavender', 'mint', 'baby', 'gentle']
+  };
+
+  let detectedTheme = 'modern'; // default
+  let maxScore = 0;
+
+  for (const [theme, keywords] of Object.entries(themePatterns)) {
+    const score = keywords.reduce((sum, keyword) => {
+      return sum + (boardText.includes(keyword) ? 1 : 0);
+    }, 0);
+    
+    if (score > maxScore) {
+      maxScore = score;
+      detectedTheme = theme;
+    }
+  }
+
+  return {
+    detectedTheme,
+    aesthetic: detectedTheme,
+    complexity: maxScore > 3 ? 'high' : maxScore > 1 ? 'medium' : 'low',
+    composition: getCompositionStyle(detectedTheme),
+    themes: getThemeLabels(detectedTheme),
+    keywords: extractEnhancedKeywords(boardText, detectedTheme),
+    sentiment: calculateSentiment(boardText),
+    topics: getTopicCategories(detectedTheme)
+  };
+}
+
+// Advanced color analysis
+function generateAdvancedColorAnalysis(theme) {
+  const colorSchemes = {
+    minimalist: {
+      palette: [
+        { hex: '#FFFFFF', mood: 'pure' },
+        { hex: '#F5F5F5', mood: 'light' },
+        { hex: '#E0E0E0', mood: 'neutral' },
+        { hex: '#BDBDBD', mood: 'calm' },
+        { hex: '#9E9E9E', mood: 'sophisticated' }
+      ],
+      temperature: 'neutral',
+      harmony: 'monochromatic',
+      lighting: 'bright'
+    },
+    bohemian: {
+      palette: [
+        { hex: '#D2691E', mood: 'earthy' },
+        { hex: '#CD853F', mood: 'warm' },
+        { hex: '#DEB887', mood: 'cozy' },
+        { hex: '#F4A460', mood: 'inviting' },
+        { hex: '#DAA520', mood: 'rich' }
+      ],
+      temperature: 'warm',
+      harmony: 'analogous',
+      lighting: 'golden'
+    },
+    vintage: {
+      palette: [
+        { hex: '#DEB887', mood: 'nostalgic' },
+        { hex: '#D2B48C', mood: 'aged' },
+        { hex: '#BC8F8F', mood: 'romantic' },
+        { hex: '#F5DEB3', mood: 'sepia' },
+        { hex: '#FFE4B5', mood: 'vintage' }
+      ],
+      temperature: 'warm',
+      harmony: 'complementary',
+      lighting: 'soft'
+    },
+    natural: {
+      palette: [
+        { hex: '#228B22', mood: 'natural' },
+        { hex: '#32CD32', mood: 'fresh' },
+        { hex: '#90EE90', mood: 'peaceful' },
+        { hex: '#8FBC8F', mood: 'calming' },
+        { hex: '#98FB98', mood: 'rejuvenating' }
+      ],
+      temperature: 'cool',
+      harmony: 'analogous',
+      lighting: 'natural'
+    },
+    modern: {
+      palette: [
+        { hex: '#2C3E50', mood: 'sophisticated' },
+        { hex: '#34495E', mood: 'modern' },
+        { hex: '#ECF0F1', mood: 'clean' },
+        { hex: '#BDC3C7', mood: 'neutral' },
+        { hex: '#95A5A6', mood: 'contemporary' }
+      ],
+      temperature: 'cool',
+      harmony: 'triadic',
+      lighting: 'crisp'
+    }
+  };
+
+  const scheme = colorSchemes[theme] || colorSchemes.modern;
+  
+  return {
+    palette: scheme.palette,
+    dominant: scheme.palette[0],
+    temperature: scheme.temperature,
+    harmony: scheme.harmony,
+    lighting: scheme.lighting
+  };
+}
+
+// Enhanced mood calculation
+function calculateEnhancedMood(themeAnalysis, colorAnalysis, boardText) {
+  const moods = [
+    { name: 'Energetic', score: 0 },
+    { name: 'Peaceful', score: 0 },
+    { name: 'Romantic', score: 0 },
+    { name: 'Nostalgic', score: 0 },
+    { name: 'Adventurous', score: 0 },
+    { name: 'Cozy', score: 0 },
+    { name: 'Elegant', score: 0 },
+    { name: 'Playful', score: 0 },
+    { name: 'Mysterious', score: 0 },
+    { name: 'Fresh', score: 0 }
+  ];
+
+  // Score based on theme
+  const themeScores = {
+    minimalist: { Peaceful: 0.8, Elegant: 0.7, Fresh: 0.6 },
+    bohemian: { Adventurous: 0.8, Romantic: 0.7, Cozy: 0.6 },
+    vintage: { Nostalgic: 0.9, Romantic: 0.7, Elegant: 0.5 },
+    natural: { Peaceful: 0.8, Fresh: 0.9, Cozy: 0.6 },
+    modern: { Elegant: 0.8, Fresh: 0.6, Energetic: 0.5 }
+  };
+
+  const themeScore = themeScores[themeAnalysis.detectedTheme] || {};
+  Object.entries(themeScore).forEach(([mood, score]) => {
+    const moodObj = moods.find(m => m.name === mood);
+    if (moodObj) moodObj.score += score;
+  });
+
+  // Score based on colors
+  if (colorAnalysis.temperature === 'warm') {
+    moods.find(m => m.name === 'Cozy').score += 0.3;
+    moods.find(m => m.name === 'Energetic').score += 0.2;
+  } else if (colorAnalysis.temperature === 'cool') {
+    moods.find(m => m.name === 'Peaceful').score += 0.3;
+    moods.find(m => m.name === 'Fresh').score += 0.2;
+  }
+
+  // Add some randomness for variety
+  moods.forEach(mood => {
+    mood.score += Math.random() * 0.2;
+    mood.confidence = Math.min(mood.score, 1.0);
+  });
+
+  const sorted = moods.sort((a, b) => b.score - a.score);
+
+  return {
+    primary: sorted[0],
+    secondary: sorted.slice(1, 3),
+    spectrum: sorted,
+    emotions: sorted.slice(0, 3).map(m => m.name.toLowerCase())
+  };
+}
+
+// Helper functions
+function getCompositionStyle(theme) {
+  const styles = {
+    minimalist: 'clean lines',
+    bohemian: 'eclectic mix',
+    vintage: 'classic balance',
+    natural: 'organic flow',
+    modern: 'geometric precision'
+  };
+  return styles[theme] || 'balanced';
+}
+
+function getThemeLabels(theme) {
+  const labels = {
+    minimalist: ['minimalism', 'simplicity', 'zen'],
+    bohemian: ['bohemian', 'eclectic', 'artistic'],
+    vintage: ['vintage', 'nostalgia', 'classic'],
+    natural: ['natural', 'organic', 'eco-friendly'],
+    modern: ['contemporary', 'sleek', 'geometric']
+  };
+  return labels[theme] || ['contemporary'];
+}
+
+function extractEnhancedKeywords(text, theme) {
+  const themeKeywords = {
+    minimalist: ['clean', 'simple', 'white', 'space'],
+    bohemian: ['colorful', 'artistic', 'free', 'creative'],
+    vintage: ['classic', 'timeless', 'nostalgic', 'elegant'],
+    natural: ['organic', 'green', 'sustainable', 'earth'],
+    modern: ['contemporary', 'sleek', 'geometric', 'innovation']
+  };
+
+  const keywords = themeKeywords[theme] || ['style', 'design', 'aesthetic'];
+  return keywords.map((word, index) => ({
+    word,
+    count: Math.floor(Math.random() * 10) + 5,
+    relevance: (keywords.length - index) / keywords.length
+  }));
+}
+
+function calculateSentiment(text) {
+  const positiveWords = ['beautiful', 'amazing', 'love', 'perfect', 'gorgeous'];
+  const score = positiveWords.reduce((sum, word) => 
+    sum + (text.includes(word) ? 0.2 : 0), 0
+  );
+  
+  return {
+    score: Math.min(score, 1.0),
+    label: score > 0.3 ? 'positive' : score < -0.1 ? 'negative' : 'neutral'
+  };
+}
+
+function getTopicCategories(theme) {
+  const categories = {
+    minimalist: ['Interior Design', 'Architecture', 'Lifestyle'],
+    bohemian: ['Art', 'Fashion', 'Travel', 'Culture'],
+    vintage: ['Antiques', 'Fashion', 'History', 'Collectibles'],
+    natural: ['Sustainability', 'Wellness', 'Gardening', 'Eco-Living'],
+    modern: ['Technology', 'Design', 'Innovation', 'Contemporary Art']
+  };
+  return categories[theme] || ['Design', 'Lifestyle'];
+}
+
+function generateAdvancedMusicRecommendations(moodAnalysis) {
+  const musicMap = {
+    Energetic: {
+      genres: ['electronic', 'pop', 'rock', 'dance'],
+      energy: 'high',
+      tempo: '120-140 BPM',
+      vocals: 'powerful vocals'
+    },
+    Peaceful: {
+      genres: ['ambient', 'classical', 'new age', 'acoustic'],
+      energy: 'low',
+      tempo: '60-80 BPM',
+      vocals: 'soft vocals'
+    },
+    Romantic: {
+      genres: ['jazz', 'soul', 'r&b', 'indie folk'],
+      energy: 'medium',
+      tempo: '70-100 BPM',
+      vocals: 'intimate vocals'
+    }
+  };
+
+  const primary = moodAnalysis.primary.name;
+  const mapping = musicMap[primary] || musicMap.Peaceful;
+
+  return {
+    genres: mapping.genres,
+    energy: mapping.energy,
+    tempo: mapping.tempo,
+    instrumental: Math.random() > 0.5 ? 'instrumental preferred' : 'vocals preferred',
+    vocals: mapping.vocals,
+    era: 'contemporary'
+  };
+}
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log('MoodSync API ready for Pinterest analysis and Spotify playlist creation!');
