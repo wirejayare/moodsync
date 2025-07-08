@@ -1158,19 +1158,35 @@ function getAnalysisQuality(confidence) {
 }
 
 // Enhanced board info extraction with better URL parsing
-// Replace your existing extractBoardInfo function with this:
-
+// Replace your extractBoardInfo function with this fixed version
 function extractBoardInfo(url) {
-  const urlParts = url.split('/').filter(part => part.length > 0);
+  console.log('🔍 Extracting board info from:', url);
+  
+  if (!url || typeof url !== 'string') {
+    console.error('❌ Invalid URL provided:', url);
+    return {
+      username: 'unknown',
+      boardName: 'board',
+      originalUrl: url || '',
+      urlParts: []
+    };
+  }
+  
+  // Split URL and filter empty parts
+  const allUrlParts = url.split('/').filter(part => part && part.length > 0);
+  console.log('📋 URL parts:', allUrlParts);
   
   let username, boardName;
   
   // Handle different Pinterest URL formats
   if (url.includes('pinterest.com')) {
-    const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
-    if (pinterestIndex >= 0 && urlParts.length > pinterestIndex + 2) {
-      username = urlParts[pinterestIndex + 1];
-      boardName = urlParts[pinterestIndex + 2];
+    const pinterestIndex = allUrlParts.findIndex(part => part.includes('pinterest.com'));
+    console.log('📍 Pinterest index:', pinterestIndex);
+    
+    if (pinterestIndex >= 0 && allUrlParts.length > pinterestIndex + 2) {
+      username = allUrlParts[pinterestIndex + 1];
+      boardName = allUrlParts[pinterestIndex + 2];
+      console.log('✅ Found username:', username, 'boardName:', boardName);
     }
   }
   
@@ -1182,8 +1198,9 @@ function extractBoardInfo(url) {
   
   // Fallback extraction
   if (!username || !boardName) {
-    username = urlParts[urlParts.length - 2] || urlParts[urlParts.length - 3] || 'unknown';
-    boardName = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2] || 'board';
+    username = allUrlParts[allUrlParts.length - 2] || allUrlParts[allUrlParts.length - 3] || 'unknown';
+    boardName = allUrlParts[allUrlParts.length - 1] || allUrlParts[allUrlParts.length - 2] || 'board';
+    console.log('🔄 Using fallback - username:', username, 'boardName:', boardName);
   }
   
   // Clean up board name for better analysis
@@ -1195,12 +1212,24 @@ function extractBoardInfo(url) {
     .replace(/[0-9]/g, '') // Remove numbers
     .trim();
   
-  return {
-    username: username,
-    boardName: cleanBoardName,
+  // Filter URL parts safely
+  const filteredUrlParts = allUrlParts.filter(part => 
+    part && 
+    !part.includes('pinterest.com') && 
+    !part.includes('http') && 
+    !part.includes('https') &&
+    !part.includes('www')
+  );
+  
+  const result = {
+    username: username || 'unknown',
+    boardName: cleanBoardName || 'board',
     originalUrl: url,
-    urlParts: urlParts.filter(part => !part.includes('pinterest.com') && !part.includes('http'))  // ← This was missing!
+    urlParts: filteredUrlParts
   };
+  
+  console.log('✅ Extracted board info:', result);
+  return result;
 }
 
 // Enhanced keyword extraction
