@@ -1,24 +1,26 @@
 {
   "name": "moodsync-backend",
   "version": "1.0.0",
-  "description": "Backend for MoodSync",
+  "description": "Backend API for MoodSync - Pinterest to Spotify playlist generator",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": ["spotify", "pinterest", "music", "mood", "playlist"],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "^4.18.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "axios": "^1.5.0",
-    "spotify-web-api-node": "^5.0.2",
-    "cheerio": "^1.0.0-rc.12"
-    "sharp": "^0.32.0",
-    "colorthief": "^2.3.2",
-    "@tensorflow/tfjs-node": "^4.10.0"
+    "axios": "^1.6.0",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
