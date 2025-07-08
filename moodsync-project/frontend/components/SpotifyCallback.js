@@ -5,7 +5,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 const SpotifyCallback = ({ onSpotifyAuth }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -38,7 +37,6 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
       } catch (error) {
         alert('Error: ' + error.message);
       } finally {
-        setIsProcessing(false);
         navigate('/');
       }
     };
