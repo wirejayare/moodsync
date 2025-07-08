@@ -1,21 +1,17 @@
-const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
-  const [backendStatus, setBackendStatus] = useState('Checking...');
-
-  // Add these debug lines
-  console.log('All environment variables:', process.env);
-  console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-
-  useEffect(() => {
 // src/components/Home.js
 import React, { useState, useEffect } from 'react';
 
 const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
   const [backendStatus, setBackendStatus] = useState('Checking...');
 
+  // Debug lines
+  console.log('All environment variables:', process.env);
+  console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+
   useEffect(() => {
-    // Test backend connection
-fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
+    // Test backend connection with hardcoded URL
+    fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
       .then(res => res.json())
       .then(data => setBackendStatus('✅ Connected'))
       .catch(() => setBackendStatus('❌ Not connected'));
