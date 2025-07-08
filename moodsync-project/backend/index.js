@@ -1158,6 +1158,8 @@ function getAnalysisQuality(confidence) {
 }
 
 // Enhanced board info extraction with better URL parsing
+// Replace your existing extractBoardInfo function with this:
+
 function extractBoardInfo(url) {
   const urlParts = url.split('/').filter(part => part.length > 0);
   
@@ -1197,7 +1199,7 @@ function extractBoardInfo(url) {
     username: username,
     boardName: cleanBoardName,
     originalUrl: url,
-    urlParts: urlParts.filter(part => !part.includes('pinterest.com') && !part.includes('http'))
+    urlParts: urlParts.filter(part => !part.includes('pinterest.com') && !part.includes('http'))  // ← This was missing!
   };
 }
 
