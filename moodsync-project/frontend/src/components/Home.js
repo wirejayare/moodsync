@@ -1,12 +1,15 @@
-// src/components/Home.js
+// src/components/Home.js - Updated with full MoodSync features
 import React, { useState, useEffect } from 'react';
+import PinterestAnalyzer from './PinterestAnalyzer';
+import PlaylistCreator from './PlaylistCreator';
 
 const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
   const [backendStatus, setBackendStatus] = useState('Checking...');
+  const [analysis, setAnalysis] = useState(null);
 
   useEffect(() => {
     // Test backend connection
-fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
+    fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
       .then(res => res.json())
       .then(data => setBackendStatus('✅ Connected'))
       .catch(() => setBackendStatus('❌ Not connected'));
@@ -14,12 +17,16 @@ fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
 
   const handleSpotifyAuth = async () => {
     try {
-      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/spotify/auth-url`)
+      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/spotify/auth-url`);
       const { authUrl } = await response.json();
       window.location.href = authUrl;
     } catch (error) {
       alert('Error: ' + error.message);
     }
+  };
+
+  const handleAnalysisComplete = (analysisData) => {
+    setAnalysis(analysisData);
   };
 
   return (
@@ -34,17 +41,18 @@ fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
       textAlign: 'center',
       padding: '20px'
     }}>
-      <div style={{ maxWidth: '600px' }}>
-        <h1 style={{ fontSize: '3rem', marginBottom: '2rem' }}>
+      <div style={{ maxWidth: '700px', width: '100%' }}>
+        <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
           🎨 MoodSync
         </h1>
-        <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+        <p style={{ fontSize: '1.2rem', marginBottom: '2rem', opacity: 0.9 }}>
           Transform Pinterest moodboards into Spotify playlists
         </p>
         
+        {/* System Status */}
         <div style={{
           background: 'rgba(255,255,255,0.1)',
-          padding: '2rem',
+          padding: '1.5rem',
           borderRadius: '15px',
           marginBottom: '2rem'
         }}>
@@ -53,6 +61,7 @@ fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
           <p><strong>Spotify:</strong> {spotifyUser ? `✅ ${spotifyUser.display_name}` : '❌ Not connected'}</p>
         </div>
 
+        {/* Spotify Connection */}
         {!spotifyUser ? (
           <div style={{
             background: 'rgba(255,255,255,0.1)',
@@ -60,7 +69,7 @@ fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
             borderRadius: '15px',
             marginBottom: '2rem'
           }}>
-            <h3 style={{ marginBottom: '1rem' }}>🎵 Connect Spotify</h3>
+            <h3 style={{ marginBottom: '1rem' }}>🎵 Step 1: Connect Spotify</h3>
             <p style={{ marginBottom: '1.5rem', opacity: 0.9 }}>
               Connect your Spotify account to create playlists
             </p>
@@ -82,24 +91,46 @@ fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
             </button>
           </div>
         ) : (
-          <div style={{
-            background: 'rgba(40, 167, 69, 0.2)',
-            padding: '2rem',
-            borderRadius: '15px',
-            border: '2px solid rgba(40, 167, 69, 0.5)'
-          }}>
-            <h3>🎉 Spotify Connected!</h3>
-            <p style={{ margin: '1rem 0' }}>
-              Welcome, <strong>{spotifyUser.display_name}</strong>!
-            </p>
-            <p style={{ opacity: 0.9 }}>
-              Ready to create playlists from your Pinterest boards.
-            </p>
-          </div>
+          <>
+            {/* Spotify Connected */}
+            <div style={{
+              background: 'rgba(40, 167, 69, 0.2)',
+              padding: '1.5rem',
+              borderRadius: '15px',
+              border: '2px solid rgba(40, 167, 69, 0.5)',
+              marginBottom: '2rem'
+            }}>
+              <h3>🎉 Spotify Connected!</h3>
+              <p style={{ margin: '0.5rem 0' }}>
+                Welcome, <strong>{spotifyUser.display_name}</strong>!
+              </p>
+            </div>
+
+            {/* Pinterest Analyzer */}
+            <div style={{ textAlign: 'left' }}>
+              <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                📌 Step 2: Analyze Pinterest Board
+              </h3>
+              <PinterestAnalyzer 
+                spotifyToken={spotifyToken}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
+
+              {/* Playlist Creator */}
+              <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                🎵 Step 3: Create Your Playlist
+              </h3>
+              <PlaylistCreator 
+                spotifyToken={spotifyToken}
+                analysis={analysis}
+                spotifyUser={spotifyUser}
+              />
+            </div>
+          </>
         )}
         
-        <p style={{ opacity: 0.7, marginTop: '2rem' }}>
-          🚧 Step 2: Spotify authentication
+        <p style={{ opacity: 0.7, marginTop: '2rem', fontSize: '14px' }}>
+          🚀 Pinterest → AI Analysis → Spotify Playlist
         </p>
       </div>
     </div>
