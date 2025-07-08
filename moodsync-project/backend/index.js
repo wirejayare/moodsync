@@ -79,28 +79,33 @@ app.get('/api/spotify/auth-url', (req, res) => {
 });
 
 // Exchange Spotify code for access token
-app.post('/api/spotify/callback', async (req, res) => {
+app.post('/api/pinterest/callback', async (req, res) => {
   try {
     const { code } = req.body;
     
     if (!code) {
-      return res.status(400).json({ success: false, message: 'Authorization code required' });
-    }
-
-    if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
-      return res.status(500).json({ 
+      return res.status(400).json({ 
         success: false, 
-        message: 'Spotify credentials not configured' 
+        message: 'Pinterest authorization code required' 
       });
     }
 
-    const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', 
+    if (!process.env.PINTEREST_CLIENT_ID || !process.env.PINTEREST_CLIENT_SECRET) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Pinterest credentials not configured' 
+      });
+    }
+
+    console.log('Exchanging Pinterest code for token...');
+
+    const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', 
       new URLSearchParams({
         grant_type: 'authorization_code',
         code: code,
-        redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
-        client_id: process.env.SPOTIFY_CLIENT_ID,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET
+        redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+        client_id: process.env.PINTEREST_CLIENT_ID,
+        client_secret: process.env.PINTEREST_CLIENT_SECRET
       }),
       {
         headers: {
@@ -109,28 +114,31 @@ app.post('/api/spotify/callback', async (req, res) => {
       }
     );
 
-    const { access_token, refresh_token } = tokenResponse.data;
+    const { access_token, refresh_token, token_type } = tokenResponse.data;
+    console.log('Pinterest token received successfully');
 
-    // Get user info
-    const userResponse = await axios.get('https://api.spotify.com/v1/me', {
+    const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
       headers: {
         'Authorization': `Bearer ${access_token}`
       }
     });
 
+    console.log('Pinterest user info retrieved:', userResponse.data.username);
+
     res.json({
       success: true,
       access_token,
       refresh_token,
+      token_type,
       user: userResponse.data
     });
 
   } catch (error) {
-    console.error('Spotify callback error:', error.response?.data || error.message);
+    console.error('Pinterest callback error:', error.response?.data || error.message);
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to authenticate with Spotify',
-      error: error.response?.data?.error_description || error.message
+      message: 'Failed to authenticate with Pinterest',
+      error: error.response?.data?.message || error.message
     });
   }
 });
