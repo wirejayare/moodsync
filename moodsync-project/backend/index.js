@@ -1195,7 +1195,6 @@ function extractBoardInfo(url) {
 function extractBoardInfo(url) {
   console.log('🔍 Extracting board info from:', url);
   
-  // Safety check
   if (!url || typeof url !== 'string') {
     console.error('❌ Invalid URL provided:', url);
     return {
@@ -1207,23 +1206,17 @@ function extractBoardInfo(url) {
   }
   
   try {
-    // Split URL and filter empty parts - SAFE version
-    const rawParts = url.split('/');
-    const allUrlParts = rawParts.filter(part => part && part.length > 0);
-    console.log('📋 All URL parts:', allUrlParts);
+    const urlParts = url.split('/').filter(part => part && part.length > 0);
+    console.log('📋 URL parts:', urlParts);
     
-    let username = 'unknown';
-    let boardName = 'unknown board';
+    let username, boardName;
     
     // Handle different Pinterest URL formats
     if (url.includes('pinterest.com')) {
-      const pinterestIndex = allUrlParts.findIndex(part => part.includes('pinterest.com'));
-      console.log('📍 Pinterest index found at:', pinterestIndex);
-      
-      if (pinterestIndex >= 0 && allUrlParts.length > pinterestIndex + 2) {
-        username = allUrlParts[pinterestIndex + 1] || 'unknown';
-        boardName = allUrlParts[pinterestIndex + 2] || 'unknown board';
-        console.log('✅ Extracted from structure - username:', username, 'boardName:', boardName);
+      const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
+      if (pinterestIndex >= 0 && urlParts.length > pinterestIndex + 2) {
+        username = urlParts[pinterestIndex + 1];
+        boardName = urlParts[pinterestIndex + 2];
       }
     }
     
@@ -1231,52 +1224,40 @@ function extractBoardInfo(url) {
     if (url.includes('pin.it')) {
       boardName = 'shared-pin';
       username = 'pinterest-user';
-      console.log('🔗 Pin.it URL detected');
     }
     
-    // Fallback extraction if nothing found
-    if (username === 'unknown' || boardName === 'unknown board') {
-      if (allUrlParts.length >= 2) {
-        username = allUrlParts[allUrlParts.length - 2] || 'unknown';
-        boardName = allUrlParts[allUrlParts.length - 1] || 'unknown board';
-        console.log('🔄 Using fallback extraction - username:', username, 'boardName:', boardName);
-      }
+    // Fallback extraction
+    if (!username || !boardName) {
+      username = urlParts[urlParts.length - 2] || urlParts[urlParts.length - 3] || 'unknown';
+      boardName = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2] || 'board';
     }
     
     // Clean up board name for better analysis
-    const cleanBoardName = String(boardName)
+    const cleanBoardName = (boardName || 'board')
       .replace(/-/g, ' ')
       .replace(/_/g, ' ')
       .replace(/\+/g, ' ')
       .replace(/%20/g, ' ')
       .replace(/[0-9]/g, '')
-      .trim() || 'board';
+      .trim();
     
-    // SAFE filtering of URL parts - this is where the error was happening
-    const filteredUrlParts = Array.isArray(allUrlParts) ? 
-      allUrlParts.filter(part => 
+    // SAFE filtering - this was the source of the error
+    const filteredParts = Array.isArray(urlParts) ? 
+      urlParts.filter(part => 
         part && 
-        typeof part === 'string' &&
         !part.includes('pinterest.com') && 
-        !part.includes('http') && 
-        !part.includes('https') &&
-        !part.includes('www') &&
-        part.length > 1
+        !part.includes('http')
       ) : [];
     
-    const result = {
+    return {
       username: username || 'unknown',
       boardName: cleanBoardName,
       originalUrl: url,
-      urlParts: filteredUrlParts
+      urlParts: filteredParts
     };
-    
-    console.log('✅ Final extracted board info:', result);
-    return result;
     
   } catch (error) {
     console.error('❌ Error in extractBoardInfo:', error);
-    // Return safe fallback
     return {
       username: 'unknown',
       boardName: 'error board',
