@@ -15,7 +15,7 @@ const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
 
   useEffect(() => {
     // Test backend connection
-    fetch(`${process.env.REACT_APP_API_URL}/health`)
+fetch(`https://moodsync-backend-sdbe.onrender.com/health`)
       .then(res => res.json())
       .then(data => setBackendStatus('✅ Connected'))
       .catch(() => setBackendStatus('❌ Not connected'));
@@ -23,7 +23,7 @@ const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
 
   const handleSpotifyAuth = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/spotify/auth-url`);
+      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/spotify/auth-url`);
       const { authUrl } = await response.json();
       window.location.href = authUrl;
     } catch (error) {
