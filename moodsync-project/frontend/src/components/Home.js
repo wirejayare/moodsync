@@ -1,9 +1,15 @@
-// src/components/Home.js - Updated with full MoodSync features
 import React, { useState, useEffect } from 'react';
 import EnhancedPinterestAnalyzer from './EnhancedPinterestAnalyzer';
 import PlaylistCreator from './PlaylistCreator';
 
-const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
+const Home = ({ 
+  spotifyUser, 
+  spotifyToken, 
+  onSpotifyAuth,
+  pinterestUser,
+  pinterestToken,
+  onPinterestAuth
+}) => {
   const [backendStatus, setBackendStatus] = useState('Checking...');
   const [analysis, setAnalysis] = useState(null);
 
@@ -59,6 +65,17 @@ const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
           <h3>System Status</h3>
           <p><strong>Backend:</strong> {backendStatus}</p>
           <p><strong>Spotify:</strong> {spotifyUser ? `✅ ${spotifyUser.display_name}` : '❌ Not connected'}</p>
+          <p><strong>Pinterest:</strong> {pinterestUser ? `✅ @${pinterestUser.username}` : '❌ Not connected'}</p>
+          {pinterestUser && (
+            <div style={{ 
+              fontSize: '12px', 
+              opacity: 0.8, 
+              marginTop: '8px',
+              color: '#E60023'
+            }}>
+              🚀 Enhanced analysis enabled!
+            </div>
+          )}
         </div>
 
         {/* Spotify Connection */}
@@ -92,7 +109,7 @@ const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
           </div>
         ) : (
           <>
-            {/* Spotify Connected */}
+            {/* Services Connected */}
             <div style={{
               background: 'rgba(40, 167, 69, 0.2)',
               padding: '1.5rem',
@@ -100,10 +117,15 @@ const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
               border: '2px solid rgba(40, 167, 69, 0.5)',
               marginBottom: '2rem'
             }}>
-              <h3>🎉 Spotify Connected!</h3>
+              <h3>🎉 Services Connected!</h3>
               <p style={{ margin: '0.5rem 0' }}>
-                Welcome, <strong>{spotifyUser.display_name}</strong>!
+                <strong>Spotify:</strong> {spotifyUser.display_name}
               </p>
+              {pinterestUser && (
+                <p style={{ margin: '0.5rem 0' }}>
+                  <strong>Pinterest:</strong> @{pinterestUser.username}
+                </p>
+              )}
             </div>
 
             {/* Pinterest Analyzer */}
@@ -114,6 +136,9 @@ const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
               <EnhancedPinterestAnalyzer 
                 spotifyToken={spotifyToken}
                 onAnalysisComplete={handleAnalysisComplete}
+                pinterestToken={pinterestToken}
+                pinterestUser={pinterestUser}
+                onPinterestAuth={onPinterestAuth}
               />
 
               {/* Playlist Creator */}
@@ -130,7 +155,7 @@ const Home = ({ spotifyUser, spotifyToken, onSpotifyAuth }) => {
         )}
         
         <p style={{ opacity: 0.7, marginTop: '2rem', fontSize: '14px' }}>
-          🚀 Pinterest → AI Analysis → Spotify Playlist
+          🚀 Pinterest {pinterestUser ? '+ API' : ''} → AI Analysis → Spotify Playlist
         </p>
       </div>
     </div>
