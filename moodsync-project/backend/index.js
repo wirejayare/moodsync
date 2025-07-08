@@ -432,6 +432,23 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
 
     console.log('Starting enhanced analysis for:', pinterestUrl);
 
+    // Generate enhanced analysis
+    const enhancedAnalysis = await generateEnhancedAnalysis(pinterestUrl, analysisOptions);
+
+    res.json({
+      success: true,
+      analysis: enhancedAnalysis
+    });
+
+  } catch (error) {
+    console.error('Enhanced Pinterest analysis error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Enhanced analysis failed. Please try again.'
+    });
+  }
+});
+
     // Set up streaming response for real-time updates
     res.writeHead(200, {
       'Content-Type': 'text/plain',
