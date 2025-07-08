@@ -172,6 +172,13 @@ app.post('/api/pinterest/callback', async (req, res) => {
   try {
     const { code } = req.body;
     
+    console.log('🔍 PINTEREST DEBUG - Starting callback');
+    console.log('🔍 Code received:', code ? 'YES' : 'NO');
+    console.log('🔍 Code length:', code ? code.length : 'N/A');
+    console.log('🔍 Client ID:', process.env.PINTEREST_CLIENT_ID ? 'SET' : 'MISSING');
+    console.log('🔍 Client Secret:', process.env.PINTEREST_CLIENT_SECRET ? 'SET' : 'MISSING');
+    console.log('🔍 Redirect URI:', process.env.PINTEREST_REDIRECT_URI);
+    
     if (!code) {
       return res.status(400).json({ 
         success: false, 
@@ -179,99 +186,120 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
     }
 
-    console.log('Exchanging Pinterest code for token...');
-
-    // Minimal Pinterest OAuth for trial apps
-    const response = await axios({
-      method: 'POST',
-      url: 'https://api.pinterest.com/v5/oauth/token',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`${process.env.PINTEREST_CLIENT_ID}:${process.env.PINTEREST_CLIENT_SECRET}`).toString('base64')}`
+    // Try multiple Pinterest OAuth formats to see which one works
+    const attempts = [
+      // Attempt 1: v5 with form data
+      {
+        name: 'v5-form',
+        url: 'https://api.pinterest.com/v5/oauth/token',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        data: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+          client_id: process.env.PINTEREST_CLIENT_ID,
+          client_secret: process.env.PINTEREST_CLIENT_SECRET
+        })
       },
-      data: {
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: process.env.PINTEREST_REDIRECT_URI
+      // Attempt 2: v5 with JSON + Basic Auth
+      {
+        name: 'v5-json-basic',
+        url: 'https://api.pinterest.com/v5/oauth/token',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${Buffer.from(`${process.env.PINTEREST_CLIENT_ID}:${process.env.PINTEREST_CLIENT_SECRET}`).toString('base64')}`
+        },
+        data: {
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: process.env.PINTEREST_REDIRECT_URI
+        }
+      },
+      // Attempt 3: v3 API
+      {
+        name: 'v3-form',
+        url: 'https://api.pinterest.com/v3/oauth/access_token/',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        data: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+          client_id: process.env.PINTEREST_CLIENT_ID,
+          client_secret: process.env.PINTEREST_CLIENT_SECRET
+        })
       }
-    });
+    ];
 
-    console.log('Pinterest authenticated successfully');
+    let lastError = null;
 
-    res.json({
-      success: true,
-      access_token: response.data.access_token,
-      user: { username: 'pinterest_user', id: 'temp_id' } // Temporary user data
-    });
+    for (const attempt of attempts) {
+      try {
+        console.log(`🔍 TRYING: ${attempt.name}`);
+        console.log(`🔍 URL: ${attempt.url}`);
+        console.log(`🔍 Headers:`, attempt.headers);
+        console.log(`🔍 Data type:`, typeof attempt.data);
+        
+        const tokenResponse = await axios.post(attempt.url, attempt.data, {
+          headers: attempt.headers
+        });
+
+        console.log(`✅ SUCCESS with ${attempt.name}!`);
+        console.log('✅ Response status:', tokenResponse.status);
+        console.log('✅ Response data keys:', Object.keys(tokenResponse.data));
+
+        const { access_token, refresh_token, token_type } = tokenResponse.data;
+        
+        if (!access_token) {
+          console.log('❌ No access_token in response:', tokenResponse.data);
+          continue;
+        }
+
+        // Try to get user info
+        let userData = { username: 'pinterest_user', id: 'unknown' };
+        
+        try {
+          const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
+            headers: { 'Authorization': `Bearer ${access_token}` }
+          });
+          userData = userResponse.data;
+          console.log('✅ User data retrieved:', userData.username);
+        } catch (userError) {
+          console.log('⚠️ User data fetch failed, using defaults:', userError.message);
+        }
+
+        return res.json({
+          success: true,
+          access_token,
+          refresh_token,
+          token_type,
+          user: userData,
+          method_used: attempt.name
+        });
+
+      } catch (error) {
+        console.log(`❌ FAILED: ${attempt.name}`);
+        console.log(`❌ Status: ${error.response?.status}`);
+        console.log(`❌ Error: ${error.response?.data?.message || error.message}`);
+        console.log(`❌ Full error data:`, error.response?.data);
+        lastError = error;
+        continue;
+      }
+    }
+
+    // If all attempts failed
+    console.log('❌ ALL ATTEMPTS FAILED');
+    throw lastError || new Error('All Pinterest OAuth attempts failed');
 
   } catch (error) {
-    console.error('Pinterest callback error:', error.response?.data || error.message);
+    console.error('🔍 FINAL ERROR:', error.response?.data || error.message);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to authenticate with Pinterest',
-      error: error.response?.data?.message || error.message
+      error: error.response?.data?.message || error.message,
+      debug_info: 'Check server logs for detailed attempts'
     });
   }
 });
-
-// Pinterest API helper functions
-async function extractBoardIdFromUrl(boardUrl) {
-  try {
-    const urlParts = boardUrl.split('/').filter(part => part && part.length > 0);
-    
-    if (boardUrl.includes('pin.it')) {
-      return null; // Pin.it URLs need special handling
-    }
-    
-    if (boardUrl.includes('pinterest.com')) {
-      const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
-      if (pinterestIndex >= 0 && urlParts.length > pinterestIndex + 2) {
-        const username = urlParts[pinterestIndex + 1];
-        const boardSlug = urlParts[pinterestIndex + 2];
-        return { username, boardSlug };
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error extracting board ID:', error);
-    return null;
-  }
-}
-
-async function getBoardBySlug(username, boardSlug, accessToken) {
-  try {
-    console.log(`Looking up board: ${username}/${boardSlug}`);
-    
-    const boardsResponse = await axios.get(`https://api.pinterest.com/v5/boards`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      },
-      params: {
-        page_size: 100
-      }
-    });
-    
-    const board = boardsResponse.data.items.find(board => {
-      const boardSlugNormalized = board.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      const targetSlugNormalized = boardSlug.toLowerCase();
-      return boardSlugNormalized.includes(targetSlugNormalized) || 
-             targetSlugNormalized.includes(boardSlugNormalized);
-    });
-    
-    if (board) {
-      console.log('Found matching board:', board.name);
-      return board;
-    }
-    
-    console.log('No matching board found');
-    return null;
-    
-  } catch (error) {
-    console.error('Error fetching boards:', error.response?.data || error.message);
-    return null;
-  }
-}
 
 async function getBoardData(boardId, accessToken) {
   try {
