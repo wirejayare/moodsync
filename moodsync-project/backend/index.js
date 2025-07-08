@@ -172,6 +172,9 @@ app.post('/api/pinterest/callback', async (req, res) => {
   try {
     const { code } = req.body;
     
+    console.log('📌 Pinterest callback started');
+    console.log('📌 Received code:', code ? 'Yes' : 'No');
+    
     if (!code) {
       return res.status(400).json({ 
         success: false, 
@@ -186,23 +189,25 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
     }
 
-    console.log('Exchanging Pinterest code for token...');
+    console.log('📌 Making token exchange request...');
 
-    // Exchange code for access token
-    const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', {
+    // Use URLSearchParams instead of JSON for Pinterest trial apps
+    const tokenData = new URLSearchParams({
       grant_type: 'authorization_code',
       code: code,
       redirect_uri: process.env.PINTEREST_REDIRECT_URI,
       client_id: process.env.PINTEREST_CLIENT_ID,
       client_secret: process.env.PINTEREST_CLIENT_SECRET
-    }, {
+    });
+
+    const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', tokenData, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded' // Changed from application/json
       }
     });
 
     const { access_token, refresh_token, token_type } = tokenResponse.data;
-    console.log('Pinterest token received successfully');
+    console.log('📌 Pinterest token received successfully');
 
     // Get user info
     const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
@@ -211,7 +216,7 @@ app.post('/api/pinterest/callback', async (req, res) => {
       }
     });
 
-    console.log('Pinterest user info retrieved:', userResponse.data.username);
+    console.log('📌 Pinterest user info retrieved:', userResponse.data.username);
 
     res.json({
       success: true,
@@ -222,7 +227,11 @@ app.post('/api/pinterest/callback', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Pinterest callback error:', error.response?.data || error.message);
+    console.error('📌 Pinterest callback error details:');
+    console.error('📌 Error response:', error.response?.data);
+    console.error('📌 Error status:', error.response?.status);
+    console.error('📌 Error message:', error.message);
+    
     res.status(500).json({ 
       success: false, 
       message: 'Failed to authenticate with Pinterest',
