@@ -1,252 +1,274 @@
-// src/components/EnhancedPinterestAnalyzer.js
-import React, { useState } from 'react';
-import EnhancedAnalysisDisplay from './EnhancedAnalysisDisplay';
+// src/components/EnhancedAnalysisDisplay.js - Safe version with error handling
+import React from 'react';
 
-const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
-  const [pinterestUrl, setPinterestUrl] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState(null);
-  const [analysisStage, setAnalysisStage] = useState('');
-
-const handleAnalyze = async () => {
-  if (!pinterestUrl.includes('pinterest.com')) {
-    alert('Please enter a valid Pinterest board URL');
-    return;
+const EnhancedAnalysisDisplay = ({ analysis }) => {
+  // Add safety checks
+  if (!analysis) {
+    console.log('No analysis data provided');
+    return null;
   }
 
-  setIsAnalyzing(true);
-  setAnalysisStage('Analyzing Pinterest board...');
-  
+  console.log('Analysis data received:', analysis);
+
   try {
-    // Start enhanced analysis
-    const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        url:pinterestUrl,
-        analysisOptions: {
-          enableComputerVision: true,
-          enableTextAnalysis: true,
-          enableColorAnalysis: true,
-          maxPinsToAnalyze: 20
-        }
-      })
-    });
+    return (
+      <div style={{
+        background: 'rgba(255,255,255,0.2)',
+        padding: '2rem',
+        borderRadius: '15px',
+        marginTop: '1rem'
+      }}>
+        <h4 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+          🎨 Comprehensive Mood Analysis
+        </h4>
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    // Handle standard JSON response only
-    const data = await response.json();
-    
-    if (data.success) {
-      setAnalysis(data.analysis);
-      onAnalysisComplete(data.analysis);
-    } else {
-      throw new Error(data.message || 'Analysis failed');
-    }
-    
-  } catch (error) {
-    console.error('Analysis error:', error);
-    alert(`Failed to analyze board: ${error.message}`);
-  } finally {
-    setIsAnalyzing(false);
-    setAnalysisStage('');
-  }
-};
-  
-  const handleDemoAnalysis = () => {
-    // Demo analysis for testing
-    const demoAnalysis = {
-      mood: {
-        primary: 'Peaceful',
-        confidence: 0.87,
-        secondary: ['Romantic', 'Cozy'],
-        emotional_spectrum: [
-          { name: 'Peaceful', confidence: 0.87 },
-          { name: 'Romantic', confidence: 0.73 },
-          { name: 'Cozy', confidence: 0.68 },
-          { name: 'Elegant', confidence: 0.45 },
-          { name: 'Fresh', confidence: 0.32 }
-        ]
-      },
-      visual: {
-        color_palette: [
-          { hex: '#F5E6D3', mood: 'warm' },
-          { hex: '#E8C5A0', mood: 'cozy' },
-          { hex: '#B8860B', mood: 'earthy' },
-          { hex: '#8FBC8F', mood: 'calming' },
-          { hex: '#F0F8FF', mood: 'light' }
-        ],
-        color_temperature: 'warm',
-        color_harmony: 'analogous',
-        aesthetic_style: 'minimalist',
-        visual_complexity: 'low',
-        lighting_mood: 'soft',
-        composition_style: 'balanced'
-      },
-      content: {
-        sentiment: { score: 0.6, label: 'positive' },
-        keywords: [
-          { word: 'home', count: 15 },
-          { word: 'cozy', count: 12 },
-          { word: 'natural', count: 10 },
-          { word: 'peaceful', count: 8 },
-          { word: 'beautiful', count: 7 }
-        ],
-        topics: ['Home Decor', 'Interior Design', 'Lifestyle', 'Wellness'],
-        themes: ['minimalism', 'hygge', 'natural living']
-      },
-      music: {
-        primary_genres: ['acoustic', 'indie folk', 'ambient', 'classical', 'lo-fi'],
-        energy_level: 'low-medium',
-        tempo_range: '60-90 BPM',
-        vocal_style: 'soft vocals',
-        era_preference: 'contemporary'
-      },
-      board: {
-        name: 'Demo Peaceful Home',
-        diversity_score: 0.65,
-        cohesion_score: 0.82
-      }
-    };
-    
-    setAnalysis(demoAnalysis);
-    onAnalysisComplete(demoAnalysis);
-  };
-
-  return (
-    <div style={{
-      background: 'rgba(255,255,255,0.1)',
-      padding: '2rem',
-      borderRadius: '15px',
-      marginBottom: '2rem'
-    }}>
-      <h3 style={{ marginBottom: '1rem' }}>📌 Enhanced Pinterest Analysis</h3>
-      
-      <div style={{ marginBottom: '1rem' }}>
-        <input
-          type="url"
-          placeholder="https://pinterest.com/username/board-name/"
-          value={pinterestUrl}
-          onChange={(e) => setPinterestUrl(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '8px',
-            border: 'none',
-            fontSize: '16px',
-            marginBottom: '1rem'
-          }}
-        />
-        
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button
-            onClick={handleAnalyze}
-            disabled={isAnalyzing || !pinterestUrl}
-            style={{
-              background: isAnalyzing ? '#ccc' : '#E60023',
-              color: 'white',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              flex: 1
-            }}
-          >
-            {isAnalyzing ? '🔍 Analyzing...' : '🔍 Deep Analysis'}
-          </button>
-          
-          <button
-            onClick={handleDemoAnalysis}
-            style={{
-              background: '#667eea',
-              color: 'white',
-              border: 'none',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            Demo
-          </button>
-        </div>
-      </div>
-
-      {/* Analysis Progress */}
-      {isAnalyzing && (
+        {/* Primary Mood Section - with safety checks */}
         <div style={{
           background: 'rgba(255,255,255,0.1)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginBottom: '1rem',
+          padding: '1.5rem',
+          borderRadius: '10px',
+          marginBottom: '1.5rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <h5>🎭 Primary Mood</h5>
+            <div style={{
+              background: 'rgba(255,255,255,0.3)',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '12px'
+            }}>
+              {Math.round((analysis.mood?.confidence || 0) * 100)}% confidence
+            </div>
+          </div>
+          
+          <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>
+            {analysis.mood?.primary || analysis.mood || 'Unknown'}
+          </div>
+          
+          {analysis.mood?.secondary && Array.isArray(analysis.mood.secondary) && (
+            <div style={{ fontSize: '14px', opacity: 0.8 }}>
+              Secondary moods: {analysis.mood.secondary.join(', ')}
+            </div>
+          )}
+
+          {/* Emotional Spectrum - with safety checks */}
+          {analysis.mood?.emotional_spectrum && Array.isArray(analysis.mood.emotional_spectrum) && (
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ fontSize: '14px', marginBottom: '8px', fontWeight: 'bold' }}>
+                Emotional Spectrum:
+              </div>
+              {analysis.mood.emotional_spectrum.slice(0, 5).map((mood, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '4px',
+                  fontSize: '12px'
+                }}>
+                  <span style={{ minWidth: '80px' }}>{mood.name || 'Unknown'}</span>
+                  <div style={{
+                    flex: 1,
+                    height: '6px',
+                    background: 'rgba(255,255,255,0.2)',
+                    borderRadius: '3px',
+                    marginLeft: '8px',
+                    marginRight: '8px'
+                  }}>
+                    <div style={{
+                      width: `${(mood.confidence || 0) * 100}%`,
+                      height: '100%',
+                      background: `hsl(${120 * (mood.confidence || 0)}, 70%, 60%)`,
+                      borderRadius: '3px'
+                    }} />
+                  </div>
+                  <span>{Math.round((mood.confidence || 0) * 100)}%</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Visual Analysis Section - with safety checks */}
+        {analysis.visual && (
+          <div style={{
+            background: 'rgba(255,255,255,0.1)',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            marginBottom: '1.5rem'
+          }}>
+            <h5 style={{ marginBottom: '1rem' }}>👁️ Visual Analysis</h5>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              {/* Color Palette */}
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  Color Palette
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                  {analysis.visual.color_palette && Array.isArray(analysis.visual.color_palette) && 
+                    analysis.visual.color_palette.slice(0, 8).map((color, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        backgroundColor: color.hex || color || '#ccc',
+                        borderRadius: '50%',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        position: 'relative'
+                      }}
+                      title={`${color.hex || color} - ${color.mood || ''}`}
+                    />
+                  ))}
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.8 }}>
+                  Temperature: {analysis.visual.color_temperature || 'Unknown'}
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.8 }}>
+                  Harmony: {analysis.visual.color_harmony || 'Unknown'}
+                </div>
+              </div>
+
+              {/* Style Analysis */}
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  Style & Composition
+                </div>
+                <div style={{ fontSize: '12px', lineHeight: '1.4' }}>
+                  <div>Aesthetic: {analysis.visual.aesthetic_style || 'Unknown'}</div>
+                  <div>Complexity: {analysis.visual.visual_complexity || 'Unknown'}</div>
+                  <div>Lighting: {analysis.visual.lighting_mood || 'Unknown'}</div>
+                  <div>Composition: {analysis.visual.composition_style || 'Unknown'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Music Recommendation Insights - with safety checks */}
+        {analysis.music && (
+          <div style={{
+            background: 'rgba(255,255,255,0.1)',
+            padding: '1.5rem',
+            borderRadius: '10px'
+          }}>
+            <h5 style={{ marginBottom: '1rem' }}>🎵 Music Recommendations</h5>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              {/* Genres */}
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  Suggested Genres
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {analysis.music.primary_genres && Array.isArray(analysis.music.primary_genres) && 
+                    analysis.music.primary_genres.map((genre, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        background: 'rgba(29, 185, 84, 0.3)',
+                        border: '1px solid rgba(29, 185, 84, 0.5)',
+                        padding: '4px 10px',
+                        borderRadius: '15px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      {genre}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Energy & Style */}
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  Musical Characteristics
+                </div>
+                <div style={{ fontSize: '12px', lineHeight: '1.4' }}>
+                  <div>Energy Level: {analysis.music.energy_level || 'Unknown'}</div>
+                  <div>Tempo Range: {analysis.music.tempo_range || 'Unknown'}</div>
+                  <div>Style: {analysis.music.vocal_style || 'Unknown'}</div>
+                  <div>Era: {analysis.music.era_preference || 'Unknown'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Simple fallback for basic analysis */}
+        {!analysis.mood?.primary && analysis.mood && typeof analysis.mood === 'string' && (
+          <div style={{
+            background: 'rgba(255,255,255,0.1)',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            marginBottom: '1.5rem'
+          }}>
+            <h5>🎭 Detected Mood</h5>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>
+              {analysis.mood}
+            </div>
+            <div style={{ fontSize: '14px', opacity: 0.8 }}>
+              {analysis.description || 'Mood-based analysis completed'}
+            </div>
+            
+            {analysis.genres && Array.isArray(analysis.genres) && (
+              <div style={{ marginTop: '1rem' }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  Suggested Genres:
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {analysis.genres.map((genre, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        background: 'rgba(29, 185, 84, 0.3)',
+                        border: '1px solid rgba(29, 185, 84, 0.5)',
+                        padding: '4px 10px',
+                        borderRadius: '15px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      {genre}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Debug info */}
+        <div style={{
+          marginTop: '1rem',
+          fontSize: '12px',
+          opacity: 0.5,
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-            🧠 AI Analysis in Progress...
-          </div>
-          <div style={{ fontSize: '12px', opacity: 0.8 }}>
-            {analysisStage || 'Initializing...'}
-          </div>
-          <div style={{
-            width: '100%',
-            height: '4px',
-            background: 'rgba(255,255,255,0.2)',
-            borderRadius: '2px',
-            marginTop: '8px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)',
-              animation: 'shimmer 2s infinite'
-            }} />
-          </div>
-          <style>
-            {`
-              @keyframes shimmer {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-              }
-            `}
-          </style>
+          Analysis type: {analysis.mood?.primary ? 'Enhanced' : 'Basic'} • 
+          Data keys: {Object.keys(analysis).join(', ')}
         </div>
-      )}
-
-      {/* Enhanced Analysis Display */}
-      <EnhancedAnalysisDisplay analysis={analysis} />
-
-      {/* Analysis Features Info */}
-      {!analysis && !isAnalyzing && (
-        <div style={{
-          background: 'rgba(255,255,255,0.05)',
-          padding: '1rem',
-          borderRadius: '8px',
-          fontSize: '12px',
-          lineHeight: '1.4',
-          marginTop: '1rem'
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-            🚀 Enhanced Analysis Features:
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
-            <div>• Computer vision analysis</div>
-            <div>• Advanced color psychology</div>
-            <div>• Text sentiment analysis</div>
-            <div>• Style & composition analysis</div>
-            <div>• Multi-dimensional mood mapping</div>
-            <div>• Enhanced music recommendations</div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  } catch (error) {
+    console.error('Error rendering analysis display:', error);
+    return (
+      <div style={{
+        background: 'rgba(255,100,100,0.2)',
+        padding: '2rem',
+        borderRadius: '15px',
+        marginTop: '1rem',
+        textAlign: 'center'
+      }}>
+        <h4>⚠️ Display Error</h4>
+        <p>There was an error displaying the analysis results.</p>
+        <details style={{ marginTop: '1rem', fontSize: '12px' }}>
+          <summary>Debug Info</summary>
+          <pre style={{ textAlign: 'left', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+            {JSON.stringify(analysis, null, 2)}
+          </pre>
+        </details>
+      </div>
+    );
+  }
 };
 
-export default EnhancedPinterestAnalyzer;
+export default EnhancedAnalysisDisplay;
