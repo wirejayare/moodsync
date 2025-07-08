@@ -8,80 +8,63 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
   const [analysis, setAnalysis] = useState(null);
   const [analysisStage, setAnalysisStage] = useState('');
 
-  const handleAnalyze = async () => {
-    if (!pinterestUrl.includes('pinterest.com')) {
-      alert('Please enter a valid Pinterest board URL');
-      return;
-    }
+const handleAnalyze = async () => {
+  if (!pinterestUrl.includes('pinterest.com')) {
+    alert('Please enter a valid Pinterest board URL');
+    return;
+  }
 
-    setIsAnalyzing(true);
-    setAnalysisStage('Fetching board data...');
+  setIsAnalyzing(true);
+  setAnalysisStage('Fetching board data...');
+  
+  try {
+    console.log('Making request to:', `https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced`);
     
-    try {
-      // Start enhanced analysis
-      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          pinterestUrl,
-          analysisOptions: {
-            enableComputerVision: true,
-            enableTextAnalysis: true,
-            enableColorAnalysis: true,
-            maxPinsToAnalyze: 20
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Check if response is streaming (for real-time updates)
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('text/plain')) {
-        // Handle streaming response for real-time updates
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n').filter(line => line.trim());
-          
-          for (const line of lines) {
-            if (line.startsWith('STAGE:')) {
-              setAnalysisStage(line.replace('STAGE:', '').trim());
-            } else if (line.startsWith('RESULT:')) {
-              const resultData = JSON.parse(line.replace('RESULT:', '').trim());
-              setAnalysis(resultData.analysis);
-              onAnalysisComplete(resultData.analysis);
-            }
-          }
+    // Start enhanced analysis
+    const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        pinterestUrl,
+        analysisOptions: {
+          enableComputerVision: true,
+          enableTextAnalysis: true,
+          enableColorAnalysis: true,
+          maxPinsToAnalyze: 20
         }
-      } else {
-        // Handle standard JSON response
-        setAnalysisStage('Processing analysis...');
-        const data = await response.json();
-        
-        if (data.success) {
-          setAnalysis(data.analysis);
-          onAnalysisComplete(data.analysis);
-        } else {
-          throw new Error(data.message || 'Analysis failed');
-        }
-      }
-    } catch (error) {
-      console.error('Analysis error:', error);
-      alert('Failed to analyze board: ' + error.message);
-    } finally {
-      setIsAnalyzing(false);
-      setAnalysisStage('');
+      })
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response error:', errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
-  };
 
+    // Handle standard JSON response
+    setAnalysisStage('Processing analysis...');
+    const data = await response.json();
+    console.log('Response data:', data);
+    
+    if (data.success) {
+      setAnalysis(data.analysis);
+      onAnalysisComplete(data.analysis);
+    } else {
+      throw new Error(data.message || 'Analysis failed');
+    }
+    
+  } catch (error) {
+    console.error('Analysis error:', error);
+    alert(`Failed to analyze board: ${error.message}`);
+  } finally {
+    setIsAnalyzing(false);
+    setAnalysisStage('');
+  }
+};
+  
   const handleDemoAnalysis = () => {
     // Demo analysis for testing
     const demoAnalysis = {
