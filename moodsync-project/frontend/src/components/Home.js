@@ -109,24 +109,54 @@ const Home = ({
           </div>
         ) : (
           <>
-            {/* Services Connected */}
-            <div style={{
-              background: 'rgba(40, 167, 69, 0.2)',
-              padding: '1.5rem',
-              borderRadius: '15px',
-              border: '2px solid rgba(40, 167, 69, 0.5)',
-              marginBottom: '2rem'
-            }}>
-              <h3>🎉 Services Connected!</h3>
-              <p style={{ margin: '0.5rem 0' }}>
-                <strong>Spotify:</strong> {spotifyUser.display_name}
-              </p>
-              {pinterestUser && (
-                <p style={{ margin: '0.5rem 0' }}>
-                  <strong>Pinterest:</strong> @{pinterestUser.username}
-                </p>
-              )}
-            </div>
+          // In your Home.js, add logout buttons in the "Services Connected" section:
+
+{/* Services Connected */}
+<div style={{
+  background: 'rgba(40, 167, 69, 0.2)',
+  padding: '1.5rem',
+  borderRadius: '15px',
+  border: '2px solid rgba(40, 167, 69, 0.5)',
+  marginBottom: '2rem'
+}}>
+  <h3>🎉 Services Connected!</h3>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.5rem 0' }}>
+    <span><strong>Spotify:</strong> {spotifyUser.display_name}</span>
+    <button 
+      onClick={() => onLogout('spotify')}
+      style={{
+        background: 'rgba(255,255,255,0.2)',
+        border: '1px solid rgba(255,255,255,0.3)',
+        color: 'white',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        cursor: 'pointer'
+      }}
+    >
+      Disconnect
+    </button>
+  </div>
+  {pinterestUser && (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.5rem 0' }}>
+      <span><strong>Pinterest:</strong> @{pinterestUser.username}</span>
+      <button 
+        onClick={() => onLogout('pinterest')}
+        style={{
+          background: 'rgba(255,255,255,0.2)',
+          border: '1px solid rgba(255,255,255,0.3)',
+          color: 'white',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          cursor: 'pointer'
+        }}
+      >
+        Disconnect
+      </button>
+    </div>
+  )}
+</div>
 
             {/* Pinterest Analyzer */}
             <div style={{ textAlign: 'left' }}>
