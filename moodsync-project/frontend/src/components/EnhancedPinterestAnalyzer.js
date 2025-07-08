@@ -23,7 +23,7 @@ const handleAnalyze = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        pinterestUrl,
+        url:pinterestUrl,
         analysisOptions: {
           enableComputerVision: true,
           enableTextAnalysis: true,
