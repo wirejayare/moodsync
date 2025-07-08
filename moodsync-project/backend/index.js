@@ -79,6 +79,95 @@ app.get('/api/spotify/auth-url', (req, res) => {
 });
 
 // Exchange Spotify code for access token
+app.post('/api/spotify/callback', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ success: false, message: 'Authorization code required' });
+    }
+
+    if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Spotify credentials not configured' 
+      });
+    }
+
+    const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', 
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+        client_id: process.env.SPOTIFY_CLIENT_ID,
+        client_secret: process.env.SPOTIFY_CLIENT_SECRET
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    const { access_token, refresh_token } = tokenResponse.data;
+
+    // Get user info
+    const userResponse = await axios.get('https://api.spotify.com/v1/me', {
+      headers: {
+        'Authorization': `Bearer ${access_token}`
+      }
+    });
+
+    res.json({
+      success: true,
+      access_token,
+      refresh_token,
+      user: userResponse.data
+    });
+
+  } catch (error) {
+    console.error('Spotify callback error:', error.response?.data || error.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to authenticate with Spotify',
+      error: error.response?.data?.error_description || error.message
+    });
+  }
+});
+
+// ADD THIS PINTEREST CODE TO YOUR backend/index.js
+// Insert this code AFTER your existing Spotify endpoints and BEFORE the basic Pinterest analysis
+
+// ===== PINTEREST API INTEGRATION =====
+
+// Pinterest auth URL endpoint
+app.get('/api/pinterest/auth-url', (req, res) => {
+  try {
+    if (!process.env.PINTEREST_CLIENT_ID) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Pinterest client ID not configured' 
+      });
+    }
+
+    const authUrl = `https://www.pinterest.com/oauth/?` +
+      `client_id=${process.env.PINTEREST_CLIENT_ID}&` +
+      `redirect_uri=${encodeURIComponent(process.env.PINTEREST_REDIRECT_URI)}&` +
+      `response_type=code&` +
+      `scope=boards:read,pins:read,user_accounts:read`;
+    
+    console.log('Generated Pinterest auth URL');
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Pinterest auth URL error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate Pinterest auth URL' 
+    });
+  }
+});
+
+// Exchange Pinterest code for access token
 app.post('/api/pinterest/callback', async (req, res) => {
   try {
     const { code } = req.body;
@@ -135,111 +224,6 @@ app.post('/api/pinterest/callback', async (req, res) => {
 
   } catch (error) {
     console.error('Pinterest callback error:', error.response?.data || error.message);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to authenticate with Pinterest',
-      error: error.response?.data?.message || error.message
-    });
-  }
-});
-
-// ADD THIS PINTEREST CODE TO YOUR backend/index.js
-// Insert this code AFTER your existing Spotify endpoints and BEFORE the basic Pinterest analysis
-
-// ===== PINTEREST API INTEGRATION =====
-
-// Pinterest auth URL endpoint
-app.get('/api/pinterest/auth-url', (req, res) => {
-  try {
-    if (!process.env.PINTEREST_CLIENT_ID) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Pinterest client ID not configured' 
-      });
-    }
-
-    const authUrl = `https://www.pinterest.com/oauth/?` +
-      `client_id=${process.env.PINTEREST_CLIENT_ID}&` +
-      `redirect_uri=${encodeURIComponent(process.env.PINTEREST_REDIRECT_URI)}&` +
-      `response_type=code&` +
-      `scope=boards:read,pins:read,user_accounts:read`;
-    
-    console.log('Generated Pinterest auth URL');
-    res.json({ authUrl });
-  } catch (error) {
-    console.error('Pinterest auth URL error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to generate Pinterest auth URL' 
-    });
-  }
-});
-
-// Exchange Pinterest code for access token
-app.post('/api/pinterest/callback', async (req, res) => {
-  try {
-    const { code } = req.body;
-    
-    console.log('📌 Pinterest callback started');
-    console.log('📌 Received code:', code ? 'Yes' : 'No');
-    
-    if (!code) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Pinterest authorization code required' 
-      });
-    }
-
-    if (!process.env.PINTEREST_CLIENT_ID || !process.env.PINTEREST_CLIENT_SECRET) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Pinterest credentials not configured' 
-      });
-    }
-
-    console.log('📌 Making token exchange request...');
-
-    // Use URLSearchParams instead of JSON for Pinterest trial apps
-    const tokenData = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code: code,
-      redirect_uri: process.env.PINTEREST_REDIRECT_URI,
-      client_id: process.env.PINTEREST_CLIENT_ID,
-      client_secret: process.env.PINTEREST_CLIENT_SECRET
-    });
-
-    const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', tokenData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded' // Changed from application/json
-      }
-    });
-
-    const { access_token, refresh_token, token_type } = tokenResponse.data;
-    console.log('📌 Pinterest token received successfully');
-
-    // Get user info
-    const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
-      headers: {
-        'Authorization': `Bearer ${access_token}`
-      }
-    });
-
-    console.log('📌 Pinterest user info retrieved:', userResponse.data.username);
-
-    res.json({
-      success: true,
-      access_token,
-      refresh_token,
-      token_type,
-      user: userResponse.data
-    });
-
-  } catch (error) {
-    console.error('📌 Pinterest callback error details:');
-    console.error('📌 Error response:', error.response?.data);
-    console.error('📌 Error status:', error.response?.status);
-    console.error('📌 Error message:', error.message);
-    
     res.status(500).json({ 
       success: false, 
       message: 'Failed to authenticate with Pinterest',
