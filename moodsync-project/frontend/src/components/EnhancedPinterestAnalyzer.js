@@ -15,11 +15,9 @@ const handleAnalyze = async () => {
   }
 
   setIsAnalyzing(true);
-  setAnalysisStage('Fetching board data...');
+  setAnalysisStage('Analyzing Pinterest board...');
   
   try {
-    console.log('Making request to:', `https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced`);
-    
     // Start enhanced analysis
     const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced`, {
       method: 'POST',
@@ -35,19 +33,12 @@ const handleAnalyze = async () => {
       })
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
-
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Response error:', errorText);
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    // Handle standard JSON response
-    setAnalysisStage('Processing analysis...');
+    // Handle standard JSON response only
     const data = await response.json();
-    console.log('Response data:', data);
     
     if (data.success) {
       setAnalysis(data.analysis);
