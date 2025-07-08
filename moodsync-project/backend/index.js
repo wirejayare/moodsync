@@ -1247,7 +1247,7 @@ function createAnalysisText(boardInfo) {
 
 function countMatches(text, keyword) {
   // Enhanced matching that handles word boundaries and variations
-  const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\  return {
+  const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
     username')}\\b`, 'gi');
   const matches = text.match(regex) || [];
   return matches.length;
