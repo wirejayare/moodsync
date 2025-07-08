@@ -1159,78 +1159,118 @@ function getAnalysisQuality(confidence) {
 
 // Enhanced board info extraction with better URL parsing
 // Replace your extractBoardInfo function with this fixed version
+// STEP 1: Find and REMOVE this duplicate function (around line 800+ in your file)
+// DELETE this entire function - it's a duplicate:
+/*
+function extractBoardInfo(url) {
+  const urlParts = url.split('/');
+  const username = urlParts[urlParts.length - 2] || urlParts[urlParts.length - 3];
+  const boardName = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+  
+  return {
+    username,
+    boardName: boardName.replace(/-/g, ' '),
+    originalUrl: url
+  };
+}
+*/
+
+// STEP 2: Replace the main extractBoardInfo function with this COMPLETE, SAFE version:
+
 function extractBoardInfo(url) {
   console.log('🔍 Extracting board info from:', url);
   
+  // Safety check
   if (!url || typeof url !== 'string') {
     console.error('❌ Invalid URL provided:', url);
     return {
       username: 'unknown',
-      boardName: 'board',
+      boardName: 'unknown board',
       originalUrl: url || '',
       urlParts: []
     };
   }
   
-  // Split URL and filter empty parts
-  const allUrlParts = url.split('/').filter(part => part && part.length > 0);
-  console.log('📋 URL parts:', allUrlParts);
-  
-  let username, boardName;
-  
-  // Handle different Pinterest URL formats
-  if (url.includes('pinterest.com')) {
-    const pinterestIndex = allUrlParts.findIndex(part => part.includes('pinterest.com'));
-    console.log('📍 Pinterest index:', pinterestIndex);
+  try {
+    // Split URL and filter empty parts - SAFE version
+    const rawParts = url.split('/');
+    const allUrlParts = rawParts.filter(part => part && part.length > 0);
+    console.log('📋 All URL parts:', allUrlParts);
     
-    if (pinterestIndex >= 0 && allUrlParts.length > pinterestIndex + 2) {
-      username = allUrlParts[pinterestIndex + 1];
-      boardName = allUrlParts[pinterestIndex + 2];
-      console.log('✅ Found username:', username, 'boardName:', boardName);
+    let username = 'unknown';
+    let boardName = 'unknown board';
+    
+    // Handle different Pinterest URL formats
+    if (url.includes('pinterest.com')) {
+      const pinterestIndex = allUrlParts.findIndex(part => part.includes('pinterest.com'));
+      console.log('📍 Pinterest index found at:', pinterestIndex);
+      
+      if (pinterestIndex >= 0 && allUrlParts.length > pinterestIndex + 2) {
+        username = allUrlParts[pinterestIndex + 1] || 'unknown';
+        boardName = allUrlParts[pinterestIndex + 2] || 'unknown board';
+        console.log('✅ Extracted from structure - username:', username, 'boardName:', boardName);
+      }
     }
+    
+    // Handle pin.it short URLs
+    if (url.includes('pin.it')) {
+      boardName = 'shared-pin';
+      username = 'pinterest-user';
+      console.log('🔗 Pin.it URL detected');
+    }
+    
+    // Fallback extraction if nothing found
+    if (username === 'unknown' || boardName === 'unknown board') {
+      if (allUrlParts.length >= 2) {
+        username = allUrlParts[allUrlParts.length - 2] || 'unknown';
+        boardName = allUrlParts[allUrlParts.length - 1] || 'unknown board';
+        console.log('🔄 Using fallback extraction - username:', username, 'boardName:', boardName);
+      }
+    }
+    
+    // Clean up board name for better analysis
+    const cleanBoardName = String(boardName)
+      .replace(/-/g, ' ')
+      .replace(/_/g, ' ')
+      .replace(/\+/g, ' ')
+      .replace(/%20/g, ' ')
+      .replace(/[0-9]/g, '')
+      .trim() || 'board';
+    
+    // SAFE filtering of URL parts - this is where the error was happening
+    const filteredUrlParts = Array.isArray(allUrlParts) ? 
+      allUrlParts.filter(part => 
+        part && 
+        typeof part === 'string' &&
+        !part.includes('pinterest.com') && 
+        !part.includes('http') && 
+        !part.includes('https') &&
+        !part.includes('www') &&
+        part.length > 1
+      ) : [];
+    
+    const result = {
+      username: username || 'unknown',
+      boardName: cleanBoardName,
+      originalUrl: url,
+      urlParts: filteredUrlParts
+    };
+    
+    console.log('✅ Final extracted board info:', result);
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Error in extractBoardInfo:', error);
+    // Return safe fallback
+    return {
+      username: 'unknown',
+      boardName: 'error board',
+      originalUrl: url,
+      urlParts: []
+    };
   }
-  
-  // Handle pin.it short URLs
-  if (url.includes('pin.it')) {
-    boardName = 'shared-pin';
-    username = 'pinterest-user';
-  }
-  
-  // Fallback extraction
-  if (!username || !boardName) {
-    username = allUrlParts[allUrlParts.length - 2] || allUrlParts[allUrlParts.length - 3] || 'unknown';
-    boardName = allUrlParts[allUrlParts.length - 1] || allUrlParts[allUrlParts.length - 2] || 'board';
-    console.log('🔄 Using fallback - username:', username, 'boardName:', boardName);
-  }
-  
-  // Clean up board name for better analysis
-  const cleanBoardName = boardName
-    .replace(/-/g, ' ')
-    .replace(/_/g, ' ')
-    .replace(/\+/g, ' ')
-    .replace(/%20/g, ' ')
-    .replace(/[0-9]/g, '') // Remove numbers
-    .trim();
-  
-  // Filter URL parts safely
-  const filteredUrlParts = allUrlParts.filter(part => 
-    part && 
-    !part.includes('pinterest.com') && 
-    !part.includes('http') && 
-    !part.includes('https') &&
-    !part.includes('www')
-  );
-  
-  const result = {
-    username: username || 'unknown',
-    boardName: cleanBoardName || 'board',
-    originalUrl: url,
-    urlParts: filteredUrlParts
-  };
-  
-  console.log('✅ Extracted board info:', result);
-  return result;
 }
+
 
 // Enhanced keyword extraction
 function extractEnhancedKeywords(text, theme) {
@@ -1353,19 +1393,6 @@ function getCompositionStyle(theme) {
   };
   
   return styles[theme] || 'balanced composition';
-}
-
-// Extract Pinterest board information
-function extractBoardInfo(url) {
-  const urlParts = url.split('/');
-  const username = urlParts[urlParts.length - 2] || urlParts[urlParts.length - 3];
-  const boardName = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
-  
-  return {
-    username,
-    boardName: boardName.replace(/-/g, ' '),
-    originalUrl: url
-  };
 }
 
 // All your helper functions (analyzeThemes, generateAdvancedColorAnalysis, etc.)
