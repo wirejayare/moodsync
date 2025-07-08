@@ -1,8 +1,14 @@
-// src/components/EnhancedPinterestAnalyzer.js - Fixed styling
 import React, { useState } from 'react';
 import EnhancedAnalysisDisplay from './EnhancedAnalysisDisplay';
+import PinterestConnector from './PinterestConnector';
 
-const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
+const EnhancedPinterestAnalyzer = ({ 
+  spotifyToken, 
+  onAnalysisComplete, 
+  pinterestToken, 
+  pinterestUser, 
+  onPinterestAuth 
+}) => {
   const [pinterestUrl, setPinterestUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
@@ -15,20 +21,26 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
     }
 
     setIsAnalyzing(true);
-    setAnalysisStage('Analyzing Pinterest board...');
+    setAnalysisStage(pinterestToken ? 
+      'Analyzing Pinterest board with API...' : 
+      'Analyzing Pinterest board URL...'
+    );
     
     try {
-      // Start enhanced analysis
-      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced`, {
+      // Use the new API-enhanced endpoint
+      const endpoint = pinterestToken ? 
+        '/api/analyze-pinterest-with-api' : 
+        '/api/analyze-pinterest-enhanced';
+      
+      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          url: pinterestUrl,  // Fixed parameter name
+          url: pinterestUrl,
+          pinterestToken: pinterestToken,
           analysisOptions: {
-            enableComputerVision: true,
-            enableTextAnalysis: true,
-            enableColorAnalysis: true,
-            maxPinsToAnalyze: 20
+            enableAPIAnalysis: !!pinterestToken,
+            maxPinsToAnalyze: 50
           }
         })
       });
@@ -37,10 +49,10 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Handle standard JSON response only
       const data = await response.json();
       
       if (data.success) {
+        console.log('Analysis method used:', data.method);
         setAnalysis(data.analysis);
         onAnalysisComplete(data.analysis);
       } else {
@@ -57,59 +69,65 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
   };
   
   const handleDemoAnalysis = () => {
-    // Demo analysis for testing
     const demoAnalysis = {
       mood: {
-        primary: 'Peaceful',
-        confidence: 0.87,
-        secondary: ['Romantic', 'Cozy'],
+        primary: 'Energetic',
+        confidence: 0.92,
+        secondary: ['Fresh', 'Optimistic'],
         emotional_spectrum: [
-          { name: 'Peaceful', confidence: 0.87 },
-          { name: 'Romantic', confidence: 0.73 },
-          { name: 'Cozy', confidence: 0.68 },
-          { name: 'Elegant', confidence: 0.45 },
-          { name: 'Fresh', confidence: 0.32 }
+          { name: 'Energetic', confidence: 0.92 },
+          { name: 'Fresh', confidence: 0.78 },
+          { name: 'Optimistic', confidence: 0.71 },
+          { name: 'Cozy', confidence: 0.45 },
+          { name: 'Peaceful', confidence: 0.32 }
         ]
       },
       visual: {
         color_palette: [
-          { hex: '#F5E6D3', mood: 'warm' },
-          { hex: '#E8C5A0', mood: 'cozy' },
-          { hex: '#B8860B', mood: 'earthy' },
-          { hex: '#8FBC8F', mood: 'calming' },
-          { hex: '#F0F8FF', mood: 'light' }
+          { hex: '#FFD700', mood: 'golden', name: 'Sunrise Gold' },
+          { hex: '#FFA500', mood: 'energetic', name: 'Morning Orange' },
+          { hex: '#FFEB3B', mood: 'bright', name: 'Sunny Yellow' },
+          { hex: '#FF9800', mood: 'warm', name: 'Amber Glow' },
+          { hex: '#FFF8DC', mood: 'soft', name: 'Cream Light' }
         ],
         color_temperature: 'warm',
         color_harmony: 'analogous',
-        aesthetic_style: 'minimalist',
-        visual_complexity: 'low',
-        lighting_mood: 'soft',
-        composition_style: 'balanced'
+        aesthetic_style: 'morning',
+        visual_complexity: 'medium',
+        lighting_mood: 'bright'
       },
       content: {
-        sentiment: { score: 0.6, label: 'positive' },
+        sentiment: { score: 0.8, label: 'positive' },
         keywords: [
-          { word: 'home', count: 15 },
-          { word: 'cozy', count: 12 },
-          { word: 'natural', count: 10 },
-          { word: 'peaceful', count: 8 },
-          { word: 'beautiful', count: 7 }
+          { word: 'morning', count: 15 },
+          { word: 'coffee', count: 12 },
+          { word: 'sunrise', count: 10 },
+          { word: 'energy', count: 8 },
+          { word: 'fresh', count: 7 }
         ],
-        topics: ['Home Decor', 'Interior Design', 'Lifestyle', 'Wellness'],
-        themes: ['minimalism', 'hygge', 'natural living']
+        topics: ['Lifestyle', 'Wellness', 'Daily Routines', 'Coffee Culture'],
+        themes: ['morning', 'energetic', 'lifestyle']
       },
       music: {
-        primary_genres: ['acoustic', 'indie folk', 'ambient', 'classical', 'lo-fi'],
-        energy_level: 'low-medium',
-        tempo_range: '60-90 BPM',
-        vocal_style: 'soft vocals',
+        primary_genres: ['indie pop', 'upbeat acoustic', 'folk pop', 'coffee shop', 'morning jazz'],
+        energy_level: 'medium-high',
+        tempo_range: '90-120 BPM',
+        vocal_style: 'contemporary vocals',
         era_preference: 'contemporary'
       },
       board: {
-        name: 'Demo Peaceful Home',
-        diversity_score: 0.65,
-        cohesion_score: 0.82
-      }
+        name: 'Demo Morning Person Vibes',
+        url: 'https://pinterest.com/demo/morning-person-vibes',
+        pin_count: 47,
+        detected_themes: [
+          { theme: 'morning', confidence: 0.92 },
+          { theme: 'energetic', confidence: 0.78 }
+        ],
+        primary_theme: 'morning',
+        theme_confidence: 0.92
+      },
+      confidence: 0.89,
+      analysis_method: pinterestToken ? 'pinterest_api_enhanced' : 'demo_analysis'
     };
     
     setAnalysis(demoAnalysis);
@@ -122,7 +140,7 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
       padding: '2rem',
       borderRadius: '15px',
       marginBottom: '2rem',
-      color: 'white'  // Ensure text is white
+      color: 'white'
     }}>
       <h3 style={{ 
         marginBottom: '1rem',
@@ -131,6 +149,12 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
       }}>
         📌 Enhanced Pinterest Analysis
       </h3>
+      
+      {/* Pinterest Connection Component */}
+      <PinterestConnector 
+        onPinterestAuth={onPinterestAuth}
+        pinterestUser={pinterestUser}
+      />
       
       <div style={{ marginBottom: '1rem' }}>
         <input
@@ -145,8 +169,8 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
             border: '2px solid rgba(255,255,255,0.3)',
             fontSize: '16px',
             marginBottom: '1rem',
-            background: 'rgba(255,255,255,0.9)',  // Light background for input
-            color: '#333',  // Dark text for input
+            background: 'rgba(255,255,255,0.9)',
+            color: '#333',
             boxSizing: 'border-box'
           }}
         />
@@ -154,13 +178,13 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
         <div style={{ 
           display: 'flex', 
           gap: '1rem',
-          flexWrap: 'wrap'  // Allow wrapping on mobile
+          flexWrap: 'wrap'
         }}>
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing || !pinterestUrl}
             style={{
-              background: isAnalyzing ? '#999' : '#E60023',
+              background: isAnalyzing ? '#999' : (pinterestToken ? '#E60023' : '#667eea'),
               color: 'white',
               border: '2px solid rgba(255,255,255,0.3)',
               padding: '12px 24px',
@@ -174,14 +198,17 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
               transition: 'all 0.3s ease'
             }}
           >
-            {isAnalyzing ? '🔍 Analyzing...' : '🔍 Deep Analysis'}
+            {isAnalyzing ? 
+              '🔍 Analyzing...' : 
+              (pinterestToken ? '🚀 Deep API Analysis' : '🔍 Basic Analysis')
+            }
           </button>
           
           <button
             onClick={handleDemoAnalysis}
             disabled={isAnalyzing}
             style={{
-              background: '#667eea',
+              background: '#f39c12',
               color: 'white',
               border: '2px solid rgba(255,255,255,0.3)',
               padding: '12px 16px',
@@ -215,7 +242,7 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
             marginBottom: '8px',
             fontWeight: 'bold'
           }}>
-            🧠 AI Analysis in Progress...
+            {pinterestToken ? '🤖 AI + API Analysis in Progress...' : '🧠 AI Analysis in Progress...'}
           </div>
           <div style={{ 
             fontSize: '12px', 
@@ -232,19 +259,64 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
             marginTop: '8px',
             overflow: 'hidden'
           }}>
-            {/* Simple pulsing animation */}
             <div style={{
               width: '40%',
               height: '100%',
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.7), rgba(255,255,255,0.3))',
-              borderRadius: '3px'
+              background: pinterestToken ? 
+                'linear-gradient(90deg, rgba(230,0,35,0.5), rgba(230,0,35,0.9), rgba(230,0,35,0.5))' :
+                'linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.7), rgba(255,255,255,0.3))',
+              borderRadius: '3px',
+              animation: 'pulse 2s infinite'
             }} />
           </div>
+          <style>
+            {`
+              @keyframes pulse {
+                0%, 100% { opacity: 0.5; }
+                50% { opacity: 1; }
+              }
+            `}
+          </style>
         </div>
       )}
 
       {/* Enhanced Analysis Display */}
       <EnhancedAnalysisDisplay analysis={analysis} />
+
+      {/* Analysis Method Indicator */}
+      {analysis && (
+        <div style={{
+          background: analysis.analysis_method === 'pinterest_api_enhanced' ? 
+            'rgba(230, 0, 35, 0.1)' : 'rgba(255,255,255,0.05)',
+          border: analysis.analysis_method === 'pinterest_api_enhanced' ? 
+            '1px solid rgba(230, 0, 35, 0.3)' : '1px solid rgba(255,255,255,0.1)',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginTop: '1rem',
+          fontSize: '12px',
+          textAlign: 'center',
+          color: 'white'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            Analysis Method: {analysis.analysis_method === 'pinterest_api_enhanced' ? 
+              '🚀 Pinterest API Enhanced' : 
+              '📝 Text-Based Analysis'
+            }
+          </div>
+          <div style={{ opacity: 0.8 }}>
+            {analysis.analysis_method === 'pinterest_api_enhanced' ? 
+              `Analyzed ${analysis.board?.pin_count || 0} pins with full content access` :
+              'Connect Pinterest for 10x more accurate results'
+            }
+          </div>
+          {analysis.data_richness && (
+            <div style={{ opacity: 0.7, marginTop: '4px' }}>
+              Data: {analysis.data_richness.pin_count} pins • {analysis.data_richness.text_length} characters • 
+              Confidence: {Math.round(analysis.confidence * 100)}%
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Analysis Features Info */}
       {!analysis && !isAnalyzing && (
@@ -263,7 +335,7 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
             marginBottom: '8px',
             color: 'white'
           }}>
-            🚀 Enhanced Analysis Features:
+            {pinterestToken ? '🚀 API-Enhanced Features:' : '📝 Current Features:'}
           </div>
           <div style={{ 
             display: 'grid', 
@@ -271,12 +343,25 @@ const EnhancedPinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
             gap: '8px',
             color: 'rgba(255,255,255,0.9)'
           }}>
-            <div>• Computer vision analysis</div>
-            <div>• Advanced color psychology</div>
-            <div>• Text sentiment analysis</div>
-            <div>• Style & composition analysis</div>
-            <div>• Multi-dimensional mood mapping</div>
-            <div>• Enhanced music recommendations</div>
+            {pinterestToken ? (
+              <>
+                <div>• Real pin content analysis</div>
+                <div>• Board description parsing</div>
+                <div>• Pin engagement data</div>
+                <div>• Multi-dimensional mood mapping</div>
+                <div>• Enhanced confidence scoring</div>
+                <div>• Popularity-validated themes</div>
+              </>
+            ) : (
+              <>
+                <div>• URL keyword analysis</div>
+                <div>• Advanced color psychology</div>
+                <div>• Text sentiment analysis</div>
+                <div>• Multi-dimensional mood mapping</div>
+                <div>• Enhanced music recommendations</div>
+                <div>• Connect Pinterest for 10x better results!</div>
+              </>
+            )}
           </div>
         </div>
       )}
