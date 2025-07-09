@@ -297,16 +297,47 @@ async function getUserBoards(accessToken) {
             }
           });
           
-          thumbnails = pinsResponse.data.items.map(pin => ({
-            id: pin.id,
-            image_url: pin.media?.images?.['300x300']?.url || 
-                      pin.media?.images?.['300x']?.url || 
-                      pin.media?.images?.original?.url,
-            title: pin.title || ''
-          })).filter(thumb => thumb.image_url);
+          console.log(`Board "${board.name}" - Found ${pinsResponse.data.items?.length || 0} pins for thumbnails`);
+          
+          thumbnails = pinsResponse.data.items?.map(pin => {
+            // Try different image sizes in order of preference
+            let imageUrl = null;
+            
+            if (pin.media?.images) {
+              // Try these sizes in order
+              const imageSizes = ['300x300', '300x', '600x', 'orig', 'original'];
+              
+              for (const size of imageSizes) {
+                if (pin.media.images[size]?.url) {
+                  imageUrl = pin.media.images[size].url;
+                  break;
+                }
+              }
+              
+              // If no standard sizes, try to get any available image
+              if (!imageUrl) {
+                const availableSizes = Object.keys(pin.media.images);
+                console.log(`Available image sizes for pin:`, availableSizes);
+                if (availableSizes.length > 0) {
+                  imageUrl = pin.media.images[availableSizes[0]]?.url;
+                }
+              }
+            }
+            
+            console.log(`Pin "${pin.title || 'Untitled'}" - Image URL: ${imageUrl ? 'Found' : 'None'}`);
+            
+            return {
+              id: pin.id,
+              image_url: imageUrl,
+              title: pin.title || '',
+              description: pin.description || ''
+            };
+          }).filter(thumb => thumb.image_url) || [];
+          
+          console.log(`Board "${board.name}" - Final thumbnails: ${thumbnails.length}`);
           
         } catch (pinError) {
-          console.log(`Could not fetch pins for board ${board.name}:`, pinError.message);
+          console.log(`Could not fetch pins for board ${board.name}:`, pinError.response?.status, pinError.message);
         }
         
         return {
