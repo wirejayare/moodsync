@@ -8,15 +8,39 @@ const PinterestBoardSelector = ({
   selectedBoard 
 }) => {
   const [boards, setBoards] = useState([]);
+  const [filteredBoards, setFilteredBoards] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name');
 
   useEffect(() => {
     if (pinterestToken && pinterestUser) {
       fetchUserBoards();
     }
   }, [pinterestToken, pinterestUser]);
+
+  useEffect(() => {
+    let filtered = boards.filter(board => 
+      board.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (board.description && board.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'pins':
+          return b.pin_count - a.pin_count;
+        case 'recent':
+          return new Date(b.created_at) - new Date(a.created_at);
+        case 'name':
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+
+    setFilteredBoards(filtered);
+  }, [boards, searchTerm, sortBy]);
 
   const fetchUserBoards = async () => {
     setIsLoading(true);
@@ -38,7 +62,14 @@ const PinterestBoardSelector = ({
       
       if (data.success) {
         setBoards(data.boards);
-        console.log(`Loaded ${data.boards.length} boards`);
+        console.log(`Loaded ${data.boards.length} boards with thumbnails`);
+        
+        data.boards.forEach(board => {
+          console.log(`Board "${board.name}": ${board.thumbnails?.length || 0} thumbnails`);
+          if (board.thumbnails?.length > 0) {
+            console.log('Sample thumbnail:', board.thumbnails[0]);
+          }
+        });
       } else {
         throw new Error(data.message || 'Failed to fetch boards');
       }
@@ -55,7 +86,6 @@ const PinterestBoardSelector = ({
     try {
       setIsLoading(true);
       
-      // Fetch detailed board info
       const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/pinterest/boards/${board.id}`, {
         headers: {
           'Authorization': `Bearer ${pinterestToken}`,
@@ -96,6 +126,7 @@ const PinterestBoardSelector = ({
       borderRadius: '10px',
       marginBottom: '1rem'
     }}>
+      {/* Header Section */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -112,7 +143,7 @@ const PinterestBoardSelector = ({
             </div>
           ) : (
             <div style={{ fontSize: '14px', color: 'white', opacity: 0.7 }}>
-              Choose a board to analyze
+              Choose from {boards.length} boards
             </div>
           )}
         </div>
@@ -136,6 +167,7 @@ const PinterestBoardSelector = ({
         </button>
       </div>
 
+      {/* Error Display */}
       {error && (
         <div style={{
           background: 'rgba(220, 53, 69, 0.2)',
@@ -163,106 +195,215 @@ const PinterestBoardSelector = ({
         </div>
       )}
 
+      {/* Expanded Board Browser */}
       {isExpanded && (
-        <div style={{
-          maxHeight: '300px',
-          overflowY: 'auto',
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '8px',
-          padding: '8px'
-        }}>
-          {boards.length === 0 && !isLoading ? (
-            <div style={{
-              textAlign: 'center',
-              color: 'white',
-              opacity: 0.7,
-              padding: '2rem'
-            }}>
-              No boards found. Create some boards on Pinterest first!
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: '8px'
-            }}>
-              {boards.map((board) => (
-                <div
-                  key={board.id}
-                  onClick={() => handleBoardClick(board)}
-                  style={{
-                    background: selectedBoard?.id === board.id ? 
-                      'rgba(230, 0, 35, 0.3)' : 'rgba(255,255,255,0.1)',
-                    border: selectedBoard?.id === board.id ? 
-                      '2px solid rgba(230, 0, 35, 0.6)' : '1px solid rgba(255,255,255,0.2)',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    minHeight: '80px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (selectedBoard?.id !== board.id) {
-                      e.target.style.background = 'rgba(255,255,255,0.2)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (selectedBoard?.id !== board.id) {
-                      e.target.style.background = 'rgba(255,255,255,0.1)';
-                    }
-                  }}
-                >
-                  <div>
-                    <div style={{
-                      color: 'white',
-                      fontWeight: 'bold',
-                      fontSize: '14px',
-                      marginBottom: '4px',
-                      lineHeight: '1.2'
-                    }}>
-                      {board.name}
-                    </div>
-                    
-                    {board.description && (
+        <div>
+          {/* Search and Sort Controls */}
+          <div style={{
+            display: 'flex',
+            gap: '10px',
+            marginBottom: '1rem',
+            flexWrap: 'wrap'
+          }}>
+            <input
+              type="text"
+              placeholder="Search boards..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                flex: 1,
+                minWidth: '200px',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                background: 'rgba(255,255,255,0.1)',
+                color: 'white',
+                fontSize: '14px'
+              }}
+            />
+            
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                background: 'rgba(255,255,255,0.1)',
+                color: 'white',
+                fontSize: '14px'
+              }}
+            >
+              <option value="name">Sort by Name</option>
+              <option value="pins">Sort by Pin Count</option>
+              <option value="recent">Sort by Recent</option>
+            </select>
+          </div>
+
+          {/* Board Grid Container */}
+          <div style={{
+            maxHeight: '400px',
+            overflowY: 'auto',
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '8px',
+            padding: '8px'
+          }}>
+            {filteredBoards.length === 0 && !isLoading ? (
+              <div style={{
+                textAlign: 'center',
+                color: 'white',
+                opacity: 0.7,
+                padding: '2rem'
+              }}>
+                {searchTerm ? `No boards found matching "${searchTerm}"` : 'No boards found. Create some boards on Pinterest first!'}
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                gap: '12px'
+              }}>
+                {filteredBoards.map((board) => (
+                  <div
+                    key={board.id}
+                    onClick={() => handleBoardClick(board)}
+                    style={{
+                      background: selectedBoard?.id === board.id ? 
+                        'rgba(230, 0, 35, 0.3)' : 'rgba(255,255,255,0.1)',
+                      border: selectedBoard?.id === board.id ? 
+                        '2px solid rgba(230, 0, 35, 0.6)' : '1px solid rgba(255,255,255,0.2)',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      minHeight: '120px',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedBoard?.id !== board.id) {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedBoard?.id !== board.id) {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                      }
+                    }}
+                  >
+                    {/* Board Thumbnails */}
+                    {board.thumbnails && board.thumbnails.length > 0 ? (
                       <div style={{
-                        color: 'white',
-                        opacity: 0.8,
-                        fontSize: '12px',
-                        lineHeight: '1.3',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: '4px',
                         marginBottom: '8px',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
+                        height: '60px',
+                        overflow: 'hidden',
+                        borderRadius: '4px'
                       }}>
-                        {board.description}
+                        {board.thumbnails.slice(0, 6).map((thumb, index) => (
+                          <div
+                            key={thumb.id || index}
+                            style={{
+                              backgroundImage: `url(${thumb.image_url})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                              borderRadius: '2px',
+                              minHeight: index < 3 ? '28px' : '26px',
+                              backgroundColor: 'rgba(255,255,255,0.1)',
+                              border: '1px solid rgba(255,255,255,0.2)'
+                            }}
+                            title={thumb.title}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '60px',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        borderRadius: '4px',
+                        marginBottom: '8px',
+                        border: '1px dashed rgba(255,255,255,0.3)'
+                      }}>
+                        <span style={{ fontSize: '20px', opacity: 0.5 }}>📌</span>
                       </div>
                     )}
+
+                    {/* Board Info */}
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                        marginBottom: '4px',
+                        lineHeight: '1.2'
+                      }}>
+                        {board.name}
+                      </div>
+                      
+                      {board.description && (
+                        <div style={{
+                          color: 'white',
+                          opacity: 0.8,
+                          fontSize: '12px',
+                          lineHeight: '1.3',
+                          marginBottom: '8px',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}>
+                          {board.description}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Board Stats */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontSize: '11px',
+                      color: 'white',
+                      opacity: 0.7,
+                      marginTop: 'auto'
+                    }}>
+                      <span>📌 {board.pin_count} pins</span>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {board.follower_count > 0 && (
+                          <span>👥 {board.follower_count}</span>
+                        )}
+                        {board.privacy === 'private' && (
+                          <span>🔒</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '11px',
-                    color: 'white',
-                    opacity: 0.7
-                  }}>
-                    <span>📌 {board.pin_count} pins</span>
-                    {board.privacy === 'private' && (
-                      <span>🔒 Private</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Stats Footer */}
+          {filteredBoards.length > 0 && (
+            <div style={{
+              textAlign: 'center',
+              fontSize: '12px',
+              color: 'white',
+              opacity: 0.7,
+              marginTop: '1rem'
+            }}>
+              Showing {filteredBoards.length} of {boards.length} boards
             </div>
           )}
         </div>
       )}
 
+      {/* Selected Board Display */}
       {selectedBoard && (
         <div style={{
           background: 'rgba(255,255,255,0.1)',
@@ -302,6 +443,7 @@ const PinterestBoardSelector = ({
           )}
         </div>
       )}
+    </div>
   );
 };
 
