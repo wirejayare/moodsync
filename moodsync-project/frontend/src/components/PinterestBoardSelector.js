@@ -302,7 +302,6 @@ const PinterestBoardSelector = ({
           )}
         </div>
       )}
-    </div>
   );
 };
 
