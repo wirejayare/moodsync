@@ -32,8 +32,11 @@ app.get('/', (req, res) => {
       '/api/spotify/callback', 
       '/api/pinterest/auth-url',
       '/api/pinterest/callback',
+      '/api/pinterest/boards',
+      '/api/pinterest/boards/:boardId',
       '/api/analyze-pinterest',
       '/api/analyze-pinterest-enhanced',
+      '/api/analyze-pinterest-with-api',
       '/api/create-playlist'
     ]
   });
@@ -233,6 +236,102 @@ app.post('/api/pinterest/callback', async (req, res) => {
     });
   }
 });
+
+// ===== PINTEREST API FUNCTIONS =====
+
+async function getUserBoards(accessToken) {
+  try {
+    console.log('Fetching user boards from Pinterest API...');
+    
+    const response = await axios.get('https://api.pinterest.com/v5/boards', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      params: {
+        page_size: 25
+      }
+    });
+    
+    console.log(`Found ${response.data.items.length} boards`);
+    
+    return response.data.items.map(board => ({
+      id: board.id,
+      name: board.name,
+      description: board.description || '',
+      pin_count: board.pin_count || 0,
+      follower_count: board.follower_count || 0,
+      url: `https://pinterest.com/${board.owner?.username || 'user'}/${board.name?.replace(/\s+/g, '-').toLowerCase() || board.id}/`,
+      image_thumbnail_url: board.media?.image_cover_url,
+      privacy: board.privacy || 'public',
+      created_at: board.created_at
+    }));
+    
+  } catch (error) {
+    console.error('Error fetching user boards:', error.response?.data || error.message);
+    throw new Error(`Failed to fetch boards: ${error.response?.data?.message || error.message}`);
+  }
+}
+
+async function getBoardById(boardId, accessToken) {
+  try {
+    console.log('Fetching board details for:', boardId);
+    
+    const boardResponse = await axios.get(`https://api.pinterest.com/v5/boards/${boardId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    const board = boardResponse.data;
+    
+    // Also fetch some pins for preview
+    let pins = [];
+    try {
+      const pinsResponse = await axios.get(`https://api.pinterest.com/v5/boards/${boardId}/pins`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        params: {
+          page_size: 10
+        }
+      });
+      
+      pins = pinsResponse.data.items.map(pin => ({
+        id: pin.id,
+        title: pin.title || '',
+        description: pin.description || '',
+        image_url: pin.media?.images?.['600x']?.url || pin.media?.images?.original?.url,
+        link: pin.link || '',
+        created_at: pin.created_at
+      }));
+      
+    } catch (pinsError) {
+      console.log('Could not fetch pins for board:', pinsError.message);
+    }
+    
+    return {
+      id: board.id,
+      name: board.name,
+      description: board.description || '',
+      pin_count: board.pin_count || 0,
+      follower_count: board.follower_count || 0,
+      url: `https://pinterest.com/${board.owner?.username || 'user'}/${board.name?.replace(/\s+/g, '-').toLowerCase() || board.id}/`,
+      image_thumbnail_url: board.media?.image_cover_url,
+      privacy: board.privacy || 'public',
+      created_at: board.created_at,
+      pins: pins,
+      owner: {
+        username: board.owner?.username || 'unknown',
+        first_name: board.owner?.first_name || '',
+        last_name: board.owner?.last_name || ''
+      }
+    };
+    
+  } catch (error) {
+    console.error('Error fetching board details:', error.response?.data || error.message);
+    throw new Error(`Failed to fetch board: ${error.response?.data?.message || error.message}`);
+  }
+}
 
 // ===== ANALYSIS FUNCTIONS =====
 
@@ -503,6 +602,205 @@ function shuffleArray(array) {
   }
   return shuffled;
 }
+
+// ===== PINTEREST BOARD ENDPOINTS =====
+
+app.get('/api/pinterest/boards', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Pinterest access token required'
+      });
+    }
+    
+    const accessToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    console.log('Fetching Pinterest boards for user...');
+    
+    const boards = await getUserBoards(accessToken);
+    
+    res.json({
+      success: true,
+      boards: boards,
+      total: boards.length,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Get boards error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch boards',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/pinterest/boards/:boardId', async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Pinterest access token required'
+      });
+    }
+    
+    const accessToken = authHeader.substring(7);
+    
+    if (!boardId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Board ID is required'
+      });
+    }
+    
+    console.log('Fetching board details for ID:', boardId);
+    
+    const board = await getBoardById(boardId, accessToken);
+    
+    res.json({
+      success: true,
+      board: board,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Get board details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch board details',
+      error: error.message
+    });
+  }
+});
+
+// Enhanced analysis using Pinterest API data
+app.post('/api/analyze-pinterest-with-api', async (req, res) => {
+  try {
+    const { boardId, pinterestToken } = req.body;
+    
+    if (!boardId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Board ID is required'
+      });
+    }
+    
+    if (!pinterestToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pinterest access token is required'
+      });
+    }
+
+    console.log('Starting API-enhanced analysis for board:', boardId);
+    
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Fetch board data from Pinterest API
+    const boardData = await getBoardById(boardId, pinterestToken);
+    
+    // Create rich analysis text from API data
+    const analysisText = [
+      boardData.name,
+      boardData.description,
+      ...boardData.pins.map(pin => pin.title).filter(title => title),
+      ...boardData.pins.map(pin => pin.description).filter(desc => desc)
+    ].join(' ').toLowerCase();
+    
+    // Use enhanced analysis with richer data
+    const themeAnalysis = detectThemes(analysisText);
+    const theme = themeAnalysis.themeData;
+    
+    // Calculate enhanced confidence based on API data richness
+    const dataRichness = Math.min(
+      (boardData.pin_count / 50) * 0.2 +
+      (boardData.pins.length / 10) * 0.3 +
+      (analysisText.length / 500) * 0.2,
+      0.4
+    );
+    
+    const enhancedConfidence = Math.min(themeAnalysis.confidence + dataRichness, 0.95);
+    
+    const analysis = {
+      mood: {
+        primary: theme.mood,
+        confidence: enhancedConfidence,
+        secondary: ['Modern', 'Fresh'],
+        emotional_spectrum: [
+          { name: theme.mood, confidence: enhancedConfidence },
+          { name: 'Modern', confidence: 0.7 },
+          { name: 'Fresh', confidence: 0.6 }
+        ]
+      },
+      visual: {
+        color_palette: theme.colors.map((hex, i) => ({
+          hex,
+          mood: i === 0 ? 'primary' : 'secondary',
+          name: `Color ${i + 1}`
+        })),
+        dominant_colors: { hex: theme.colors[0], name: 'Primary' },
+        aesthetic_style: themeAnalysis.primaryTheme,
+        visual_complexity: boardData.pins.length > 20 ? 'high' : 'medium'
+      },
+      content: {
+        sentiment: { score: 0.8, label: 'positive' },
+        keywords: [
+          { word: boardData.name.split(' ')[0], count: 1 },
+          ...boardData.pins.slice(0, 3).map(pin => ({ 
+            word: pin.title.split(' ')[0] || 'pin', 
+            count: 1 
+          }))
+        ].filter(k => k.word),
+        topics: ['Lifestyle', 'Design', 'Mood', 'Pinterest']
+      },
+      music: {
+        primary_genres: theme.genres,
+        energy_level: theme.mood === 'Energetic' ? 'high' : 'medium',
+        tempo_range: theme.mood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'
+      },
+      board: {
+        id: boardData.id,
+        name: boardData.name,
+        description: boardData.description,
+        url: boardData.url,
+        username: boardData.owner.username,
+        pin_count: boardData.pin_count,
+        follower_count: boardData.follower_count,
+        detected_theme: themeAnalysis.primaryTheme,
+        theme_confidence: enhancedConfidence,
+        pins_analyzed: boardData.pins.length
+      },
+      confidence: enhancedConfidence,
+      analysis_method: 'pinterest_api_enhanced',
+      data_source: 'pinterest_api',
+      timestamp: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      analysis,
+      board_data: boardData,
+      method: 'api_enhanced_analysis',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('API-enhanced analysis error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'API-enhanced analysis failed. Please try again.',
+      error: error.message
+    });
+  }
+});
 
 // ===== ANALYSIS ENDPOINTS =====
 
