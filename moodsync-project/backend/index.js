@@ -1,4 +1,884 @@
-const express = require('express');
+// ENHANCED MOOD DETECTION SYSTEM WITH NLP
+
+function detectThemes(analysisText) {
+  // Comprehensive mood database with 60 moods
+  const moodDatabase = {
+    // ENERGY SPECTRUM (10 moods)
+    euphoric: {
+      keywords: ['euphoric', 'ecstatic', 'blissful', 'exhilarated', 'rapturous'],
+      synonyms: ['elated', 'overjoyed', 'thrilled'],
+      nlp_patterns: ['feel amazing', 'on top of world', 'pure joy'],
+      weight: 1.2,
+      energy: 'very-high',
+      genres: ['dance', 'electronic', 'pop', 'festival', 'uplifting house']
+    },
+    energetic: {
+      keywords: ['energetic', 'dynamic', 'vibrant', 'active', 'lively'],
+      synonyms: ['vigorous', 'spirited', 'animated'],
+      nlp_patterns: ['full of energy', 'ready to go', 'pumped up'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['indie pop', 'upbeat acoustic', 'rock', 'funk']
+    },
+    motivated: {
+      keywords: ['motivated', 'driven', 'determined', 'focused', 'ambitious'],
+      synonyms: ['goal-oriented', 'purposeful', 'inspired'],
+      nlp_patterns: ['get things done', 'make it happen', 'chase dreams'],
+      weight: 1.0,
+      energy: 'medium-high',
+      genres: ['motivational', 'hip hop', 'rock', 'electronic']
+    },
+    balanced: {
+      keywords: ['balanced', 'centered', 'stable', 'harmonious', 'grounded'],
+      synonyms: ['equilibrium', 'steady', 'composed'],
+      nlp_patterns: ['find balance', 'inner peace', 'steady rhythm'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['indie', 'alternative', 'acoustic', 'folk']
+    },
+    calm: {
+      keywords: ['calm', 'serene', 'tranquil', 'peaceful', 'still'],
+      synonyms: ['placid', 'quiet', 'restful'],
+      nlp_patterns: ['take it slow', 'breathe deep', 'find peace'],
+      weight: 1.0,
+      energy: 'low-medium',
+      genres: ['ambient', 'classical', 'meditation', 'soft acoustic']
+    },
+    peaceful: {
+      keywords: ['peaceful', 'zen', 'mindful', 'meditative', 'soothing'],
+      synonyms: ['tranquil', 'restful', 'calming'],
+      nlp_patterns: ['inner calm', 'peaceful moment', 'quiet mind'],
+      weight: 1.0,
+      energy: 'low',
+      genres: ['ambient', 'new age', 'meditation', 'nature sounds']
+    },
+    sleepy: {
+      keywords: ['sleepy', 'drowsy', 'tired', 'relaxed', 'lazy'],
+      synonyms: ['lethargic', 'languid', 'dreamy'],
+      nlp_patterns: ['need rest', 'wind down', 'drift away'],
+      weight: 0.9,
+      energy: 'very-low',
+      genres: ['lo-fi', 'ambient', 'sleep music', 'soft piano']
+    },
+    dreamy: {
+      keywords: ['dreamy', 'ethereal', 'floating', 'otherworldly', 'surreal'],
+      synonyms: ['fantastical', 'mystical', 'transcendent'],
+      nlp_patterns: ['lost in thought', 'float away', 'dream state'],
+      weight: 1.0,
+      energy: 'low',
+      genres: ['dream pop', 'ambient', 'ethereal', 'shoegaze']
+    },
+    restless: {
+      keywords: ['restless', 'anxious', 'agitated', 'unsettled', 'fidgety'],
+      synonyms: ['uneasy', 'nervous', 'jittery'],
+      nlp_patterns: ['can\'t sit still', 'need to move', 'feeling antsy'],
+      weight: 0.9,
+      energy: 'medium-high',
+      genres: ['alternative rock', 'indie', 'post-punk', 'experimental']
+    },
+    exhausted: {
+      keywords: ['exhausted', 'drained', 'depleted', 'worn out', 'fatigued'],
+      synonyms: ['spent', 'weary', 'burnt out'],
+      nlp_patterns: ['need a break', 'completely drained', 'so tired'],
+      weight: 0.8,
+      energy: 'very-low',
+      genres: ['slow acoustic', 'soft rock', 'melancholic', 'introspective']
+    },
+
+    // EMOTIONAL SPECTRUM (15 moods)
+    joyful: {
+      keywords: ['joyful', 'happy', 'cheerful', 'delighted', 'gleeful'],
+      synonyms: ['jubilant', 'merry', 'sunny'],
+      nlp_patterns: ['so happy', 'pure joy', 'can\'t stop smiling'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['pop', 'indie pop', 'feel-good', 'upbeat folk']
+    },
+    content: {
+      keywords: ['content', 'satisfied', 'fulfilled', 'pleasant', 'comfortable'],
+      synonyms: ['gratified', 'pleased', 'at ease'],
+      nlp_patterns: ['feeling good', 'life is good', 'satisfied with'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['acoustic', 'folk', 'indie', 'soft rock']
+    },
+    optimistic: {
+      keywords: ['optimistic', 'hopeful', 'positive', 'upbeat', 'bright'],
+      synonyms: ['encouraging', 'promising', 'confident'],
+      nlp_patterns: ['looking forward', 'bright future', 'good things coming'],
+      weight: 1.0,
+      energy: 'medium-high',
+      genres: ['indie pop', 'folk pop', 'uplifting', 'alternative']
+    },
+    romantic: {
+      keywords: ['romantic', 'loving', 'affectionate', 'intimate', 'tender'],
+      synonyms: ['passionate', 'amorous', 'devoted'],
+      nlp_patterns: ['in love', 'heart full', 'romantic moment'],
+      weight: 1.1,
+      energy: 'medium',
+      genres: ['romantic', 'soul', 'R&B', 'soft jazz', 'love songs']
+    },
+    passionate: {
+      keywords: ['passionate', 'intense', 'fervent', 'ardent', 'fiery'],
+      synonyms: ['zealous', 'burning', 'devoted'],
+      nlp_patterns: ['burning desire', 'intense feeling', 'heart on fire'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['rock', 'latin', 'flamenco', 'intense pop', 'dramatic']
+    },
+    melancholic: {
+      keywords: ['melancholic', 'wistful', 'pensive', 'bittersweet', 'longing'],
+      synonyms: ['sorrowful', 'mournful', 'reflective'],
+      nlp_patterns: ['feeling blue', 'lost in thought', 'bittersweet memory'],
+      weight: 1.0,
+      energy: 'low',
+      genres: ['indie folk', 'melancholic', 'sad songs', 'introspective']
+    },
+    nostalgic: {
+      keywords: ['nostalgic', 'reminiscent', 'sentimental', 'yearning', 'remembering'],
+      synonyms: ['wistful', 'longing', 'homesick'],
+      nlp_patterns: ['miss the old days', 'remember when', 'take me back'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['vintage', 'classic rock', 'oldies', 'retro pop']
+    },
+    anxious: {
+      keywords: ['anxious', 'worried', 'nervous', 'stressed', 'tense'],
+      synonyms: ['apprehensive', 'uneasy', 'troubled'],
+      nlp_patterns: ['feeling anxious', 'so worried', 'stressed out'],
+      weight: 0.8,
+      energy: 'medium-high',
+      genres: ['alternative', 'indie rock', 'post-punk', 'experimental']
+    },
+    confident: {
+      keywords: ['confident', 'self-assured', 'bold', 'fearless', 'empowered'],
+      synonyms: ['assertive', 'strong', 'determined'],
+      nlp_patterns: ['feeling strong', 'ready to conquer', 'unstoppable'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['hip hop', 'rock', 'pop', 'empowerment', 'strong vocals']
+    },
+    vulnerable: {
+      keywords: ['vulnerable', 'sensitive', 'fragile', 'delicate', 'exposed'],
+      synonyms: ['tender', 'raw', 'open'],
+      nlp_patterns: ['feeling exposed', 'heart on sleeve', 'raw emotion'],
+      weight: 0.9,
+      energy: 'low',
+      genres: ['acoustic', 'singer-songwriter', 'emotional', 'soft indie']
+    },
+    grateful: {
+      keywords: ['grateful', 'thankful', 'blessed', 'appreciative', 'fortunate'],
+      synonyms: ['indebted', 'obliged', 'touched'],
+      nlp_patterns: ['so grateful', 'feeling blessed', 'count my blessings'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['gospel', 'soul', 'folk', 'acoustic', 'uplifting']
+    },
+    excited: {
+      keywords: ['excited', 'thrilled', 'enthusiastic', 'eager', 'pumped'],
+      synonyms: ['exhilarated', 'animated', 'keyed up'],
+      nlp_patterns: ['so excited', 'can\'t wait', 'thrilled about'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['pop', 'dance', 'electronic', 'upbeat indie']
+    },
+    rebellious: {
+      keywords: ['rebellious', 'defiant', 'revolutionary', 'fierce', 'bold'],
+      synonyms: ['insurgent', 'mutinous', 'resistant'],
+      nlp_patterns: ['break the rules', 'fight the system', 'rebel spirit'],
+      weight: 1.0,
+      energy: 'high',
+      genres: ['punk', 'rock', 'alternative', 'grunge', 'metal']
+    },
+    empowered: {
+      keywords: ['empowered', 'strong', 'independent', 'liberated', 'free'],
+      synonyms: ['autonomous', 'self-reliant', 'sovereign'],
+      nlp_patterns: ['feeling empowered', 'strong and free', 'own my power'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['empowerment pop', 'strong vocals', 'R&B', 'rock']
+    },
+    confused: {
+      keywords: ['confused', 'uncertain', 'lost', 'bewildered', 'puzzled'],
+      synonyms: ['perplexed', 'disoriented', 'muddled'],
+      nlp_patterns: ['don\'t know', 'feeling lost', 'so confused'],
+      weight: 0.8,
+      energy: 'medium',
+      genres: ['experimental', 'alternative', 'indie', 'introspective']
+    },
+
+    // AESTHETIC SPECTRUM (15 moods)
+    elegant: {
+      keywords: ['elegant', 'sophisticated', 'refined', 'classy', 'graceful'],
+      synonyms: ['stylish', 'polished', 'cultured'],
+      nlp_patterns: ['so elegant', 'refined taste', 'classic style'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['jazz', 'classical', 'sophisticated pop', 'lounge']
+    },
+    minimalist: {
+      keywords: ['minimalist', 'simple', 'clean', 'pure', 'essential'],
+      synonyms: ['stripped', 'bare', 'uncluttered'],
+      nlp_patterns: ['less is more', 'simple beauty', 'clean aesthetic'],
+      weight: 1.0,
+      energy: 'low-medium',
+      genres: ['minimal', 'ambient', 'neo-classical', 'clean electronic']
+    },
+    maximalist: {
+      keywords: ['maximalist', 'abundant', 'rich', 'lavish', 'ornate'],
+      synonyms: ['opulent', 'extravagant', 'luxurious'],
+      nlp_patterns: ['more is more', 'rich details', 'abundant beauty'],
+      weight: 1.0,
+      energy: 'high',
+      genres: ['baroque pop', 'orchestral', 'rich production', 'layered']
+    },
+    vintage: {
+      keywords: ['vintage', 'retro', 'classic', 'timeless', 'antique'],
+      synonyms: ['old-school', 'traditional', 'heritage'],
+      nlp_patterns: ['vintage vibes', 'old soul', 'classic style'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['vintage', 'classic rock', 'jazz standards', 'retro pop']
+    },
+    modern: {
+      keywords: ['modern', 'contemporary', 'current', 'trendy', 'fresh'],
+      synonyms: ['up-to-date', 'cutting-edge', 'new'],
+      nlp_patterns: ['modern style', 'contemporary feel', 'fresh take'],
+      weight: 1.0,
+      energy: 'medium-high',
+      genres: ['modern pop', 'electronic', 'contemporary', 'indie']
+    },
+    rustic: {
+      keywords: ['rustic', 'earthy', 'natural', 'organic', 'raw'],
+      synonyms: ['countryside', 'pastoral', 'primitive'],
+      nlp_patterns: ['back to nature', 'rustic charm', 'earthy feel'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['folk', 'country', 'acoustic', 'americana', 'bluegrass']
+    },
+    urban: {
+      keywords: ['urban', 'city', 'metropolitan', 'street', 'cosmopolitan'],
+      synonyms: ['downtown', 'concrete', 'cityscape'],
+      nlp_patterns: ['city life', 'urban jungle', 'street style'],
+      weight: 1.0,
+      energy: 'medium-high',
+      genres: ['hip hop', 'R&B', 'electronic', 'urban pop', 'street']
+    },
+    bohemian: {
+      keywords: ['bohemian', 'boho', 'artistic', 'free-spirited', 'unconventional'],
+      synonyms: ['hippie', 'alternative', 'creative'],
+      nlp_patterns: ['boho vibes', 'free spirit', 'artistic soul'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['indie folk', 'psychedelic', 'world music', 'alternative']
+    },
+    glamorous: {
+      keywords: ['glamorous', 'luxurious', 'dazzling', 'sparkling', 'stunning'],
+      synonyms: ['glitzy', 'fabulous', 'spectacular'],
+      nlp_patterns: ['feeling glamorous', 'pure glamour', 'dazzling beauty'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['disco', 'dance pop', 'glam rock', 'dramatic pop']
+    },
+    edgy: {
+      keywords: ['edgy', 'bold', 'daring', 'provocative', 'cutting-edge'],
+      synonyms: ['avant-garde', 'rebellious', 'unconventional'],
+      nlp_patterns: ['pushing boundaries', 'edgy style', 'bold choice'],
+      weight: 1.0,
+      energy: 'high',
+      genres: ['alternative rock', 'punk', 'experimental', 'indie']
+    },
+    whimsical: {
+      keywords: ['whimsical', 'playful', 'quirky', 'fanciful', 'imaginative'],
+      synonyms: ['capricious', 'eccentric', 'charming'],
+      nlp_patterns: ['playful spirit', 'whimsical touch', 'quirky charm'],
+      weight: 1.0,
+      energy: 'medium-high',
+      genres: ['indie pop', 'quirky folk', 'playful electronic', 'cute']
+    },
+    mysterious: {
+      keywords: ['mysterious', 'enigmatic', 'secretive', 'dark', 'hidden'],
+      synonyms: ['cryptic', 'obscure', 'shadowy'],
+      nlp_patterns: ['air of mystery', 'hidden depths', 'dark secrets'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['dark ambient', 'gothic', 'mysterious electronic', 'noir']
+    },
+    ethereal: {
+      keywords: ['ethereal', 'heavenly', 'angelic', 'divine', 'transcendent'],
+      synonyms: ['celestial', 'otherworldly', 'spiritual'],
+      nlp_patterns: ['heavenly beauty', 'ethereal quality', 'divine feeling'],
+      weight: 1.0,
+      energy: 'low-medium',
+      genres: ['ambient', 'ethereal', 'new age', 'spiritual', 'celestial']
+    },
+    gritty: {
+      keywords: ['gritty', 'raw', 'rough', 'unpolished', 'authentic'],
+      synonyms: ['rugged', 'harsh', 'unrefined'],
+      nlp_patterns: ['raw emotion', 'gritty reality', 'unfiltered truth'],
+      weight: 1.0,
+      energy: 'medium-high',
+      genres: ['grunge', 'blues rock', 'punk', 'garage rock', 'raw']
+    },
+    dreamy: {
+      keywords: ['dreamy', 'soft', 'hazy', 'floating', 'gentle'],
+      synonyms: ['misty', 'cloudy', 'gossamer'],
+      nlp_patterns: ['dream-like', 'soft focus', 'floating feeling'],
+      weight: 1.0,
+      energy: 'low',
+      genres: ['dream pop', 'shoegaze', 'ambient pop', 'soft indie']
+    },
+
+    // SEASONAL & TEMPORAL (10 moods)
+    spring: {
+      keywords: ['spring', 'bloom', 'renewal', 'fresh', 'growth'],
+      synonyms: ['rebirth', 'awakening', 'blossoming'],
+      nlp_patterns: ['spring has sprung', 'new beginnings', 'fresh start'],
+      weight: 1.1,
+      energy: 'medium-high',
+      genres: ['indie pop', 'folk pop', 'fresh acoustic', 'uplifting']
+    },
+    summer: {
+      keywords: ['summer', 'sunny', 'bright', 'warm', 'tropical'],
+      synonyms: ['vacation', 'beach', 'festival'],
+      nlp_patterns: ['summer vibes', 'sunny days', 'beach life'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['tropical house', 'beach pop', 'reggae', 'summer hits']
+    },
+    autumn: {
+      keywords: ['autumn', 'fall', 'cozy', 'warm', 'harvest'],
+      synonyms: ['seasonal', 'crisp', 'golden'],
+      nlp_patterns: ['autumn leaves', 'cozy season', 'fall vibes'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['folk', 'indie folk', 'acoustic', 'cozy indie']
+    },
+    winter: {
+      keywords: ['winter', 'cold', 'snow', 'crystalline', 'quiet'],
+      synonyms: ['icy', 'frozen', 'peaceful'],
+      nlp_patterns: ['winter wonderland', 'snow day', 'cold beauty'],
+      weight: 1.0,
+      energy: 'low-medium',
+      genres: ['ambient', 'classical', 'winter folk', 'contemplative']
+    },
+    morning: {
+      keywords: ['morning', 'sunrise', 'dawn', 'early', 'awakening'],
+      synonyms: ['daybreak', 'am', 'fresh start'],
+      nlp_patterns: ['morning person', 'sunrise ritual', 'new day'],
+      weight: 1.1,
+      energy: 'medium-high',
+      genres: ['coffee shop', 'morning jazz', 'acoustic', 'indie pop']
+    },
+    evening: {
+      keywords: ['evening', 'sunset', 'dusk', 'twilight', 'golden hour'],
+      synonyms: ['nightfall', 'pm', 'end of day'],
+      nlp_patterns: ['golden hour', 'evening ritual', 'sunset walk'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['smooth jazz', 'acoustic', 'chill', 'evening classics']
+    },
+    midnight: {
+      keywords: ['midnight', 'late night', 'after hours', 'nocturnal', 'dark'],
+      synonyms: ['witching hour', 'small hours', 'deep night'],
+      nlp_patterns: ['midnight thoughts', 'late night vibes', 'after hours'],
+      weight: 1.0,
+      energy: 'low-medium',
+      genres: ['late night', 'ambient', 'downtempo', 'nocturnal']
+    },
+    timeless: {
+      keywords: ['timeless', 'eternal', 'enduring', 'classic', 'ageless'],
+      synonyms: ['everlasting', 'immortal', 'permanent'],
+      nlp_patterns: ['stands the test', 'never goes out', 'timeless beauty'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['classics', 'standards', 'timeless hits', 'enduring']
+    },
+    fleeting: {
+      keywords: ['fleeting', 'temporary', 'brief', 'momentary', 'passing'],
+      synonyms: ['ephemeral', 'transient', 'short-lived'],
+      nlp_patterns: ['in the moment', 'here and gone', 'brief moment'],
+      weight: 0.9,
+      energy: 'medium',
+      genres: ['indie', 'experimental', 'ambient', 'contemplative']
+    },
+    cyclical: {
+      keywords: ['cyclical', 'recurring', 'repetitive', 'circular', 'returning'],
+      synonyms: ['periodic', 'rhythmic', 'recurrent'],
+      nlp_patterns: ['comes around', 'full circle', 'cycle repeats'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['minimalist', 'repetitive', 'hypnotic', 'rhythmic']
+    },
+
+    // LIFESTYLE & ACTIVITY (10 moods)
+    adventurous: {
+      keywords: ['adventurous', 'exploring', 'journey', 'discovery', 'wanderlust'],
+      synonyms: ['daring', 'bold', 'intrepid'],
+      nlp_patterns: ['adventure awaits', 'explore the world', 'journey begins'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['world music', 'epic', 'adventure', 'uplifting rock']
+    },
+    creative: {
+      keywords: ['creative', 'artistic', 'imaginative', 'innovative', 'inspired'],
+      synonyms: ['inventive', 'original', 'visionary'],
+      nlp_patterns: ['creative flow', 'artistic vision', 'inspired moment'],
+      weight: 1.0,
+      energy: 'medium-high',
+      genres: ['experimental', 'art rock', 'creative', 'innovative']
+    },
+    productive: {
+      keywords: ['productive', 'efficient', 'focused', 'accomplished', 'working'],
+      synonyms: ['effective', 'industrious', 'busy'],
+      nlp_patterns: ['getting things done', 'in the zone', 'productive day'],
+      weight: 1.0,
+      energy: 'medium-high',
+      genres: ['focus music', 'instrumental', 'productivity', 'ambient']
+    },
+    social: {
+      keywords: ['social', 'party', 'friends', 'gathering', 'celebration'],
+      synonyms: ['communal', 'festive', 'gregarious'],
+      nlp_patterns: ['good times', 'party time', 'with friends'],
+      weight: 1.1,
+      energy: 'high',
+      genres: ['party', 'dance', 'social', 'celebration', 'fun']
+    },
+    introspective: {
+      keywords: ['introspective', 'reflective', 'contemplative', 'thoughtful', 'inner'],
+      synonyms: ['meditative', 'pensive', 'soul-searching'],
+      nlp_patterns: ['deep thoughts', 'looking within', 'self reflection'],
+      weight: 1.0,
+      energy: 'low',
+      genres: ['introspective', 'singer-songwriter', 'contemplative', 'deep']
+    },
+    spiritual: {
+      keywords: ['spiritual', 'sacred', 'divine', 'transcendent', 'enlightened'],
+      synonyms: ['holy', 'mystical', 'soulful'],
+      nlp_patterns: ['spiritual journey', 'divine connection', 'sacred moment'],
+      weight: 1.0,
+      energy: 'low-medium',
+      genres: ['spiritual', 'sacred', 'meditation', 'new age', 'gospel']
+    },
+    athletic: {
+      keywords: ['athletic', 'fitness', 'workout', 'training', 'strong'],
+      synonyms: ['sporty', 'physical', 'competitive'],
+      nlp_patterns: ['get fit', 'training hard', 'athletic performance'],
+      weight: 1.0,
+      energy: 'high',
+      genres: ['workout', 'high-energy', 'motivational', 'pump up']
+    },
+    studious: {
+      keywords: ['studious', 'learning', 'academic', 'scholarly', 'intellectual'],
+      synonyms: ['educational', 'cerebral', 'bookish'],
+      nlp_patterns: ['study time', 'learning mode', 'academic focus'],
+      weight: 1.0,
+      energy: 'medium',
+      genres: ['study music', 'classical', 'instrumental', 'focus']
+    },
+    luxurious: {
+      keywords: ['luxurious', 'opulent', 'indulgent', 'pampered', 'lavish'],
+      synonyms: ['sumptuous', 'rich', 'extravagant'],
+      nlp_patterns: ['luxury living', 'indulge yourself', 'pampered life'],
+      weight: 1.1,
+      energy: 'medium',
+      genres: ['luxury lounge', 'sophisticated', 'rich production', 'elegant']
+    },
+    minimalistic: {
+      keywords: ['minimalistic', 'simple living', 'decluttered', 'essential', 'sparse'],
+      synonyms: ['stripped down', 'bare essentials', 'unadorned'],
+      nlp_patterns: ['simple life', 'less stuff', 'essential only'],
+      weight: 1.0,
+      energy: 'low-medium',
+      genres: ['minimal', 'sparse', 'essential', 'clean sounds']
+    }
+  };
+
+  // Enhanced NLP processing
+  const processedText = enhancedNLP(analysisText);
+  
+  // Calculate theme scores with NLP enhancement
+  const themeScores = {};
+  const detectedKeywords = {};
+  
+  for (const [moodName, moodData] of Object.entries(moodDatabase)) {
+    let totalScore = 0;
+    let matchedKeywords = [];
+    
+    // Direct keyword matches (weight: 3)
+    moodData.keywords.forEach(keyword => {
+      const matches = countMatches(processedText.cleaned, keyword);
+      if (matches > 0) {
+        totalScore += matches * 3 * moodData.weight;
+        matchedKeywords.push({keyword, matches, weight: 'primary'});
+      }
+    });
+    
+    // Synonym matches (weight: 2)
+    moodData.synonyms.forEach(synonym => {
+      const matches = countMatches(processedText.cleaned, synonym);
+      if (matches > 0) {
+        totalScore += matches * 2 * moodData.weight;
+        matchedKeywords.push({keyword: synonym, matches, weight: 'synonym'});
+      }
+    });
+    
+    // NLP pattern matches (weight: 4 - highest because they're contextual)
+    moodData.nlp_patterns.forEach(pattern => {
+      const matches = countPhraseMatches(processedText.cleaned, pattern);
+      if (matches > 0) {
+        totalScore += matches * 4 * moodData.weight;
+        matchedKeywords.push({keyword: pattern, matches, weight: 'nlp_pattern'});
+      }
+    });
+    
+    // Sentiment boost
+    if (processedText.sentiment && moodData.sentiment_alignment) {
+      const sentimentBoost = calculateSentimentAlignment(processedText.sentiment, moodData.sentiment_alignment);
+      totalScore += sentimentBoost;
+    }
+    
+    if (totalScore > 0) {
+      themeScores[moodName] = totalScore;
+      detectedKeywords[moodName] = matchedKeywords;
+    }
+  }
+  
+  // Sort moods by score
+  const sortedMoods = Object.entries(themeScores)
+    .sort(([,a], [,b]) => b - a)
+    .map(([mood, score]) => ({
+      mood,
+      score,
+      confidence: Math.min(score / 15, 1), // Normalized confidence
+      keywords: detectedKeywords[mood],
+      moodData: moodDatabase[mood]
+    }));
+  
+  // Determine primary mood and confidence
+  const primaryMood = sortedMoods[0];
+  const totalScore = Object.values(themeScores).reduce((sum, score) => sum + score, 0);
+  const overallConfidence = primaryMood ? Math.min(primaryMood.score / Math.max(totalScore, 10), 1) : 0.1;
+  
+  return {
+    detectedMoods: sortedMoods,
+    primaryMood: primaryMood?.mood || 'balanced',
+    confidence: overallConfidence,
+    breakdown: sortedMoods.slice(0, 8), // Top 8 moods
+    totalMatches: totalScore,
+    nlpData: processedText
+  };
+}
+
+// Enhanced Natural Language Processing
+function enhancedNLP(text) {
+  // Text cleaning and normalization
+  let cleaned = text.toLowerCase()
+    .replace(/[^\w\s'-]/g, ' ') // Keep apostrophes and hyphens
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Expand contractions
+  const contractions = {
+    "can't": "cannot",
+    "won't": "will not",
+    "n't": " not",
+    "'re": " are",
+    "'ve": " have",
+    "'ll": " will",
+    "'d": " would",
+    "'m": " am",
+    "let's": "let us",
+    "that's": "that is",
+    "there's": "there is",
+    "here's": "here is",
+    "what's": "what is",
+    "where's": "where is",
+    "how's": "how is",
+    "it's": "it is"
+  };
+  
+  Object.entries(contractions).forEach(([contraction, expansion]) => {
+    cleaned = cleaned.replace(new RegExp(contraction, 'g'), expansion);
+  });
+  
+  // Extract emotional intensifiers
+  const intensifiers = {
+    very: 1.3,
+    extremely: 1.5,
+    incredibly: 1.4,
+    absolutely: 1.4,
+    totally: 1.3,
+    completely: 1.4,
+    perfectly: 1.3,
+    really: 1.2,
+    quite: 1.1,
+    rather: 1.1,
+    pretty: 1.1,
+    so: 1.2,
+    super: 1.3,
+    ultra: 1.4,
+    mega: 1.3,
+    pure: 1.2,
+    deeply: 1.3,
+    highly: 1.2
+  };
+  
+  // Extract negations
+  const negations = ['not', 'no', 'never', 'none', 'nothing', 'nobody', 'nowhere', 'neither', 'nor'];
+  const hasNegation = negations.some(neg => cleaned.includes(neg));
+  
+  // Simple sentiment analysis
+  const positiveWords = [
+    'love', 'amazing', 'beautiful', 'wonderful', 'fantastic', 'great', 'excellent', 
+    'perfect', 'awesome', 'brilliant', 'stunning', 'gorgeous', 'fabulous', 'incredible',
+    'happy', 'joy', 'excited', 'thrilled', 'delighted', 'pleased', 'satisfied', 'content',
+    'peaceful', 'calm', 'relaxed', 'comfortable', 'cozy', 'warm', 'sweet', 'lovely',
+    'fresh', 'bright', 'vibrant', 'energetic', 'inspiring', 'motivating', 'uplifting'
+  ];
+  
+  const negativeWords = [
+    'hate', 'terrible', 'awful', 'horrible', 'disgusting', 'bad', 'worst', 'ugly',
+    'sad', 'depressed', 'miserable', 'unhappy', 'disappointed', 'frustrated', 'angry',
+    'stressed', 'anxious', 'worried', 'scared', 'afraid', 'nervous', 'upset', 'hurt',
+    'tired', 'exhausted', 'drained', 'overwhelmed', 'confused', 'lost', 'broken'
+  ];
+  
+  let sentimentScore = 0;
+  const words = cleaned.split(' ');
+  
+  words.forEach((word, index) => {
+    let wordScore = 0;
+    
+    if (positiveWords.includes(word)) {
+      wordScore = 1;
+    } else if (negativeWords.includes(word)) {
+      wordScore = -1;
+    }
+    
+    // Apply intensifier if present before the word
+    if (index > 0 && intensifiers[words[index - 1]]) {
+      wordScore *= intensifiers[words[index - 1]];
+    }
+    
+    sentimentScore += wordScore;
+  });
+  
+  // Apply negation adjustment
+  if (hasNegation) {
+    sentimentScore *= -0.5; // Flip and reduce intensity
+  }
+  
+  // Normalize sentiment score
+  const normalizedSentiment = Math.max(-1, Math.min(1, sentimentScore / Math.max(words.length, 5)));
+  
+  // Extract key phrases (2-4 word combinations)
+  const phrases = extractKeyPhrases(cleaned);
+  
+  // Extract emotional context
+  const emotionalContext = extractEmotionalContext(cleaned);
+  
+  return {
+    cleaned: cleaned,
+    originalLength: text.length,
+    cleanedLength: cleaned.length,
+    wordCount: words.length,
+    sentiment: {
+      score: normalizedSentiment,
+      label: normalizedSentiment > 0.1 ? 'positive' : normalizedSentiment < -0.1 ? 'negative' : 'neutral',
+      confidence: Math.abs(normalizedSentiment)
+    },
+    intensifiers: Object.keys(intensifiers).filter(int => cleaned.includes(int)),
+    negations: negations.filter(neg => cleaned.includes(neg)),
+    keyPhrases: phrases,
+    emotionalContext: emotionalContext
+  };
+}
+
+// Extract meaningful phrases from text
+function extractKeyPhrases(text) {
+  const words = text.split(' ').filter(word => word.length > 2);
+  const phrases = [];
+  
+  // Extract 2-word phrases
+  for (let i = 0; i < words.length - 1; i++) {
+    phrases.push(words[i] + ' ' + words[i + 1]);
+  }
+  
+  // Extract 3-word phrases
+  for (let i = 0; i < words.length - 2; i++) {
+    phrases.push(words[i] + ' ' + words[i + 1] + ' ' + words[i + 2]);
+  }
+  
+  // Count phrase frequency
+  const phraseCount = {};
+  phrases.forEach(phrase => {
+    phraseCount[phrase] = (phraseCount[phrase] || 0) + 1;
+  });
+  
+  // Return top phrases
+  return Object.entries(phraseCount)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10)
+    .map(([phrase, count]) => ({ phrase, count }));
+}
+
+// Extract emotional context indicators
+function extractEmotionalContext(text) {
+  const emotionalIndicators = {
+    timeContext: {
+      patterns: ['morning', 'evening', 'night', 'day', 'weekend', 'today', 'yesterday', 'tomorrow'],
+      found: []
+    },
+    personalContext: {
+      patterns: ['feeling', 'mood', 'emotion', 'heart', 'soul', 'mind', 'spirit'],
+      found: []
+    },
+    socialContext: {
+      patterns: ['friend', 'family', 'together', 'alone', 'relationship', 'love', 'partner'],
+      found: []
+    },
+    activityContext: {
+      patterns: ['work', 'study', 'play', 'travel', 'create', 'relax', 'exercise', 'dance'],
+      found: []
+    },
+    spaceContext: {
+      patterns: ['home', 'office', 'outside', 'nature', 'city', 'beach', 'mountain', 'room'],
+      found: []
+    }
+  };
+  
+  Object.keys(emotionalIndicators).forEach(contextType => {
+    emotionalIndicators[contextType].patterns.forEach(pattern => {
+      if (text.includes(pattern)) {
+        emotionalIndicators[contextType].found.push(pattern);
+      }
+    });
+  });
+  
+  return emotionalIndicators;
+}
+
+// Count phrase matches with context awareness
+function countPhraseMatches(text, phrase) {
+  // Direct phrase match
+  const directMatches = (text.match(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\  // Expand contractions
+  const contractions = {
+    "can't": "cannot",
+    "won't": "will not",
+    "n't": " not",'), 'gi')) || []).length;
+  
+  // Partial phrase match (if phrase has multiple words)
+  const words = phrase.split(' ');
+  if (words.length > 1) {
+    let partialScore = 0;
+    const textWords = text.split(' ');
+    
+    // Check for words appearing in proximity (within 3 words of each other)
+    for (let i = 0; i < words.length - 1; i++) {
+      const word1 = words[i];
+      const word2 = words[i + 1];
+      
+      for (let j = 0; j < textWords.length - 3; j++) {
+        const window = textWords.slice(j, j + 4).join(' ');
+        if (window.includes(word1) && window.includes(word2)) {
+          partialScore += 0.5; // Half credit for proximity matches
+        }
+      }
+    }
+    
+    return directMatches + partialScore;
+  }
+  
+  return directMatches;
+}
+
+// Calculate sentiment alignment bonus
+function calculateSentimentAlignment(textSentiment, moodSentimentPreference) {
+  if (!moodSentimentPreference) return 0;
+  
+  const alignment = Math.abs(textSentiment.score - moodSentimentPreference);
+  const bonus = Math.max(0, 1 - alignment) * 2; // 0-2 point bonus for good alignment
+  
+  return bonus;
+}
+
+// Enhanced theme detection using the new mood system
+function detectThemes(analysisText) {
+  console.log('🧠 Starting enhanced NLP mood detection...');
+  
+  const moodAnalysis = detectThemes(analysisText);
+  
+  // Convert primary mood to legacy theme format for compatibility
+  const legacyThemeMapping = {
+    // Map new moods to old theme system for backward compatibility
+    energetic: { theme: 'morning', genres: ['indie pop', 'upbeat acoustic', 'folk pop'] },
+    joyful: { theme: 'morning', genres: ['pop', 'indie pop', 'feel-good'] },
+    peaceful: { theme: 'minimalist', genres: ['ambient', 'classical', 'meditation'] },
+    cozy: { theme: 'cozy', genres: ['acoustic', 'folk', 'lo-fi'] },
+    romantic: { theme: 'evening', genres: ['romantic', 'soul', 'R&B'] },
+    nostalgic: { theme: 'vintage', genres: ['vintage', 'classic rock', 'oldies'] },
+    mysterious: { theme: 'dark', genres: ['dark ambient', 'gothic', 'mysterious'] },
+    minimalist: { theme: 'minimalist', genres: ['minimal', 'ambient', 'neo-classical'] },
+    vintage: { theme: 'vintage', genres: ['vintage', 'classic rock', 'jazz standards'] },
+    modern: { theme: 'modern', genres: ['modern pop', 'electronic', 'contemporary'] },
+    spring: { theme: 'spring', genres: ['indie pop', 'folk pop', 'fresh acoustic'] },
+    summer: { theme: 'summer', genres: ['tropical house', 'beach pop', 'reggae'] },
+    autumn: { theme: 'autumn', genres: ['folk', 'indie folk', 'acoustic'] },
+    winter: { theme: 'winter', genres: ['ambient', 'classical', 'winter folk'] },
+    morning: { theme: 'morning', genres: ['coffee shop', 'morning jazz', 'acoustic'] },
+    evening: { theme: 'evening', genres: ['smooth jazz', 'acoustic', 'chill'] },
+    adventurous: { theme: 'travel', genres: ['world music', 'epic', 'adventure'] },
+    athletic: { theme: 'workout', genres: ['workout', 'high-energy', 'motivational'] }
+  };
+  
+  const primaryMoodData = legacyThemeMapping[moodAnalysis.primaryMood] || 
+                          legacyThemeMapping.balanced || 
+                          { theme: 'modern', genres: ['indie', 'alternative', 'pop'] };
+  
+  return {
+    primaryTheme: primaryMoodData.theme,
+    confidence: moodAnalysis.confidence,
+    themeData: {
+      mood: moodAnalysis.primaryMood,
+      genres: primaryMoodData.genres,
+      colors: getColorsForMood(moodAnalysis.primaryMood)
+    },
+    enhancedMoodData: moodAnalysis // Include full mood analysis
+  };
+}
+
+// Get colors for specific moods
+function getColorsForMood(mood) {
+  const moodColors = {
+    // Energy spectrum
+    euphoric: ['#FF6B9D', '#FFE66D', '#FF8E53', '#FF5722', '#E91E63'],
+    energetic: ['#FFD700', '#FFA500', '#FFEB3B', '#FF9800', '#FFF8DC'],
+    motivated: ['#2196F3', '#00BCD4', '#009688', '#4CAF50', '#8BC34A'],
+    balanced: ['#607D8B', '#90A4AE', '#B0BEC5', '#CFD8DC', '#ECEFF1'],
+    calm: ['#E3F2FD', '#BBDEFB', '#90CAF9', '#64B5F6', '#42A5F5'],
+    peaceful: ['#E8F5E8', '#C8E6C9', '#A5D6A7', '#81C784', '#66BB6A'],
+    sleepy: ['#F3E5F5', '#E1BEE7', '#CE93D8', '#BA68C8', '#AB47BC'],
+    dreamy: ['#FCE4EC', '#F8BBD9', '#F48FB1', '#F06292', '#EC407A'],
+    
+    // Emotional spectrum
+    joyful: ['#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#CDDC39'],
+    romantic: ['#E91E63', '#F06292', '#F48FB1', '#F8BBD9', '#FCE4EC'],
+    nostalgic: ['#DEB887', '#D2B48C', '#BC8F8F', '#F5DEB3', '#CD853F'],
+    mysterious: ['#2C3E50', '#34495E', '#7F8C8D', '#95A5A6', '#BDC3C7'],
+    
+    // Seasonal
+    spring: ['#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800'],
+    summer: ['#FF5722', '#FF9800', '#FFC107', '#FFEB3B', '#CDDC39'],
+    autumn: ['#FF5722', '#FF9800', '#FFC107', '#8BC34A', '#795548'],
+    winter: ['#607D8B', '#90A4AE', '#B0BEC5', '#CFD8DC', '#ECEFF1'],
+    
+    // Default fallback
+    default: ['#2196F3', '#4CAF50', '#FF9800', '#9E9E9E', '#E91E63']
+  };
+  
+  return moodColors[mood] || moodColors.default;
+}const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 require('dotenv').config();
