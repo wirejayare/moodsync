@@ -2166,3 +2166,127 @@ app.get('/api/pinterest/test-api', async (req, res) => {
     });
   }
 });
+
+// Pinterest comprehensive endpoint test
+app.get('/api/pinterest/test-endpoints', async (req, res) => {
+  try {
+    const testResults = {
+      timestamp: new Date().toISOString(),
+      app_id: process.env.PINTEREST_CLIENT_ID,
+      redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+      tests: []
+    };
+
+    // Test 1: Basic OAuth URL generation
+    const authUrl = `https://www.pinterest.com/oauth/?client_id=${process.env.PINTEREST_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.PINTEREST_REDIRECT_URI)}&response_type=code&scope=boards:read,pins:read,user_accounts:read`;
+    
+    testResults.tests.push({
+      name: 'OAuth URL Generation',
+      url: authUrl,
+      status: 'OK'
+    });
+
+    // Test 2: Try different token endpoint variations
+    const tokenEndpoints = [
+      {
+        name: 'v5 with Basic Auth',
+        url: 'https://api.pinterest.com/v5/oauth/token',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${Buffer.from(`${process.env.PINTEREST_CLIENT_ID}:${process.env.PINTEREST_CLIENT_SECRET}`).toString('base64')}`
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: 'test_code',
+          redirect_uri: process.env.PINTEREST_REDIRECT_URI
+        })
+      },
+      {
+        name: 'v1 with form data',
+        url: 'https://api.pinterest.com/oauth/token',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: 'test_code',
+          redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+          client_id: process.env.PINTEREST_CLIENT_ID,
+          client_secret: process.env.PINTEREST_CLIENT_SECRET
+        })
+      },
+      {
+        name: 'Legacy oauth endpoint',
+        url: 'https://api.pinterest.com/oauth/token',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: 'test_code',
+          redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+          client_id: process.env.PINTEREST_CLIENT_ID,
+          client_secret: process.env.PINTEREST_CLIENT_SECRET
+        })
+      }
+    ];
+
+    for (const endpoint of tokenEndpoints) {
+      try {
+        const response = await fetch(endpoint.url, {
+          method: endpoint.method,
+          headers: endpoint.headers,
+          body: endpoint.body
+        });
+
+        const responseText = await response.text();
+        
+        testResults.tests.push({
+          name: endpoint.name,
+          url: endpoint.url,
+          status: response.status,
+          response: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''),
+          success: response.status !== 404 && response.status !== 405
+        });
+      } catch (error) {
+        testResults.tests.push({
+          name: endpoint.name,
+          url: endpoint.url,
+          status: 'ERROR',
+          response: error.message,
+          success: false
+        });
+      }
+    }
+
+    // Test 3: Check if different scopes work
+    const scopeTests = [
+      'boards:read,pins:read,user_accounts:read',
+      'boards:read,pins:read',
+      'boards:read',
+      'user_accounts:read'
+    ];
+
+    for (const scope of scopeTests) {
+      const scopeAuthUrl = `https://www.pinterest.com/oauth/?client_id=${process.env.PINTEREST_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.PINTEREST_REDIRECT_URI)}&response_type=code&scope=${scope}`;
+      
+      testResults.tests.push({
+        name: `OAuth URL with scope: ${scope}`,
+        url: scopeAuthUrl,
+        status: 'OK',
+        success: true
+      });
+    }
+
+    res.json(testResults);
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to test Pinterest endpoints',
+      error: error.message 
+    });
+  }
+});
