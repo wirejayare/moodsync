@@ -36,15 +36,11 @@ const PinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
   };
 
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.1)',
-      padding: '2rem',
-      borderRadius: '15px',
-      marginBottom: '2rem'
-    }}>
-      <h3 style={{ marginBottom: '1rem' }}>📌 Analyze Pinterest Board</h3>
-      
-      <div style={{ marginBottom: '1rem' }}>
+    <div className="card glass animate-fade-in-up" style={{ marginBottom: 'var(--space-xl)' }}>
+      <h3 className="heading-3" style={{ marginBottom: 'var(--space-md)', color: 'var(--text-primary)' }}>
+        📌 Analyze Pinterest Board
+      </h3>
+      <div style={{ marginBottom: 'var(--space-lg)' }}>
         <input
           type="url"
           placeholder="https://pinterest.com/username/board-name/"
@@ -52,26 +48,23 @@ const PinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
           onChange={(e) => setPinterestUrl(e.target.value)}
           style={{
             width: '100%',
-            padding: '12px',
-            borderRadius: '8px',
-            border: 'none',
-            fontSize: '16px',
-            marginBottom: '1rem'
+            padding: 'var(--space-md)',
+            borderRadius: 'var(--radius-small)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            background: 'rgba(255, 255, 255, 0.05)',
+            color: 'var(--text-primary)',
+            fontSize: '1rem',
+            marginBottom: 'var(--space-md)'
           }}
         />
-        
         <button
           onClick={handleAnalyze}
           disabled={isAnalyzing || !pinterestUrl}
+          className="btn btn-pinterest"
           style={{
-            background: isAnalyzing ? '#ccc' : '#E60023',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold'
+            width: '100%',
+            opacity: (!pinterestUrl || isAnalyzing) ? 0.5 : 1,
+            cursor: (!pinterestUrl || isAnalyzing) ? 'not-allowed' : 'pointer'
           }}
         >
           {isAnalyzing ? '🔍 Analyzing...' : '🔍 Analyze Mood'}
@@ -79,28 +72,31 @@ const PinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
       </div>
 
       {analysis && (
-        <div style={{
-          background: 'rgba(255,255,255,0.2)',
-          padding: '1.5rem',
-          borderRadius: '10px',
-          marginTop: '1rem'
+        <div className="glass" style={{
+          padding: 'var(--space-lg)',
+          borderRadius: 'var(--radius-medium)',
+          marginTop: 'var(--space-lg)',
+          color: 'var(--text-primary)'
         }}>
-          <h4>🎨 Mood Analysis Results</h4>
-          <p><strong>Detected Mood:</strong> {analysis.mood}</p>
-          <p><strong>Theme:</strong> {analysis.theme}</p>
-          <p style={{ fontSize: '14px', opacity: 0.9 }}>{analysis.description}</p>
-          
-          <div style={{ marginTop: '1rem' }}>
+          <h4 className="heading-3" style={{ marginBottom: 'var(--space-md)' }}>🎨 Mood Analysis Results</h4>
+          <div className="body-medium" style={{ marginBottom: 'var(--space-md)' }}>
+            <strong>Detected Mood:</strong> {analysis.mood}<br/>
+            <strong>Theme:</strong> {analysis.theme}<br/>
+            <span style={{ fontSize: '0.95em', color: 'var(--text-secondary)' }}>{analysis.description}</span>
+          </div>
+          <div style={{ marginTop: 'var(--space-md)' }}>
             <strong>Suggested Genres:</strong>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
               {analysis.genres.map((genre, index) => (
                 <span
                   key={index}
                   style={{
-                    background: 'rgba(255,255,255,0.3)',
-                    padding: '4px 12px',
+                    background: 'rgba(255,255,255,0.15)',
+                    padding: '4px 14px',
                     borderRadius: '20px',
-                    fontSize: '12px'
+                    fontSize: '0.95em',
+                    color: 'var(--text-primary)',
+                    fontWeight: 500
                   }}
                 >
                   {genre}
@@ -108,19 +104,19 @@ const PinterestAnalyzer = ({ spotifyToken, onAnalysisComplete }) => {
               ))}
             </div>
           </div>
-
-          <div style={{ marginTop: '1rem' }}>
+          <div style={{ marginTop: 'var(--space-md)' }}>
             <strong>Color Palette:</strong>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
               {analysis.colors.map((color, index) => (
                 <div
                   key={index}
                   style={{
-                    width: '30px',
-                    height: '30px',
+                    width: '32px',
+                    height: '32px',
                     backgroundColor: color,
                     borderRadius: '50%',
-                    border: '2px solid rgba(255,255,255,0.3)'
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.10)'
                   }}
                   title={color}
                 />
