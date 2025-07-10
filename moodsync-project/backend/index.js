@@ -762,11 +762,7 @@ function extractEmotionalContext(text) {
 // Count phrase matches with context awareness
 function countPhraseMatches(text, phrase) {
   // Direct phrase match
-  const directMatches = (text.match(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\  // Expand contractions
-  const contractions = {
-    "can't": "cannot",
-    "won't": "will not",
-    "n't": " not",'), 'gi')) || []).length;
+  const directMatches = (text.match(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')) || []).length;
   
   // Partial phrase match (if phrase has multiple words)
   const words = phrase.split(' ');
@@ -878,7 +874,9 @@ function getColorsForMood(mood) {
   };
   
   return moodColors[mood] || moodColors.default;
-}const express = require('express');
+}
+
+const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 require('dotenv').config();
@@ -932,6 +930,18 @@ app.get('/health', (req, res) => {
     spotify_configured: !!(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET),
     pinterest_configured: !!(process.env.PINTEREST_CLIENT_ID && process.env.PINTEREST_CLIENT_SECRET),
     frontend_url: process.env.FRONTEND_URL
+  });
+});
+
+// Pinterest health check
+app.get('/api/pinterest/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    pinterest_configured: !!(process.env.PINTEREST_CLIENT_ID && process.env.PINTEREST_CLIENT_SECRET),
+    client_id_present: !!process.env.PINTEREST_CLIENT_ID,
+    client_secret_present: !!process.env.PINTEREST_CLIENT_SECRET,
+    redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -1051,6 +1061,10 @@ app.post('/api/pinterest/callback', async (req, res) => {
     const { code } = req.body;
     
     console.log('🔍 Pinterest callback - Code received:', !!code);
+    console.log('🔍 Environment check:');
+    console.log('  - PINTEREST_CLIENT_ID:', !!process.env.PINTEREST_CLIENT_ID);
+    console.log('  - PINTEREST_CLIENT_SECRET:', !!process.env.PINTEREST_CLIENT_SECRET);
+    console.log('  - PINTEREST_REDIRECT_URI:', process.env.PINTEREST_REDIRECT_URI);
     
     if (!code) {
       return res.status(400).json({ 
@@ -1059,8 +1073,18 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
     }
 
+    if (!process.env.PINTEREST_CLIENT_ID || !process.env.PINTEREST_CLIENT_SECRET) {
+      console.error('❌ Missing Pinterest credentials');
+      return res.status(500).json({
+        success: false,
+        message: 'Pinterest credentials not configured'
+      });
+    }
+
     // Try Pinterest v5 API
     try {
+      console.log('🔍 Attempting Pinterest OAuth token exchange...');
+      
       const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', 
         new URLSearchParams({
           grant_type: 'authorization_code',
@@ -1076,11 +1100,14 @@ app.post('/api/pinterest/callback', async (req, res) => {
         }
       );
 
+      console.log('✅ Pinterest token response received');
       const { access_token, refresh_token, token_type } = tokenResponse.data;
       
       if (!access_token) {
         throw new Error('No access token in response');
       }
+
+      console.log('✅ Access token obtained, fetching user data...');
 
       // Get user info
       let userData = { username: 'pinterest_user', id: 'unknown' };
@@ -1090,10 +1117,12 @@ app.post('/api/pinterest/callback', async (req, res) => {
           headers: { 'Authorization': `Bearer ${access_token}` }
         });
         userData = userResponse.data;
+        console.log('✅ User data fetched:', userData.username);
       } catch (userError) {
-        console.log('⚠️ User data fetch failed, using defaults');
+        console.log('⚠️ User data fetch failed, using defaults:', userError.response?.status, userError.message);
       }
 
+      console.log('✅ Pinterest authentication successful');
       return res.json({
         success: true,
         access_token,
@@ -1103,12 +1132,50 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
 
     } catch (error) {
-      console.error('Pinterest OAuth failed:', error.response?.data || error.message);
-      throw error;
+      console.error('❌ Pinterest v5 OAuth failed, trying v3 fallback...');
+      
+      // Fallback to v3 API
+      try {
+        const tokenResponse = await axios.post('https://api.pinterest.com/v3/oauth/token', 
+          new URLSearchParams({
+            grant_type: 'authorization_code',
+            code: code,
+            redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+            client_id: process.env.PINTEREST_CLIENT_ID,
+            client_secret: process.env.PINTEREST_CLIENT_SECRET
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
+          }
+        );
+
+        console.log('✅ Pinterest v3 token response received');
+        const { access_token, refresh_token, token_type } = tokenResponse.data;
+        
+        if (!access_token) {
+          throw new Error('No access token in response');
+        }
+
+        console.log('✅ Access token obtained from v3 API');
+        
+        return res.json({
+          success: true,
+          access_token,
+          refresh_token,
+          token_type,
+          user: { username: 'pinterest_user', id: 'unknown' }
+        });
+
+      } catch (v3Error) {
+        console.error('❌ Pinterest v3 OAuth also failed:', v3Error.response?.data || v3Error.message);
+        throw error; // Throw the original v5 error
+      }
     }
 
   } catch (error) {
-    console.error('Pinterest callback error:', error.response?.data || error.message);
+    console.error('❌ Pinterest callback error:', error.response?.data || error.message);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to authenticate with Pinterest',

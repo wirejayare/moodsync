@@ -34,7 +34,9 @@ const PinterestCallback = ({ onPinterestAuth }) => {
             onPinterestAuth(data.access_token, data.user);
             alert(`Pinterest connected! Welcome ${data.user.username} 📌`);
           } else {
-            alert('Failed to connect Pinterest: ' + data.message);
+            console.error('Pinterest auth failed:', data);
+            const errorMessage = data.error || data.message || 'Unknown error';
+            alert('Failed to connect Pinterest: ' + errorMessage);
           }
         }
       } catch (error) {
