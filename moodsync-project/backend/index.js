@@ -1137,9 +1137,9 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
     }
 
-    console.log('Received Pinterest authorization code:', code);
+    console.log('Received Pinterest authorization code:', code.substring(0, 10) + '...');
 
-    // Use v5 endpoint only (since we confirmed it works)
+    // Use v5 endpoint with optimized timeout
     const tokenResponse = await fetch('https://api.pinterest.com/v5/oauth/token', {
       method: 'POST',
       headers: {
@@ -1150,121 +1150,83 @@ app.post('/api/pinterest/callback', async (req, res) => {
         grant_type: 'authorization_code',
         code: code,
         redirect_uri: process.env.PINTEREST_REDIRECT_URI
-      })
+      }),
+      // Add timeout to prevent hanging
+      signal: AbortSignal.timeout(10000) // 10 second timeout
     });
-
-    console.log('v5 Token response status:', tokenResponse.status);
-    const tokenData = await tokenResponse.text();
-    console.log('v5 Token response data:', tokenData);
 
     if (!tokenResponse.ok) {
-      console.error('Failed to exchange code for token:', tokenData);
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Failed to exchange code for token',
-        error: tokenData
+      const errorText = await tokenResponse.text();
+      console.error('Pinterest token exchange failed:', tokenResponse.status, errorText);
+      
+      // Handle specific error codes
+      if (tokenResponse.status === 400) {
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.code === 283) {
+            return res.status(400).json({
+              success: false,
+              message: 'Authorization code expired or invalid. Please try connecting again.',
+              code: 'EXPIRED_CODE'
+            });
+          }
+        } catch (e) {
+          // If we can't parse the error, return generic message
+        }
+      }
+      
+      return res.status(tokenResponse.status).json({
+        success: false,
+        message: `Pinterest authentication failed: ${errorText}`,
+        status: tokenResponse.status
       });
     }
 
-    let tokenJson;
-    try {
-      tokenJson = JSON.parse(tokenData);
-    } catch (e) {
-      console.error('Failed to parse token response:', e);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Invalid token response format',
-        error: tokenData
-      });
-    }
+    const tokenData = await tokenResponse.json();
+    console.log('Pinterest token exchange successful');
 
-    const accessToken = tokenJson.access_token;
-    console.log('Access token obtained:', accessToken ? 'YES' : 'NO');
-
-    if (!accessToken) {
-      console.error('No access token in response:', tokenJson);
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No access token received',
-        error: tokenJson
-      });
-    }
-
-    // Use v5 user endpoint only
+    // Get user info with the access token
     const userResponse = await fetch('https://api.pinterest.com/v5/user_account', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
+        'Authorization': `Bearer ${tokenData.access_token}`
+      },
+      signal: AbortSignal.timeout(5000) // 5 second timeout
     });
 
-    console.log('v5 User info response status:', userResponse.status);
-    const userData = await userResponse.text();
-    console.log('v5 User info response data:', userData);
-
     if (!userResponse.ok) {
-      console.error('Failed to get user info:', userData);
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Failed to get user info',
-        error: userData
+      console.error('Failed to get user info:', userResponse.status);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to get user information from Pinterest'
       });
     }
 
-    let userJson;
-    try {
-      userJson = JSON.parse(userData);
-    } catch (e) {
-      console.error('Failed to parse user response:', e);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Invalid user response format',
-        error: userData
-      });
-    }
-
-    // Try to get boards using v5 endpoint
-    let boardsJson = { items: [] };
-    try {
-      const boardsResponse = await fetch('https://api.pinterest.com/v5/boards', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log('Boards response status:', boardsResponse.status);
-      const boardsData = await boardsResponse.text();
-      console.log('Boards response data:', boardsData);
-
-      if (boardsResponse.ok) {
-        try {
-          boardsJson = JSON.parse(boardsData);
-        } catch (e) {
-          console.error('Failed to parse boards response:', e);
-        }
-      } else {
-        console.error('Failed to get boards:', boardsData);
-      }
-    } catch (boardsError) {
-      console.error('Boards request failed:', boardsError.message);
-    }
+    const userData = await userResponse.json();
+    console.log('Pinterest user info retrieved successfully');
 
     res.json({
       success: true,
-      message: 'Successfully authenticated with Pinterest',
-      user: userJson,
-      boards: boardsJson.items || [],
-      access_token: accessToken,
-      note: 'Using v5 endpoints only'
+      access_token: tokenData.access_token,
+      user: {
+        username: userData.username,
+        full_name: userData.full_name,
+        id: userData.username
+      }
     });
 
   } catch (error) {
     console.error('Pinterest OAuth error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to authenticate with Pinterest',
-      error: error.message 
+    
+    if (error.name === 'AbortError') {
+      return res.status(408).json({
+        success: false,
+        message: 'Request timeout. Please try again.'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error during Pinterest authentication'
     });
   }
 });
