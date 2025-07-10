@@ -2290,3 +2290,62 @@ app.get('/api/pinterest/test-endpoints', async (req, res) => {
     });
   }
 });
+
+// Test v5 endpoint availability
+app.get('/api/pinterest/test-v5-endpoints', async (req, res) => {
+  try {
+    const testResults = {
+      timestamp: new Date().toISOString(),
+      app_id: process.env.PINTEREST_CLIENT_ID,
+      v5_endpoints: []
+    };
+
+    // Test various v5 endpoints
+    const v5Endpoints = [
+      'https://api.pinterest.com/v5/oauth/token',
+      'https://api.pinterest.com/v5/user_account',
+      'https://api.pinterest.com/v5/boards',
+      'https://api.pinterest.com/v5/boards/{board_id}',
+      'https://api.pinterest.com/v5/boards/{board_id}/pins',
+      'https://api.pinterest.com/v5/pins',
+      'https://api.pinterest.com/v5/pins/{pin_id}'
+    ];
+
+    for (const endpoint of v5Endpoints) {
+      try {
+        // Test with a dummy request to see if endpoint exists
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer dummy_token',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        testResults.v5_endpoints.push({
+          endpoint: endpoint,
+          status: response.status,
+          available: response.status !== 404 && response.status !== 405,
+          note: response.status === 401 ? 'Endpoint exists, needs valid token' : 
+                response.status === 404 ? 'Endpoint not found' :
+                response.status === 405 ? 'Method not allowed' : 'Unknown'
+        });
+      } catch (error) {
+        testResults.v5_endpoints.push({
+          endpoint: endpoint,
+          status: 'ERROR',
+          available: false,
+          note: error.message
+        });
+      }
+    }
+
+    res.json(testResults);
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to test v5 endpoints',
+      error: error.message 
+    });
+  }
+});
