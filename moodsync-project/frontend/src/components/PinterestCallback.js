@@ -19,8 +19,6 @@ const PinterestCallback = ({ onPinterestAuth }) => {
         }
 
         if (code) {
-          console.log('Pinterest callback code received');
-          
           const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/pinterest/callback`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -30,17 +28,14 @@ const PinterestCallback = ({ onPinterestAuth }) => {
           const data = await response.json();
           
           if (data.success) {
-            console.log('Pinterest authentication successful');
             onPinterestAuth(data.access_token, data.user);
             alert(`Pinterest connected! Welcome ${data.user.username} 📌`);
           } else {
-            console.error('Pinterest auth failed:', data);
             const errorMessage = data.error || data.message || 'Unknown error';
             alert('Failed to connect Pinterest: ' + errorMessage);
           }
         }
       } catch (error) {
-        console.error('Pinterest callback error:', error);
         alert('Error: ' + error.message);
       } finally {
         setIsProcessing(false);
@@ -54,34 +49,98 @@ const PinterestCallback = ({ onPinterestAuth }) => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'var(--background-primary)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: 'white',
-      fontFamily: 'Arial, sans-serif',
-      textAlign: 'center'
+      color: 'var(--text-primary)',
+      fontFamily: 'var(--font-text)',
+      textAlign: 'center',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      <div>
-        <h1>📌 Connecting Pinterest...</h1>
-        <p>Please wait while we set up your enhanced analysis.</p>
+      {/* Background decorative elements */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        overflow: 'hidden'
+      }}>
         <div style={{
-          width: '50px',
-          height: '50px',
-          border: '4px solid rgba(255,255,255,0.3)',
-          borderTop: '4px solid #E60023',
+          position: 'absolute',
+          top: '-160px',
+          right: '-160px',
+          width: '320px',
+          height: '320px',
+          background: 'radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)',
           borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '20px auto'
+          filter: 'blur(60px)',
+          animation: 'float 3s ease-in-out infinite'
         }}></div>
-        <style>
-          {`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}
-        </style>
+        <div style={{
+          position: 'absolute',
+          bottom: '-160px',
+          left: '-160px',
+          width: '320px',
+          height: '320px',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)',
+          borderRadius: '50%',
+          filter: 'blur(60px)',
+          animation: 'float 3s ease-in-out infinite',
+          animationDelay: '1s'
+        }}></div>
+      </div>
+
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        maxWidth: '500px',
+        padding: 'var(--space-xl)'
+      }}>
+        <div className="card glass-strong animate-fade-in-up">
+          <div style={{
+            width: '80px',
+            height: '80px',
+            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto var(--space-lg)',
+            animation: 'pulse 2s infinite'
+          }}>
+            <span style={{ fontSize: '2rem' }}>📌</span>
+          </div>
+          
+          <h1 className="heading-2" style={{ marginBottom: 'var(--space-md)' }}>
+            Connecting Pinterest...
+          </h1>
+          
+          <p className="body-medium" style={{ 
+            marginBottom: 'var(--space-xl)',
+            color: 'var(--text-secondary)'
+          }}>
+            Please wait while we set up your enhanced analysis.
+          </p>
+          
+          <div style={{
+            width: '60px',
+            height: '60px',
+            border: '4px solid rgba(239, 68, 68, 0.3)',
+            borderTop: '4px solid #ef4444',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto'
+          }}></div>
+          
+          <style>
+            {`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}
+          </style>
+        </div>
       </div>
     </div>
   );
