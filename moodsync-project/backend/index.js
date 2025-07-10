@@ -979,6 +979,17 @@ app.post('/api/test-simple', (req, res) => {
   });
 });
 
+// Pinterest app configuration test
+app.get('/api/pinterest/test-config', (req, res) => {
+  res.json({
+    success: true,
+    pinterest_configured: !!(process.env.PINTEREST_CLIENT_ID && process.env.PINTEREST_CLIENT_SECRET),
+    client_id: process.env.PINTEREST_CLIENT_ID,
+    redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+    auth_url: `https://www.pinterest.com/oauth/?client_id=${process.env.PINTEREST_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.PINTEREST_REDIRECT_URI)}&response_type=code&scope=boards:read,pins:read,user_accounts:read`
+  });
+});
+
 // ===== SPOTIFY ENDPOINTS =====
 
 app.get('/api/spotify/auth-url', (req, res) => {
@@ -1139,9 +1150,11 @@ app.post('/api/pinterest/callback', async (req, res) => {
     // Try Pinterest OAuth with correct endpoints
     try {
       console.log('🔍 Attempting Pinterest OAuth token exchange...');
+      console.log('🔍 Redirect URI being sent:', process.env.PINTEREST_REDIRECT_URI);
+      console.log('🔍 Client ID being sent:', process.env.PINTEREST_CLIENT_ID);
       
       // Try the correct Pinterest OAuth endpoint
-      const tokenResponse = await axios.post('https://api.pinterest.com/oauth/token', 
+      const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', 
         new URLSearchParams({
           grant_type: 'authorization_code',
           code: code,
@@ -1151,7 +1164,8 @@ app.post('/api/pinterest/callback', async (req, res) => {
         }),
         {
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
           }
         }
       );
