@@ -1127,126 +1127,139 @@ app.get('/api/pinterest/auth-url', (req, res) => {
 
 app.post('/api/pinterest/callback', async (req, res) => {
   try {
-    console.log('🔍 Pinterest callback request received');
-    console.log('🔍 Request headers:', req.headers);
-    console.log('🔍 Request body:', req.body);
-    console.log('🔍 Request body type:', typeof req.body);
-    
-    // Check if body is properly parsed
-    if (!req.body || typeof req.body !== 'object') {
-      console.error('❌ Request body not properly parsed');
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid request body format',
-        error: 'Request body not properly parsed',
-        receivedBody: req.body
-      });
-    }
-    
     const { code } = req.body;
     
-    console.log('🔍 Pinterest callback - Code received:', !!code);
-    console.log('🔍 Code value:', code);
-    console.log('🔍 Environment check:');
-    console.log('  - PINTEREST_CLIENT_ID:', !!process.env.PINTEREST_CLIENT_ID);
-    console.log('  - PINTEREST_CLIENT_SECRET:', !!process.env.PINTEREST_CLIENT_SECRET);
-    console.log('  - PINTEREST_REDIRECT_URI:', process.env.PINTEREST_REDIRECT_URI);
-    
     if (!code) {
-      console.error('❌ No authorization code in request body');
-      console.error('❌ Request body keys:', Object.keys(req.body || {}));
+      console.error('No authorization code provided');
       return res.status(400).json({ 
         success: false, 
-        message: 'Pinterest authorization code required',
-        error: 'No code found in request body',
-        receivedBody: req.body
+        message: 'No authorization code provided' 
       });
     }
 
-    if (!process.env.PINTEREST_CLIENT_ID || !process.env.PINTEREST_CLIENT_SECRET) {
-      console.error('❌ Missing Pinterest credentials');
-      return res.status(500).json({
-        success: false,
-        message: 'Pinterest credentials not configured'
-      });
-    }
+    console.log('Received Pinterest authorization code:', code);
 
-    // Try Pinterest OAuth with correct endpoints
-    try {
-      console.log('🔍 Attempting Pinterest OAuth token exchange...');
-      console.log('🔍 Redirect URI being sent:', process.env.PINTEREST_REDIRECT_URI);
-      console.log('🔍 Client ID being sent:', process.env.PINTEREST_CLIENT_ID);
-      
-      // Try the correct Pinterest OAuth endpoint
-      const tokenResponse = await axios.post('https://api.pinterest.com/oauth/token', 
-        new URLSearchParams({
-          grant_type: 'authorization_code',
-          code: code,
-          redirect_uri: process.env.PINTEREST_REDIRECT_URI,
-          client_id: process.env.PINTEREST_CLIENT_ID,
-          client_secret: process.env.PINTEREST_CLIENT_SECRET
-        }),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-          }
-        }
-      );
-
-      console.log('✅ Pinterest token response received');
-      const { access_token, refresh_token, token_type } = tokenResponse.data;
-      
-      if (!access_token) {
-        throw new Error('No access token in response');
-      }
-
-      console.log('✅ Access token obtained, fetching user data...');
-
-      // Get user info using the correct endpoint
-      let userData = { username: 'pinterest_user', id: 'unknown' };
-      
-      try {
-        const userResponse = await axios.get('https://api.pinterest.com/v1/user', {
-          headers: { 'Authorization': `Bearer ${access_token}` }
-        });
-        userData = userResponse.data;
-        console.log('✅ User data fetched:', userData.username);
-      } catch (userError) {
-        console.log('⚠️ User data fetch failed, using defaults:', userError.response?.status, userError.message);
-      }
-
-      console.log('✅ Pinterest authentication successful');
-      return res.json({
-        success: true,
-        access_token,
-        refresh_token,
-        token_type,
-        user: userData
-      });
-
-    } catch (error) {
-      console.error('❌ Pinterest OAuth failed:', error.response?.data || error.message);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error details:', error.response?.data);
-      console.error('❌ Full error response:', JSON.stringify(error.response?.data, null, 2));
-      console.error('❌ Request URL:', 'https://api.pinterest.com/oauth/token');
-      console.error('❌ Request params:', {
+    // Exchange code for access token
+    const tokenResponse = await fetch('https://api.pinterest.com/v5/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${process.env.PINTEREST_CLIENT_ID}:${process.env.PINTEREST_CLIENT_SECRET}`).toString('base64')}`
+      },
+      body: new URLSearchParams({
         grant_type: 'authorization_code',
         code: code,
-        redirect_uri: process.env.PINTEREST_REDIRECT_URI,
-        client_id: process.env.PINTEREST_CLIENT_ID,
-        client_secret: '***hidden***'
+        redirect_uri: process.env.PINTEREST_REDIRECT_URI
+      })
+    });
+
+    console.log('Token response status:', tokenResponse.status);
+    const tokenData = await tokenResponse.text();
+    console.log('Token response data:', tokenData);
+
+    if (!tokenResponse.ok) {
+      console.error('Failed to exchange code for token:', tokenData);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Failed to exchange code for token',
+        error: tokenData
       });
-      throw error;
     }
 
+    let tokenJson;
+    try {
+      tokenJson = JSON.parse(tokenData);
+    } catch (e) {
+      console.error('Failed to parse token response:', e);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Invalid token response format',
+        error: tokenData
+      });
+    }
+
+    const accessToken = tokenJson.access_token;
+    console.log('Access token obtained:', accessToken ? 'YES' : 'NO');
+
+    if (!accessToken) {
+      console.error('No access token in response:', tokenJson);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No access token received',
+        error: tokenJson
+      });
+    }
+
+    // Get user info
+    const userResponse = await fetch('https://api.pinterest.com/v5/user_account', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('User info response status:', userResponse.status);
+    const userData = await userResponse.text();
+    console.log('User info response data:', userData);
+
+    if (!userResponse.ok) {
+      console.error('Failed to get user info:', userData);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Failed to get user info',
+        error: userData
+      });
+    }
+
+    let userJson;
+    try {
+      userJson = JSON.parse(userData);
+    } catch (e) {
+      console.error('Failed to parse user response:', e);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Invalid user response format',
+        error: userData
+      });
+    }
+
+    // Get user's boards
+    const boardsResponse = await fetch('https://api.pinterest.com/v5/boards', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('Boards response status:', boardsResponse.status);
+    const boardsData = await boardsResponse.text();
+    console.log('Boards response data:', boardsData);
+
+    let boardsJson = { items: [] };
+    if (boardsResponse.ok) {
+      try {
+        boardsJson = JSON.parse(boardsData);
+      } catch (e) {
+        console.error('Failed to parse boards response:', e);
+      }
+    } else {
+      console.error('Failed to get boards:', boardsData);
+    }
+
+    res.json({
+      success: true,
+      message: 'Successfully authenticated with Pinterest',
+      user: userJson,
+      boards: boardsJson.items || [],
+      access_token: accessToken
+    });
+
   } catch (error) {
-    console.error('❌ Pinterest callback error:', error.response?.data || error.message);
+    console.error('Pinterest OAuth error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to authenticate with Pinterest',
-      error: error.response?.data?.message || error.message
+      error: error.message 
     });
   }
 });
