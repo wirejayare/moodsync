@@ -1136,11 +1136,12 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
     }
 
-    // Try Pinterest v5 API
+    // Try Pinterest OAuth with correct endpoints
     try {
       console.log('🔍 Attempting Pinterest OAuth token exchange...');
       
-      const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', 
+      // Try the correct Pinterest OAuth endpoint
+      const tokenResponse = await axios.post('https://api.pinterest.com/oauth/token', 
         new URLSearchParams({
           grant_type: 'authorization_code',
           code: code,
@@ -1164,11 +1165,11 @@ app.post('/api/pinterest/callback', async (req, res) => {
 
       console.log('✅ Access token obtained, fetching user data...');
 
-      // Get user info
+      // Get user info using the correct endpoint
       let userData = { username: 'pinterest_user', id: 'unknown' };
       
       try {
-        const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
+        const userResponse = await axios.get('https://api.pinterest.com/v1/user', {
           headers: { 'Authorization': `Bearer ${access_token}` }
         });
         userData = userResponse.data;
@@ -1187,46 +1188,10 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
 
     } catch (error) {
-      console.error('❌ Pinterest v5 OAuth failed, trying v3 fallback...');
-      
-      // Fallback to v3 API
-      try {
-        const tokenResponse = await axios.post('https://api.pinterest.com/v3/oauth/token', 
-          new URLSearchParams({
-            grant_type: 'authorization_code',
-            code: code,
-            redirect_uri: process.env.PINTEREST_REDIRECT_URI,
-            client_id: process.env.PINTEREST_CLIENT_ID,
-            client_secret: process.env.PINTEREST_CLIENT_SECRET
-          }),
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }
-          }
-        );
-
-        console.log('✅ Pinterest v3 token response received');
-        const { access_token, refresh_token, token_type } = tokenResponse.data;
-        
-        if (!access_token) {
-          throw new Error('No access token in response');
-        }
-
-        console.log('✅ Access token obtained from v3 API');
-        
-        return res.json({
-          success: true,
-          access_token,
-          refresh_token,
-          token_type,
-          user: { username: 'pinterest_user', id: 'unknown' }
-        });
-
-      } catch (v3Error) {
-        console.error('❌ Pinterest v3 OAuth also failed:', v3Error.response?.data || v3Error.message);
-        throw error; // Throw the original v5 error
-      }
+      console.error('❌ Pinterest OAuth failed:', error.response?.data || error.message);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error details:', error.response?.data);
+      throw error;
     }
 
   } catch (error) {
