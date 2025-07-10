@@ -958,6 +958,16 @@ app.post('/api/test-json', (req, res) => {
   });
 });
 
+// Simple test endpoint
+app.post('/api/test-simple', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Simple test endpoint working',
+    body: req.body,
+    headers: req.headers
+  });
+});
+
 // ===== SPOTIFY ENDPOINTS =====
 
 app.get('/api/spotify/auth-url', (req, res) => {
