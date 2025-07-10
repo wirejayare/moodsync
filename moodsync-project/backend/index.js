@@ -1169,7 +1169,7 @@ app.post('/api/pinterest/callback', async (req, res) => {
       let userData = { username: 'pinterest_user', id: 'unknown' };
       
       try {
-        const userResponse = await axios.get('https://api.pinterest.com/v1/user', {
+        const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
           headers: { 'Authorization': `Bearer ${access_token}` }
         });
         userData = userResponse.data;
@@ -1191,6 +1191,15 @@ app.post('/api/pinterest/callback', async (req, res) => {
       console.error('❌ Pinterest OAuth failed:', error.response?.data || error.message);
       console.error('❌ Error status:', error.response?.status);
       console.error('❌ Error details:', error.response?.data);
+      console.error('❌ Full error response:', JSON.stringify(error.response?.data, null, 2));
+      console.error('❌ Request URL:', 'https://api.pinterest.com/oauth/token');
+      console.error('❌ Request params:', {
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+        client_id: process.env.PINTEREST_CLIENT_ID,
+        client_secret: '***hidden***'
+      });
       throw error;
     }
 
