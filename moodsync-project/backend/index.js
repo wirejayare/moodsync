@@ -945,6 +945,19 @@ app.get('/api/pinterest/health', (req, res) => {
   });
 });
 
+// Test JSON parsing
+app.post('/api/test-json', (req, res) => {
+  console.log('Test JSON endpoint called');
+  console.log('Request body:', req.body);
+  console.log('Request headers:', req.headers);
+  res.json({
+    success: true,
+    receivedBody: req.body,
+    bodyType: typeof req.body,
+    bodyKeys: Object.keys(req.body || {})
+  });
+});
+
 // ===== SPOTIFY ENDPOINTS =====
 
 app.get('/api/spotify/auth-url', (req, res) => {
