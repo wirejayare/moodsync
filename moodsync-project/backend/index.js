@@ -1058,18 +1058,28 @@ app.get('/api/pinterest/auth-url', (req, res) => {
 
 app.post('/api/pinterest/callback', async (req, res) => {
   try {
+    console.log('🔍 Pinterest callback request received');
+    console.log('🔍 Request headers:', req.headers);
+    console.log('🔍 Request body:', req.body);
+    console.log('🔍 Request body type:', typeof req.body);
+    
     const { code } = req.body;
     
     console.log('🔍 Pinterest callback - Code received:', !!code);
+    console.log('🔍 Code value:', code);
     console.log('🔍 Environment check:');
     console.log('  - PINTEREST_CLIENT_ID:', !!process.env.PINTEREST_CLIENT_ID);
     console.log('  - PINTEREST_CLIENT_SECRET:', !!process.env.PINTEREST_CLIENT_SECRET);
     console.log('  - PINTEREST_REDIRECT_URI:', process.env.PINTEREST_REDIRECT_URI);
     
     if (!code) {
+      console.error('❌ No authorization code in request body');
+      console.error('❌ Request body keys:', Object.keys(req.body || {}));
       return res.status(400).json({ 
         success: false, 
-        message: 'Pinterest authorization code required' 
+        message: 'Pinterest authorization code required',
+        error: 'No code found in request body',
+        receivedBody: req.body
       });
     }
 
