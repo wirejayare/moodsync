@@ -1139,8 +1139,8 @@ app.post('/api/pinterest/callback', async (req, res) => {
 
     console.log('Received Pinterest authorization code:', code);
 
-    // Try v5 endpoint first
-    let tokenResponse = await fetch('https://api.pinterest.com/v5/oauth/token', {
+    // Use v5 endpoint only (since we confirmed it works)
+    const tokenResponse = await fetch('https://api.pinterest.com/v5/oauth/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -1154,30 +1154,8 @@ app.post('/api/pinterest/callback', async (req, res) => {
     });
 
     console.log('v5 Token response status:', tokenResponse.status);
-    let tokenData = await tokenResponse.text();
+    const tokenData = await tokenResponse.text();
     console.log('v5 Token response data:', tokenData);
-
-    // If v5 fails, try v1 endpoint
-    if (!tokenResponse.ok) {
-      console.log('v5 failed, trying v1 endpoint...');
-      tokenResponse = await fetch('https://api.pinterest.com/oauth/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code: code,
-          redirect_uri: process.env.PINTEREST_REDIRECT_URI,
-          client_id: process.env.PINTEREST_CLIENT_ID,
-          client_secret: process.env.PINTEREST_CLIENT_SECRET
-        })
-      });
-
-      console.log('v1 Token response status:', tokenResponse.status);
-      tokenData = await tokenResponse.text();
-      console.log('v1 Token response data:', tokenData);
-    }
 
     if (!tokenResponse.ok) {
       console.error('Failed to exchange code for token:', tokenData);
@@ -1212,8 +1190,8 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
     }
 
-    // Try v5 user endpoint first, then v1 as fallback
-    let userResponse = await fetch('https://api.pinterest.com/v5/user_account', {
+    // Use v5 user endpoint only
+    const userResponse = await fetch('https://api.pinterest.com/v5/user_account', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -1221,22 +1199,8 @@ app.post('/api/pinterest/callback', async (req, res) => {
     });
 
     console.log('v5 User info response status:', userResponse.status);
-    let userData = await userResponse.text();
+    const userData = await userResponse.text();
     console.log('v5 User info response data:', userData);
-
-    // If v5 fails, try v1 endpoint
-    if (!userResponse.ok) {
-      console.log('v5 user endpoint failed, trying v1...');
-      userResponse = await fetch('https://api.pinterest.com/v1/user', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-
-      console.log('v1 User info response status:', userResponse.status);
-      userData = await userResponse.text();
-      console.log('v1 User info response data:', userData);
-    }
 
     if (!userResponse.ok) {
       console.error('Failed to get user info:', userData);
@@ -1259,7 +1223,7 @@ app.post('/api/pinterest/callback', async (req, res) => {
       });
     }
 
-    // Try to get boards (this might fail for trial access)
+    // Try to get boards using v5 endpoint
     let boardsJson = { items: [] };
     try {
       const boardsResponse = await fetch('https://api.pinterest.com/v5/boards', {
@@ -1292,7 +1256,7 @@ app.post('/api/pinterest/callback', async (req, res) => {
       user: userJson,
       boards: boardsJson.items || [],
       access_token: accessToken,
-      note: 'Trial access apps may have limited API access'
+      note: 'Using v5 endpoints only'
     });
 
   } catch (error) {
