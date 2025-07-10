@@ -898,6 +898,17 @@ app.use(cors({
 
 app.use(express.json());
 
+// Add middleware to log all requests to Pinterest callback
+app.use('/api/pinterest/callback', (req, res, next) => {
+  console.log('🔍 Pinterest callback middleware triggered');
+  console.log('🔍 Request method:', req.method);
+  console.log('🔍 Request URL:', req.url);
+  console.log('🔍 Request headers:', req.headers);
+  console.log('🔍 Request body:', req.body);
+  console.log('🔍 Request body type:', typeof req.body);
+  next();
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({ 
@@ -1085,6 +1096,17 @@ app.post('/api/pinterest/callback', async (req, res) => {
     console.log('🔍 Request headers:', req.headers);
     console.log('🔍 Request body:', req.body);
     console.log('🔍 Request body type:', typeof req.body);
+    
+    // Check if body is properly parsed
+    if (!req.body || typeof req.body !== 'object') {
+      console.error('❌ Request body not properly parsed');
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request body format',
+        error: 'Request body not properly parsed',
+        receivedBody: req.body
+      });
+    }
     
     const { code } = req.body;
     
@@ -2020,7 +2042,11 @@ app.post('/api/create-playlist', async (req, res) => {
 
 // Error handling
 app.use((error, req, res, next) => {
-  console.error('Unhandled error:', error);
+  console.error('❌ Unhandled error:', error);
+  console.error('❌ Error stack:', error.stack);
+  console.error('❌ Request URL:', req.url);
+  console.error('❌ Request method:', req.method);
+  console.error('❌ Request body:', req.body);
   res.status(500).json({ 
     success: false,
     error: 'Internal server error',
