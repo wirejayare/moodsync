@@ -1154,7 +1154,7 @@ app.post('/api/pinterest/callback', async (req, res) => {
       console.log('🔍 Client ID being sent:', process.env.PINTEREST_CLIENT_ID);
       
       // Try the correct Pinterest OAuth endpoint
-      const tokenResponse = await axios.post('https://api.pinterest.com/v5/oauth/token', 
+      const tokenResponse = await axios.post('https://api.pinterest.com/oauth/token', 
         new URLSearchParams({
           grant_type: 'authorization_code',
           code: code,
@@ -1183,7 +1183,7 @@ app.post('/api/pinterest/callback', async (req, res) => {
       let userData = { username: 'pinterest_user', id: 'unknown' };
       
       try {
-        const userResponse = await axios.get('https://api.pinterest.com/v5/user_account', {
+        const userResponse = await axios.get('https://api.pinterest.com/v1/user', {
           headers: { 'Authorization': `Bearer ${access_token}` }
         });
         userData = userResponse.data;
