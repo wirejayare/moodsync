@@ -990,6 +990,30 @@ app.get('/api/pinterest/test-config', (req, res) => {
   });
 });
 
+// Pinterest app diagnostic
+app.get('/api/pinterest/diagnostic', (req, res) => {
+  const diagnostic = {
+    success: true,
+    timestamp: new Date().toISOString(),
+    configuration: {
+      client_id_present: !!process.env.PINTEREST_CLIENT_ID,
+      client_secret_present: !!process.env.PINTEREST_CLIENT_SECRET,
+      redirect_uri: process.env.PINTEREST_REDIRECT_URI,
+      client_id: process.env.PINTEREST_CLIENT_ID
+    },
+    auth_url: `https://www.pinterest.com/oauth/?client_id=${process.env.PINTEREST_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.PINTEREST_REDIRECT_URI)}&response_type=code&scope=boards:read,pins:read,user_accounts:read`,
+    troubleshooting: {
+      step1: "Check if app is in 'Live' mode (not 'Development')",
+      step2: "Verify redirect URI matches exactly: https://moodsync-jw.netlify.app/pinterest-callback",
+      step3: "Ensure required scopes are enabled: boards:read, pins:read, user_accounts:read",
+      step4: "Check if app has API access permissions",
+      step5: "Try creating a new Pinterest app if issues persist"
+    }
+  };
+  
+  res.json(diagnostic);
+});
+
 // ===== SPOTIFY ENDPOINTS =====
 
 app.get('/api/spotify/auth-url', (req, res) => {
