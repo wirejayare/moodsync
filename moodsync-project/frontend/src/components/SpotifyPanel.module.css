@@ -1,0 +1,133 @@
+.panel {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid #dee2e6;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7);
+}
+
+.panelTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.playlistTracks {
+  margin-bottom: 20px;
+}
+
+.playlistTrack {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background: linear-gradient(90deg, #f8f9fa, #ffffff);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.playlistTrack:hover {
+  background: linear-gradient(90deg, #e9ecef, #f8f9fa);
+  border-color: #4ecdc4;
+  transform: translateX(5px);
+}
+
+.trackNumber {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  margin-right: 15px;
+}
+
+.trackInfo {
+  flex: 1;
+}
+
+.trackTitle {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.trackArtist {
+  color: #666;
+  font-size: 13px;
+}
+
+.emptyPlaylist {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.emptyText {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.emptySubtext {
+  font-size: 14px;
+  color: #999;
+}
+
+.btn {
+  background: linear-gradient(180deg, #4ecdc4 0%, #44a08d 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+  border: 2px solid transparent;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+  border-color: rgba(255,255,255,0.3);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnPrimary {
+  background: linear-gradient(180deg, #ff6b6b 0%, #ee5a6f 100%);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+} 

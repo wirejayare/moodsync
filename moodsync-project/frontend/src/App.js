@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import SpotifyCallback from './components/SpotifyCallback';
 import PinterestCallback from './components/PinterestCallback';
+import MainMockup from './components/MainMockup';
 import './App.css';
 
 function App() {
@@ -88,7 +89,7 @@ function App() {
           <Route 
             path="/" 
             element={
-              <Home 
+              <MainMockup
                 spotifyUser={spotifyUser}
                 spotifyToken={spotifyToken}
                 onSpotifyAuth={handleSpotifyAuth}
