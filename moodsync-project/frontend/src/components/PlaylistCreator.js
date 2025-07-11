@@ -42,52 +42,33 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   // Helper function to safely get genres from either analysis format
   const getGenres = (analysis) => {
     if (!analysis) return [];
-    
-    // Enhanced analysis format
     if (analysis.music && analysis.music.primary_genres) {
       return analysis.music.primary_genres;
     }
-    
-    // Basic analysis format
     if (analysis.genres) {
       return analysis.genres;
     }
-    
-    // Fallback
     return ['pop', 'indie'];
   };
 
   // Helper function to safely get mood from either analysis format
   const getMood = (analysis) => {
     if (!analysis) return 'Unknown';
-    
-    // Enhanced analysis format
     if (analysis.mood && analysis.mood.primary) {
       return analysis.mood.primary;
     }
-    
-    // Basic analysis format
     if (analysis.mood && typeof analysis.mood === 'string') {
       return analysis.mood;
     }
-    
-    // Fallback
     return 'Mood';
   };
 
   if (!analysis) {
     return (
-      <div style={{
-        background: 'rgba(255,255,255,0.1)',
-        padding: '2rem',
-        borderRadius: '15px',
-        textAlign: 'center',
-        opacity: 0.6,
-        color: 'white'
-      }}>
-        <h3 style={{ color: 'white' }}>🎵 Create Playlist</h3>
-        <p style={{ color: 'white' }}>Analyze a Pinterest board first to create a mood-based playlist</p>
-      </div>
+      <section className="apple-glass playlist-creator empty" aria-label="Create Playlist">
+        <h3 className="pc-title">🎵 Create Playlist</h3>
+        <p className="pc-desc">Analyze a Pinterest board first to create a mood-based playlist</p>
+      </section>
     );
   }
 
@@ -95,116 +76,49 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   const mood = getMood(analysis);
 
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.1)',
-      padding: '2rem',
-      borderRadius: '15px',
-      marginBottom: '2rem',
-      color: 'white'
-    }}>
-      <h3 style={{ 
-        marginBottom: '1rem',
-        color: 'white' 
-      }}>
-        🎵 Create Spotify Playlist
-      </h3>
-      
-      <div style={{ marginBottom: '1rem' }}>
+    <section className="apple-glass playlist-creator" aria-label="Create Spotify Playlist">
+      <h3 className="pc-title">🎵 Create Spotify Playlist</h3>
+      <form className="pc-form" onSubmit={e => { e.preventDefault(); handleCreatePlaylist(); }}>
         <input
           type="text"
+          className="pc-input"
           placeholder={`${mood} Vibes`}
           value={playlistName}
           onChange={(e) => setPlaylistName(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '8px',
-            border: '2px solid rgba(255,255,255,0.3)',
-            fontSize: '16px',
-            marginBottom: '1rem',
-            background: 'rgba(255,255,255,0.9)',
-            color: '#333',
-            boxSizing: 'border-box'
-          }}
+          aria-label="Playlist name"
+          disabled={isCreating}
         />
-        
         <button
+          type="submit"
+          className="pc-create-btn"
           onClick={handleCreatePlaylist}
           disabled={isCreating || !playlistName.trim()}
-          style={{
-            background: isCreating ? '#999' : '#1db954',
-            color: 'white',
-            border: '2px solid rgba(255,255,255,0.3)',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: isCreating ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold',
-            width: '100%',
-            opacity: (isCreating || !playlistName.trim()) ? 0.6 : 1
-          }}
+          aria-busy={isCreating}
         >
           {isCreating ? '🎵 Creating...' : '🎵 Create Playlist'}
         </button>
+      </form>
+      <div className="pc-summary">
+        <p><strong>Based on:</strong> {mood}</p>
+        <p><strong>Genres:</strong> {genres.slice(0, 3).join(', ')}</p>
+        <p><strong>For:</strong> {spotifyUser?.display_name || 'You'}</p>
       </div>
-
-      <div style={{
-        background: 'rgba(255,255,255,0.2)',
-        padding: '1rem',
-        borderRadius: '8px',
-        fontSize: '14px',
-        color: 'white'
-      }}>
-        <p style={{ margin: '0.5rem 0', color: 'white' }}>
-          <strong>Based on:</strong> {mood}
-        </p>
-        <p style={{ margin: '0.5rem 0', color: 'white' }}>
-          <strong>Genres:</strong> {genres.slice(0, 3).join(', ')}
-        </p>
-        <p style={{ margin: '0.5rem 0', color: 'white' }}>
-          <strong>For:</strong> {spotifyUser?.display_name || 'You'}
-        </p>
-      </div>
-
       {createdPlaylist && (
-        <div style={{
-          background: 'rgba(40, 167, 69, 0.3)',
-          padding: '1.5rem',
-          borderRadius: '10px',
-          marginTop: '1rem',
-          border: '2px solid rgba(40, 167, 69, 0.5)',
-          color: 'white'
-        }}>
-          <h4 style={{ color: 'white' }}>🎉 Playlist Created!</h4>
-          <p style={{ color: 'white' }}>
-            <strong>Name:</strong> {createdPlaylist.name}
-          </p>
-          <p style={{ color: 'white' }}>
-            <strong>Tracks:</strong> {createdPlaylist.trackCount} songs
-          </p>
-          
+        <div className="pc-created">
+          <h4 className="pc-created-title">🎉 Playlist Created!</h4>
+          <p><strong>Name:</strong> {createdPlaylist.name}</p>
+          <p><strong>Tracks:</strong> {createdPlaylist.trackCount} songs</p>
           <a
             href={createdPlaylist.url}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'inline-block',
-              background: '#1db954',
-              color: 'white',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              textDecoration: 'none',
-              fontSize: '14px',
-              marginTop: '1rem',
-              fontWeight: 'bold',
-              border: '2px solid rgba(255,255,255,0.3)'
-            }}
+            className="pc-open-spotify"
           >
             🎧 Open in Spotify
           </a>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
