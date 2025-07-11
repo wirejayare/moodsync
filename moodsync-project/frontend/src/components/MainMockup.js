@@ -30,15 +30,10 @@ const MainMockup = ({
   const [pinterestConnected, setPinterestConnected] = useState(!!pinterestUser);
   const [spotifyConnected, setSpotifyConnected] = useState(!!spotifyUser);
 
-  // Pinterest boards (replace with real fetch)
-  const [boards, setBoards] = useState([
-    { id: 'sunset-vibes', name: '🌅 Sunset Vibes', pinCount: 47 },
-    { id: 'cozy-cafe', name: '☕ Cozy Café Aesthetic', pinCount: 23 },
-    { id: 'ocean-dreams', name: '🌊 Ocean Dreams', pinCount: 31 },
-    { id: 'city-lights', name: '🏙️ City Lights & Neon', pinCount: 19 },
-    { id: 'forest-path', name: '🌲 Forest Path Wanderlust', pinCount: 28 },
-    { id: 'minimalist', name: '✨ Minimalist Moments', pinCount: 42 }
-  ]);
+  // Real Pinterest boards
+  const [boards, setBoards] = useState([]);
+  const [boardsLoading, setBoardsLoading] = useState(false);
+  const [boardsError, setBoardsError] = useState(null);
   const [selectedBoard, setSelectedBoard] = useState('');
 
   // Playlist and progress
@@ -120,6 +115,37 @@ const MainMockup = ({
     alert('Saving playlist to Spotify! (Implement real logic)');
   };
 
+  // Fetch Pinterest boards when connected
+  useEffect(() => {
+    const fetchBoards = async () => {
+      if (!pinterestToken || !pinterestUser) return;
+      setBoardsLoading(true);
+      setBoardsError(null);
+      try {
+        const response = await fetch('https://moodsync-backend-sdbe.onrender.com/api/pinterest/boards', {
+          headers: {
+            'Authorization': `Bearer ${pinterestToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.success) {
+          setBoards(data.boards);
+        } else {
+          throw new Error(data.message || 'Failed to fetch boards');
+        }
+      } catch (error) {
+        setBoardsError(error.message);
+      } finally {
+        setBoardsLoading(false);
+      }
+    };
+    fetchBoards();
+  }, [pinterestToken, pinterestUser]);
+
   useEffect(() => {
     setPinterestConnected(!!pinterestUser);
   }, [pinterestUser]);
@@ -143,6 +169,8 @@ const MainMockup = ({
           onBoardSelect={handleBoardSelect}
           onGeneratePlaylist={handleGeneratePlaylist}
           boardPreviews={BOARD_PREVIEWS}
+          isLoading={boardsLoading}
+          error={boardsError}
         />
         <SpotifyPanel
           playlist={playlist}
