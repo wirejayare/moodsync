@@ -186,6 +186,36 @@
   font-weight: bold;
 }
 
+.modeBtn {
+  background: #f8f9fa;
+  color: #333;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  margin-right: 4px;
+}
+.modeBtnActive {
+  background: linear-gradient(90deg, #4ecdc4, #45b7d1);
+  color: white;
+  border-color: #4ecdc4;
+  box-shadow: 0 2px 8px rgba(78,205,196,0.08);
+}
+.urlInputSection {
+  margin-bottom: 16px;
+}
+.urlInput {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
 @media (max-width: 768px) {
   .boardGrid {
     grid-template-columns: repeat(2, 1fr);
