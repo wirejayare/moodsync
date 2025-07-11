@@ -1,0 +1,152 @@
+.connectionStatus {
+  background: linear-gradient(180deg, #f1f3f4 0%, #e8eaed 100%);
+  border: 2px solid #dadce0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+  align-items: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+
+.accountConnection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #e0e0e0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.accountConnection:hover {
+  border-color: #4ecdc4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.connected {
+  border-color: #4caf50;
+  background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+}
+
+.connectionText {
+  flex: 1;
+}
+
+.connectionTitle {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.connectionStatusText {
+  font-size: 12px;
+  color: #666;
+}
+
+.connectionStatusText.connected {
+  color: #4caf50;
+}
+
+.pinterestLogo {
+  width: 40px;
+  height: 40px;
+  background: #E60023;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(230, 0, 35, 0.3);
+}
+
+.pinterestSvg {
+  width: 22px;
+  height: 22px;
+  fill: white;
+}
+
+.spotifyLogo {
+  width: 40px;
+  height: 40px;
+  background: #1DB954;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+}
+
+.connectionMixer {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+.cd {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #ff6b6b 0deg,
+    #4ecdc4 60deg,
+    #45b7d1 120deg,
+    #96ceb4 180deg,
+    #ffeaa7 240deg,
+    #fd79a8 300deg,
+    #ff6b6b 360deg
+  );
+  position: relative;
+  animation: spin 3s linear infinite;
+  box-shadow: 0 0 0 3px #333, 0 0 0 4px #666, 0 4px 15px rgba(0,0,0,0.3), inset 0 0 0 2px rgba(255,255,255,0.1);
+}
+
+.cd::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 15px;
+  height: 15px;
+  background: radial-gradient(circle, #333 0%, #666 100%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px #333, inset 0 1px 2px rgba(255,255,255,0.3);
+}
+
+.cd::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 35px;
+  height: 35px;
+  background: radial-gradient(
+    circle,
+    transparent 40%,
+    rgba(255,255,255,0.1) 41%,
+    rgba(255,255,255,0.2) 42%,
+    transparent 43%
+  );
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+} 
