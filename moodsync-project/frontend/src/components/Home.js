@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import EnhancedPinterestAnalyzer from './EnhancedPinterestAnalyzer';
 import PlaylistCreator from './PlaylistCreator';
+import PinterestPanel from './PinterestPanel';
 
 const Home = ({ 
   spotifyUser, 
@@ -13,6 +13,10 @@ const Home = ({
 }) => {
   const [backendStatus, setBackendStatus] = useState('Checking...');
   const [analysis, setAnalysis] = useState(null);
+  const [pinterestBoards, setPinterestBoards] = useState([]);
+  const [selectedBoard, setSelectedBoard] = useState(null);
+  const [isLoadingBoards, setIsLoadingBoards] = useState(false);
+  const [pinterestError, setPinterestError] = useState(null);
 
   useEffect(() => {
     // Test backend connection
@@ -21,6 +25,78 @@ const Home = ({
       .then(data => setBackendStatus('✅ Connected'))
       .catch(() => setBackendStatus('❌ Not connected'));
   }, []);
+
+  // Fetch boards if Pinterest is connected
+  useEffect(() => {
+    if (pinterestToken && pinterestUser) {
+      setIsLoadingBoards(true);
+      setPinterestError(null);
+      fetch('https://moodsync-backend-sdbe.onrender.com/api/pinterest/boards', {
+        headers: {
+          'Authorization': `Bearer ${pinterestToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setPinterestBoards(data.boards);
+          } else {
+            setPinterestError(data.message || 'Failed to fetch boards');
+          }
+        })
+        .catch(err => setPinterestError(err.message))
+        .finally(() => setIsLoadingBoards(false));
+    } else {
+      setPinterestBoards([]);
+      setSelectedBoard(null);
+    }
+  }, [pinterestToken, pinterestUser]);
+
+  // Handler for board selection
+  const handleBoardSelect = (boardId) => {
+    setSelectedBoard(boardId);
+  };
+
+  // Handler for playlist generation (boardId or boardUrl)
+  const handleGeneratePlaylist = async (boardOrUrl) => {
+    setAnalysis(null);
+    let analysisData = null;
+    try {
+      if (typeof boardOrUrl === 'string' && boardOrUrl.includes('pinterest.com')) {
+        // Board URL mode
+        const response = await fetch('https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: boardOrUrl })
+        });
+        const data = await response.json();
+        if (data.success) {
+          analysisData = data.analysis;
+        } else {
+          throw new Error(data.message || 'Analysis failed');
+        }
+      } else {
+        // Board picker mode
+        const board = pinterestBoards.find(b => b.id === boardOrUrl);
+        if (!board) throw new Error('Board not found');
+        const response = await fetch('https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-with-api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ boardId: board.id, pinterestToken })
+        });
+        const data = await response.json();
+        if (data.success) {
+          analysisData = data.analysis;
+        } else {
+          throw new Error(data.message || 'Analysis failed');
+        }
+      }
+      setAnalysis(analysisData);
+    } catch (error) {
+      alert('Failed to analyze board: ' + error.message);
+    }
+  };
 
   const handleSpotifyAuth = async () => {
     try {
@@ -98,12 +174,13 @@ const Home = ({
             {/* Pinterest Analyzer */}
             <section className="home-analyzer-section">
               <h3 className="home-step-title">📌 Step 2: Analyze Pinterest Board</h3>
-              <EnhancedPinterestAnalyzer 
-                spotifyToken={spotifyToken}
-                onAnalysisComplete={handleAnalysisComplete}
-                pinterestToken={pinterestToken}
-                pinterestUser={pinterestUser}
-                onPinterestAuth={onPinterestAuth}
+              <PinterestPanel
+                boards={pinterestBoards}
+                selectedBoard={selectedBoard}
+                onBoardSelect={handleBoardSelect}
+                onGeneratePlaylist={handleGeneratePlaylist}
+                isLoading={isLoadingBoards}
+                error={pinterestError}
               />
               {/* Playlist Creator */}
               <h3 className="home-step-title">🎵 Step 3: Create Your Playlist</h3>
