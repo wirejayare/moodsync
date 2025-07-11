@@ -181,55 +181,58 @@ const MainMockup = ({
         onDisconnectPinterest={() => onLogout('pinterest')}
         onDisconnectSpotify={() => onLogout('spotify')}
       />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
-        <PinterestPanel
-          boards={boards}
-          selectedBoard={selectedBoard}
-          onBoardSelect={handleBoardSelect}
-          onGeneratePlaylist={handleGeneratePlaylist}
-          boardPreviews={BOARD_PREVIEWS}
-          isLoading={boardsLoading}
-          error={boardsError}
-        />
-        <div>
-          {/* Show keyword themes if available */}
-          {themes.length > 0 && (
-            <div style={{
-              marginBottom: '16px',
-              padding: '12px 18px',
-              background: 'linear-gradient(90deg, #f8f9fa, #e0f7fa)',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              fontSize: '16px',
-              color: '#333',
-              display: 'flex',
-              gap: '12px',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(78,205,196,0.08)'
-            }}>
-              {themes.map((theme, idx) => (
-                <span key={idx} style={{
-                  background: 'linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%)',
-                  color: 'white',
-                  borderRadius: '8px',
-                  padding: '6px 14px',
-                  marginRight: '6px',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  letterSpacing: '1px',
-                  boxShadow: '0 1px 4px rgba(78,205,196,0.12)'
-                }}>{theme}</span>
-              ))}
-            </div>
-          )}
-          <SpotifyPanel
-            playlist={playlist}
-            onSaveToSpotify={handleSaveToSpotify}
-            isGenerating={isGenerating}
+      {/* Only show main panels if both Pinterest and Spotify are connected */}
+      {(pinterestConnected && spotifyConnected) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+          <PinterestPanel
+            boards={boards}
+            selectedBoard={selectedBoard}
+            onBoardSelect={handleBoardSelect}
+            onGeneratePlaylist={handleGeneratePlaylist}
+            boardPreviews={BOARD_PREVIEWS}
+            isLoading={boardsLoading}
+            error={boardsError}
           />
+          <div>
+            {/* Show keyword themes if available */}
+            {themes.length > 0 && (
+              <div style={{
+                marginBottom: '16px',
+                padding: '12px 18px',
+                background: 'linear-gradient(90deg, #f8f9fa, #e0f7fa)',
+                borderRadius: '12px',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                color: '#333',
+                display: 'flex',
+                gap: '12px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(78,205,196,0.08)'
+              }}>
+                {themes.map((theme, idx) => (
+                  <span key={idx} style={{
+                    background: 'linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    padding: '6px 14px',
+                    marginRight: '6px',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    letterSpacing: '1px',
+                    boxShadow: '0 1px 4px rgba(78,205,196,0.12)'
+                  }}>{theme}</span>
+                ))}
+              </div>
+            )}
+            <SpotifyPanel
+              playlist={playlist}
+              onSaveToSpotify={handleSaveToSpotify}
+              isGenerating={isGenerating}
+            />
+          </div>
         </div>
-      </div>
+      )}
       <ConnectionLine />
       <StatusBar
         statusText={statusText}
