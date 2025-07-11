@@ -5,7 +5,9 @@ const ConnectionStatus = ({
   pinterestConnected,
   spotifyConnected,
   onConnectPinterest,
-  onConnectSpotify
+  onConnectSpotify,
+  onDisconnectPinterest,
+  onDisconnectSpotify
 }) => (
   <div className={styles.connectionStatus}>
     <div
@@ -14,7 +16,6 @@ const ConnectionStatus = ({
           ? `${styles.accountConnection} ${styles.connected}`
           : styles.accountConnection
       }
-      onClick={onConnectPinterest}
     >
       <div className={styles.pinterestLogo}>
         <svg className={styles.pinterestSvg} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -31,6 +32,11 @@ const ConnectionStatus = ({
           {pinterestConnected ? 'Connected ✓' : 'Click to connect'}
         </div>
       </div>
+      {pinterestConnected && (
+        <button className={styles.disconnectBtn} onClick={onDisconnectPinterest}>
+          Disconnect
+        </button>
+      )}
     </div>
     <div className={styles.connectionMixer}>
       <div className={styles.cd}></div>
@@ -41,7 +47,6 @@ const ConnectionStatus = ({
           ? `${styles.accountConnection} ${styles.connected}`
           : styles.accountConnection
       }
-      onClick={onConnectSpotify}
     >
       <div className={styles.spotifyLogo}>♫</div>
       <div className={styles.connectionText}>
@@ -54,6 +59,11 @@ const ConnectionStatus = ({
           {spotifyConnected ? 'Connected ✓' : 'Click to connect'}
         </div>
       </div>
+      {spotifyConnected && (
+        <button className={styles.disconnectBtn} onClick={onDisconnectSpotify}>
+          Disconnect
+        </button>
+      )}
     </div>
   </div>
 );

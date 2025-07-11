@@ -149,4 +149,23 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.disconnectBtn {
+  margin-left: 12px;
+  background: linear-gradient(180deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.15);
+  border: 2px solid transparent;
+}
+.disconnectBtn:hover {
+  background: linear-gradient(180deg, #ee5a6f 0%, #ff6b6b 100%);
+  border-color: #fff;
 } 

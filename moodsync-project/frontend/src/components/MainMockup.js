@@ -43,6 +43,10 @@ const MainMockup = ({
   const [statusText, setStatusText] = useState('Ready to generate playlist');
   const [showStatus, setShowStatus] = useState(false);
 
+  // Add state for analysis and themes
+  const [analysis, setAnalysis] = useState(null);
+  const [themes, setThemes] = useState([]);
+
   // OAuth handlers
   const handleConnectPinterest = async () => {
     if (pinterestUser) return;
@@ -78,6 +82,8 @@ const MainMockup = ({
     setShowStatus(true);
     setProgress(0);
     setStatusText('🔄 Analyzing mood & generating playlist...');
+    setThemes([]);
+    setAnalysis(null);
     // Simulate progress
     let prog = 0;
     const interval = setInterval(() => {
@@ -101,9 +107,20 @@ const MainMockup = ({
       setPlaylist(data.tracks || []);
       setStatusText('✅ Playlist ready!');
       setProgress(100);
+      setAnalysis(data.analysis || null);
+      // Extract up to three keyword themes from analysis
+      if (data.analysis && Array.isArray(data.analysis.detected_themes)) {
+        setThemes(data.analysis.detected_themes.slice(0, 3).map(t => t.theme));
+      } else if (data.analysis && data.analysis.primary_theme) {
+        setThemes([data.analysis.primary_theme]);
+      } else {
+        setThemes([]);
+      }
     } catch (error) {
       setStatusText('❌ Error generating playlist');
       setProgress(100);
+      setThemes([]);
+      setAnalysis(null);
     } finally {
       setIsGenerating(false);
       clearInterval(interval);
@@ -161,6 +178,8 @@ const MainMockup = ({
         spotifyConnected={spotifyConnected}
         onConnectPinterest={handleConnectPinterest}
         onConnectSpotify={handleConnectSpotify}
+        onDisconnectPinterest={() => onLogout('pinterest')}
+        onDisconnectSpotify={() => onLogout('spotify')}
       />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
         <PinterestPanel
@@ -172,11 +191,44 @@ const MainMockup = ({
           isLoading={boardsLoading}
           error={boardsError}
         />
-        <SpotifyPanel
-          playlist={playlist}
-          onSaveToSpotify={handleSaveToSpotify}
-          isGenerating={isGenerating}
-        />
+        <div>
+          {/* Show keyword themes if available */}
+          {themes.length > 0 && (
+            <div style={{
+              marginBottom: '16px',
+              padding: '12px 18px',
+              background: 'linear-gradient(90deg, #f8f9fa, #e0f7fa)',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              color: '#333',
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(78,205,196,0.08)'
+            }}>
+              {themes.map((theme, idx) => (
+                <span key={idx} style={{
+                  background: 'linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '6px 14px',
+                  marginRight: '6px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  boxShadow: '0 1px 4px rgba(78,205,196,0.12)'
+                }}>{theme}</span>
+              ))}
+            </div>
+          )}
+          <SpotifyPanel
+            playlist={playlist}
+            onSaveToSpotify={handleSaveToSpotify}
+            isGenerating={isGenerating}
+          />
+        </div>
       </div>
       <ConnectionLine />
       <StatusBar
