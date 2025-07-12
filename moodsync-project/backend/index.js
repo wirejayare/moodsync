@@ -2543,6 +2543,12 @@ async function generateEnhancedAnalysisWithVision(url) {
     }
   }
   
+  // Generate AI-powered music recommendations
+  let aiRecommendations = null;
+  if (visualAnalysis) {
+    aiRecommendations = await generateAIMusicRecommendations(visualAnalysis, boardInfo);
+  }
+  
   // Combine text-based and visual analysis
   let finalMood = theme.mood;
   let finalConfidence = themeAnalysis.confidence;
@@ -2598,7 +2604,10 @@ async function generateEnhancedAnalysisWithVision(url) {
         total_faces: visualAnalysis.visualElements.totalFaces,
         average_brightness: visualAnalysis.visualElements.averageBrightness,
         color_diversity: visualAnalysis.visualElements.colorDiversity,
-        common_labels: visualAnalysis.commonLabels.slice(0, 5)
+        common_labels: visualAnalysis.commonLabels.slice(0, 5),
+        objects: visualAnalysis.objects || [],
+        activities: visualAnalysis.activities || [],
+        settings: visualAnalysis.settings || []
       } : null
     },
     content: {
@@ -2607,9 +2616,13 @@ async function generateEnhancedAnalysisWithVision(url) {
       topics: ['Lifestyle', 'Design', 'Mood']
     },
     music: {
-      primary_genres: theme.genres,
-      energy_level: finalMood === 'Energetic' ? 'high' : 'medium',
-      tempo_range: finalMood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'
+      primary_genres: aiRecommendations ? aiRecommendations.genres : theme.genres,
+      energy_level: aiRecommendations ? aiRecommendations.energyLevel : (finalMood === 'Energetic' ? 'high' : 'medium'),
+      tempo_range: aiRecommendations ? aiRecommendations.tempoRange : (finalMood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'),
+      mood_characteristics: aiRecommendations ? aiRecommendations.moodCharacteristics : [],
+      search_terms: aiRecommendations ? aiRecommendations.searchTerms : [],
+      audio_features: aiRecommendations ? aiRecommendations.audioFeatures : {},
+      ai_reasoning: aiRecommendations ? aiRecommendations.reasoning : []
     },
     board: {
       name: boardInfo.boardName,
@@ -2623,4 +2636,278 @@ async function generateEnhancedAnalysisWithVision(url) {
     data_source: 'url_analysis' + (visualAnalysis ? '+vision_api' : ''),
     timestamp: new Date().toISOString()
   };
+}
+
+// ===== AI-POWERED MUSIC RECOMMENDATION =====
+
+// Generate AI-powered music recommendations based on visual analysis
+async function generateAIMusicRecommendations(visualAnalysis, boardInfo) {
+  try {
+    console.log('🤖 Generating AI-powered music recommendations...');
+    
+    // Create a comprehensive analysis prompt
+    const analysisPrompt = createAnalysisPrompt(visualAnalysis, boardInfo);
+    
+    // For now, we'll use a sophisticated rule-based system
+    // In production, you could integrate with Claude/GPT API here
+    const recommendations = await generateSophisticatedRecommendations(visualAnalysis, boardInfo);
+    
+    console.log('✅ AI recommendations generated:', recommendations);
+    return recommendations;
+    
+  } catch (error) {
+    console.error('❌ AI recommendation error:', error);
+    return null;
+  }
+}
+
+// Create a comprehensive analysis prompt for AI
+function createAnalysisPrompt(visualAnalysis, boardInfo) {
+  const prompt = `
+Analyze this Pinterest board and recommend music genres and characteristics:
+
+BOARD INFO:
+- Name: ${boardInfo.boardName}
+- Username: ${boardInfo.username}
+- URL: ${boardInfo.url}
+
+VISUAL ANALYSIS:
+- Dominant Colors: ${visualAnalysis.dominantColors?.map(c => c.hex).join(', ') || 'None'}
+- Detected Objects: ${visualAnalysis.objects?.map(o => o.name).join(', ') || 'None'}
+- Activities: ${visualAnalysis.activities?.map(a => a.name).join(', ') || 'None'}
+- Settings: ${visualAnalysis.settings?.map(s => s.name).join(', ') || 'None'}
+- Mood Indicators: ${visualAnalysis.mood?.primary || 'Unknown'}
+- Color Temperature: ${visualAnalysis.visualElements?.colorTemperature || 'Unknown'}
+
+Please recommend:
+1. Primary music genres (3-5 genres)
+2. Energy level (low/medium/high)
+3. Tempo range (BPM)
+4. Mood characteristics
+5. Specific Spotify search terms
+6. Audio features to target (danceability, valence, energy, etc.)
+
+Format as JSON with detailed reasoning.
+`;
+
+  return prompt;
+}
+
+// Sophisticated rule-based recommendation system
+async function generateSophisticatedRecommendations(visualAnalysis, boardInfo) {
+  const recommendations = {
+    genres: [],
+    energyLevel: 'medium',
+    tempoRange: '80-120 BPM',
+    moodCharacteristics: [],
+    searchTerms: [],
+    audioFeatures: {},
+    reasoning: []
+  };
+
+  // Analyze colors for mood
+  if (visualAnalysis.dominantColors) {
+    const colorAnalysis = analyzeColorsForMood(visualAnalysis.dominantColors);
+    recommendations.reasoning.push(`Color analysis: ${colorAnalysis.reasoning}`);
+    recommendations.genres.push(...colorAnalysis.genres);
+    recommendations.moodCharacteristics.push(...colorAnalysis.moods);
+  }
+
+  // Analyze activities
+  if (visualAnalysis.activities && visualAnalysis.activities.length > 0) {
+    const activityAnalysis = analyzeActivitiesForMusic(visualAnalysis.activities);
+    recommendations.reasoning.push(`Activity analysis: ${activityAnalysis.reasoning}`);
+    recommendations.genres.push(...activityAnalysis.genres);
+    recommendations.energyLevel = activityAnalysis.energyLevel;
+    recommendations.searchTerms.push(...activityAnalysis.searchTerms);
+  }
+
+  // Analyze settings
+  if (visualAnalysis.settings && visualAnalysis.settings.length > 0) {
+    const settingAnalysis = analyzeSettingsForMusic(visualAnalysis.settings);
+    recommendations.reasoning.push(`Setting analysis: ${settingAnalysis.reasoning}`);
+    recommendations.genres.push(...settingAnalysis.genres);
+    recommendations.searchTerms.push(...settingAnalysis.searchTerms);
+  }
+
+  // Analyze objects
+  if (visualAnalysis.objects && visualAnalysis.objects.length > 0) {
+    const objectAnalysis = analyzeObjectsForMusic(visualAnalysis.objects);
+    recommendations.reasoning.push(`Object analysis: ${objectAnalysis.reasoning}`);
+    recommendations.genres.push(...objectAnalysis.genres);
+    recommendations.moodCharacteristics.push(...objectAnalysis.moods);
+  }
+
+  // Remove duplicates and limit
+  recommendations.genres = [...new Set(recommendations.genres)].slice(0, 5);
+  recommendations.moodCharacteristics = [...new Set(recommendations.moodCharacteristics)].slice(0, 3);
+  recommendations.searchTerms = [...new Set(recommendations.searchTerms)].slice(0, 5);
+
+  // Set audio features based on analysis
+  recommendations.audioFeatures = generateAudioFeatures(recommendations);
+
+  return recommendations;
+}
+
+// Analyze colors for mood and music recommendations
+function analyzeColorsForMood(colors) {
+  const warmColors = colors.filter(c => isWarmColor(c.hex));
+  const coolColors = colors.filter(c => isCoolColor(c.hex));
+  const brightColors = colors.filter(c => isBrightColor(c.hex));
+
+  const result = {
+    genres: [],
+    moods: [],
+    reasoning: ''
+  };
+
+  if (warmColors.length > coolColors.length) {
+    result.genres.push('soul', 'R&B', 'romantic', 'acoustic');
+    result.moods.push('warm', 'passionate', 'cozy');
+    result.reasoning = 'Warm color palette detected';
+  } else if (coolColors.length > warmColors.length) {
+    result.genres.push('ambient', 'chill', 'lo-fi', 'indie');
+    result.moods.push('calm', 'peaceful', 'serene');
+    result.reasoning = 'Cool color palette detected';
+  }
+
+  if (brightColors.length > 2) {
+    result.genres.push('pop', 'dance', 'electronic');
+    result.moods.push('energetic', 'joyful');
+    result.reasoning += ' - Bright colors suggest high energy';
+  }
+
+  return result;
+}
+
+// Analyze activities for music recommendations
+function analyzeActivitiesForMusic(activities) {
+  const result = {
+    genres: [],
+    energyLevel: 'medium',
+    searchTerms: [],
+    reasoning: ''
+  };
+
+  for (const activity of activities) {
+    if (activity.genres) {
+      result.genres.push(...activity.genres);
+    }
+    
+    if (activity.name === 'workout') {
+      result.energyLevel = 'high';
+      result.searchTerms.push('energetic', 'motivational', 'upbeat');
+    } else if (activity.name === 'relaxation') {
+      result.energyLevel = 'low';
+      result.searchTerms.push('calm', 'peaceful', 'ambient');
+    }
+  }
+
+  result.reasoning = `Activities detected: ${activities.map(a => a.name).join(', ')}`;
+  return result;
+}
+
+// Analyze settings for music recommendations
+function analyzeSettingsForMusic(settings) {
+  const result = {
+    genres: [],
+    searchTerms: [],
+    reasoning: ''
+  };
+
+  for (const setting of settings) {
+    if (setting.name === 'outdoor') {
+      result.genres.push('folk', 'acoustic', 'nature sounds');
+      result.searchTerms.push('outdoor', 'nature', 'organic');
+    } else if (setting.name === 'urban') {
+      result.genres.push('hip hop', 'pop', 'electronic');
+      result.searchTerms.push('urban', 'city', 'modern');
+    } else if (setting.name === 'home') {
+      result.genres.push('acoustic', 'indie', 'cozy');
+      result.searchTerms.push('home', 'comfortable', 'relaxing');
+    }
+  }
+
+  result.reasoning = `Settings detected: ${settings.map(s => s.name).join(', ')}`;
+  return result;
+}
+
+// Analyze objects for music recommendations
+function analyzeObjectsForMusic(objects) {
+  const result = {
+    genres: [],
+    moods: [],
+    reasoning: ''
+  };
+
+  for (const obj of objects) {
+    const objName = obj.name.toLowerCase();
+    
+    if (objName.includes('coffee') || objName.includes('tea')) {
+      result.genres.push('coffee shop', 'acoustic', 'indie pop');
+      result.moods.push('morning', 'contemplative');
+    } else if (objName.includes('book') || objName.includes('reading')) {
+      result.genres.push('ambient', 'classical', 'lo-fi');
+      result.moods.push('focused', 'intellectual');
+    } else if (objName.includes('art') || objName.includes('creative')) {
+      result.genres.push('experimental', 'indie', 'alternative');
+      result.moods.push('creative', 'inspired');
+    }
+  }
+
+  result.reasoning = `Objects detected: ${objects.map(o => o.name).join(', ')}`;
+  return result;
+}
+
+// Generate audio features based on recommendations
+function generateAudioFeatures(recommendations) {
+  const features = {};
+
+  if (recommendations.energyLevel === 'high') {
+    features.energy = { min: 0.7, max: 1.0 };
+    features.danceability = { min: 0.6, max: 1.0 };
+  } else if (recommendations.energyLevel === 'low') {
+    features.energy = { min: 0.0, max: 0.4 };
+    features.danceability = { min: 0.0, max: 0.5 };
+  } else {
+    features.energy = { min: 0.3, max: 0.7 };
+    features.danceability = { min: 0.3, max: 0.7 };
+  }
+
+  // Set valence based on mood characteristics
+  if (recommendations.moodCharacteristics.some(m => ['joyful', 'excited', 'energetic'].includes(m))) {
+    features.valence = { min: 0.6, max: 1.0 };
+  } else if (recommendations.moodCharacteristics.some(m => ['calm', 'peaceful', 'serene'].includes(m))) {
+    features.valence = { min: 0.4, max: 0.8 };
+  } else {
+    features.valence = { min: 0.3, max: 0.7 };
+  }
+
+  return features;
+}
+
+// Color utility functions
+function isWarmColor(hex) {
+  const rgb = hexToRgb(hex);
+  return rgb.r > rgb.b && rgb.g > rgb.b;
+}
+
+function isCoolColor(hex) {
+  const rgb = hexToRgb(hex);
+  return rgb.b > rgb.r && rgb.b > rgb.g;
+}
+
+function isBrightColor(hex) {
+  const rgb = hexToRgb(hex);
+  const brightness = (rgb.r + rgb.g + rgb.b) / 3;
+  return brightness > 150;
+}
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 0, g: 0, b: 0 };
 }
