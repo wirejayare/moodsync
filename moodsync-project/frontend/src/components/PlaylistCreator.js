@@ -1,5 +1,6 @@
 // src/components/PlaylistCreator.js - Fixed version
 import React, { useState } from 'react';
+import SpotifyPlayer from './SpotifyPlayer';
 
 const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   const [playlistName, setPlaylistName] = useState('');
@@ -124,6 +125,12 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           >
             🎧 Open in Spotify
           </a>
+          
+          {/* Embedded Spotify Player */}
+          <SpotifyPlayer 
+            spotifyToken={spotifyToken}
+            playlistUrl={createdPlaylist.url}
+          />
         </div>
       )}
     </section>
