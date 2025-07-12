@@ -1,4 +1,5 @@
-// ENHANCED MOOD DETECTION SYSTEM WITH NLP
+// ENHANCED MOOD DETECTION SYSTEM WITH NLP AND VISION ANALYSIS
+const visionAnalyzer = require('./vision-analyzer');
 
 function detectThemes(analysisText) {
   // Comprehensive mood database with 60 moods
@@ -1809,7 +1810,7 @@ app.get('/api/pinterest/boards/:boardId', async (req, res) => {
   }
 });
 
-// Enhanced analysis using Pinterest API data
+// Enhanced analysis using Pinterest API data with Vision API
 app.post('/api/analyze-pinterest-with-api', async (req, res) => {
   try {
     const { boardId, pinterestToken } = req.body;
@@ -1828,13 +1829,33 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
       });
     }
 
-    console.log('Starting API-enhanced analysis for board:', boardId);
+    console.log('Starting API-enhanced analysis with Vision API for board:', boardId);
     
     // Simulate processing time
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Fetch board data from Pinterest API
     const boardData = await getBoardById(boardId, pinterestToken);
+    
+    // Extract image URLs from pins for vision analysis
+    const imageUrls = boardData.pins
+      .map(pin => pin.image_url)
+      .filter(url => url && url.startsWith('http'))
+      .slice(0, 10); // Limit to 10 images for cost efficiency
+    
+    console.log(`Found ${imageUrls.length} images to analyze with Vision API`);
+    
+    // Analyze images with Vision API
+    let visualAnalysis = null;
+    if (imageUrls.length > 0) {
+      try {
+        visualAnalysis = await visionAnalyzer.analyzeMultipleImages(imageUrls, 8);
+        console.log('Vision API analysis completed:', visualAnalysis ? 'Success' : 'Failed');
+      } catch (visionError) {
+        console.error('Vision API error:', visionError.message);
+        // Continue without vision analysis if it fails
+      }
+    }
     
     // Create rich analysis text from API data
     const analysisText = [
@@ -1848,36 +1869,74 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
     const themeAnalysis = detectThemes(analysisText);
     const theme = themeAnalysis.themeData;
     
-    // Calculate enhanced confidence based on API data richness
+    // Combine text-based and visual analysis
+    let finalMood = theme.mood;
+    let finalConfidence = themeAnalysis.confidence;
+    let visualMood = null;
+    
+    if (visualAnalysis) {
+      visualMood = visualAnalysis.primaryMood;
+      const visualConfidence = visualAnalysis.confidence;
+      
+      // If visual analysis has higher confidence, use it
+      if (visualConfidence > finalConfidence) {
+        finalMood = visualMood;
+        finalConfidence = visualConfidence;
+      } else {
+        // Blend the moods if confidence is similar
+        if (Math.abs(visualConfidence - finalConfidence) < 0.2) {
+          finalMood = visualMood; // Prefer visual mood for similar confidence
+          finalConfidence = Math.max(visualConfidence, finalConfidence);
+        }
+      }
+    }
+    
+    // Calculate enhanced confidence based on data richness
     const dataRichness = Math.min(
       (boardData.pin_count / 50) * 0.2 +
       (boardData.pins.length / 10) * 0.3 +
-      (analysisText.length / 500) * 0.2,
+      (analysisText.length / 500) * 0.2 +
+      (visualAnalysis ? 0.3 : 0), // Bonus for visual analysis
       0.4
     );
     
-    const enhancedConfidence = Math.min(themeAnalysis.confidence + dataRichness, 0.95);
+    const enhancedConfidence = Math.min(finalConfidence + dataRichness, 0.95);
     
     const analysis = {
       mood: {
-        primary: theme.mood,
+        primary: finalMood,
         confidence: enhancedConfidence,
-        secondary: ['Modern', 'Fresh'],
+        secondary: visualAnalysis ? [visualMood, 'Modern'] : ['Modern', 'Fresh'],
         emotional_spectrum: [
-          { name: theme.mood, confidence: enhancedConfidence },
+          { name: finalMood, confidence: enhancedConfidence },
           { name: 'Modern', confidence: 0.7 },
           { name: 'Fresh', confidence: 0.6 }
         ]
       },
       visual: {
-        color_palette: theme.colors.map((hex, i) => ({
-          hex,
-          mood: i === 0 ? 'primary' : 'secondary',
-          name: `Color ${i + 1}`
-        })),
-        dominant_colors: { hex: theme.colors[0], name: 'Primary' },
+        color_palette: visualAnalysis ? 
+          visualAnalysis.dominantColors.map((hex, i) => ({
+            hex,
+            mood: i === 0 ? 'primary' : 'secondary',
+            name: `Color ${i + 1}`
+          })) :
+          theme.colors.map((hex, i) => ({
+            hex,
+            mood: i === 0 ? 'primary' : 'secondary',
+            name: `Color ${i + 1}`
+          })),
+        dominant_colors: visualAnalysis ? 
+          { hex: visualAnalysis.dominantColors[0], name: 'Primary' } :
+          { hex: theme.colors[0], name: 'Primary' },
         aesthetic_style: themeAnalysis.primaryTheme,
-        visual_complexity: boardData.pins.length > 20 ? 'high' : 'medium'
+        visual_complexity: boardData.pins.length > 20 ? 'high' : 'medium',
+        visual_analysis: visualAnalysis ? {
+          images_analyzed: visualAnalysis.imagesAnalyzed,
+          total_faces: visualAnalysis.visualElements.totalFaces,
+          average_brightness: visualAnalysis.visualElements.averageBrightness,
+          color_diversity: visualAnalysis.visualElements.colorDiversity,
+          common_labels: visualAnalysis.commonLabels.slice(0, 5)
+        } : null
       },
       content: {
         sentiment: { score: 0.8, label: 'positive' },
@@ -1892,8 +1951,8 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
       },
       music: {
         primary_genres: theme.genres,
-        energy_level: theme.mood === 'Energetic' ? 'high' : 'medium',
-        tempo_range: theme.mood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'
+        energy_level: finalMood === 'Energetic' ? 'high' : 'medium',
+        tempo_range: finalMood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'
       },
       board: {
         id: boardData.id,
@@ -1905,11 +1964,12 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
         follower_count: boardData.follower_count,
         detected_theme: themeAnalysis.primaryTheme,
         theme_confidence: enhancedConfidence,
-        pins_analyzed: boardData.pins.length
+        pins_analyzed: boardData.pins.length,
+        images_analyzed: visualAnalysis ? visualAnalysis.imagesAnalyzed : 0
       },
       confidence: enhancedConfidence,
-      analysis_method: 'pinterest_api_enhanced',
-      data_source: 'pinterest_api',
+      analysis_method: visualAnalysis ? 'pinterest_api_vision_enhanced' : 'pinterest_api_enhanced',
+      data_source: 'pinterest_api' + (visualAnalysis ? '+vision_api' : ''),
       timestamp: new Date().toISOString()
     };
 
@@ -1917,7 +1977,7 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
       success: true,
       analysis,
       board_data: boardData,
-      method: 'api_enhanced_analysis',
+      method: visualAnalysis ? 'api_vision_enhanced_analysis' : 'api_enhanced_analysis',
       timestamp: new Date().toISOString()
     });
 
