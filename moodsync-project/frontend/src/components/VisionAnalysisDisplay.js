@@ -7,7 +7,7 @@ const VisionAnalysisDisplay = ({ analysis }) => {
   
   // Check if we have any visual analysis data
   const hasVisualAnalysis = analysis && analysis.visual && analysis.visual.visual_analysis;
-  const hasVisionMethod = analysis && analysis.analysis_method === 'pinterest_api_vision_enhanced';
+  const hasVisionMethod = analysis && (analysis.analysis_method === 'pinterest_api_vision_enhanced' || analysis.analysis_method === 'url_vision_enhanced');
   const hasVisualData = analysis && analysis.visual;
   
   console.log('Has visual analysis:', hasVisualAnalysis);
