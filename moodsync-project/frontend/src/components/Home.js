@@ -182,17 +182,15 @@ const Home = ({
                   pinterestUser={pinterestUser}
                 />
               )}
-              {/* Show Pinterest Panel if connected */}
-              {pinterestUser && (
-                <PinterestPanel
-                  boards={pinterestBoards}
-                  selectedBoard={selectedBoard}
-                  onBoardSelect={handleBoardSelect}
-                  onGeneratePlaylist={handleGeneratePlaylist}
-                  isLoading={isLoadingBoards}
-                  error={pinterestError}
-                />
-              )}
+              {/* Show Pinterest Panel - always show for URL analysis */}
+              <PinterestPanel
+                boards={pinterestBoards}
+                selectedBoard={selectedBoard}
+                onBoardSelect={handleBoardSelect}
+                onGeneratePlaylist={handleGeneratePlaylist}
+                isLoading={isLoadingBoards}
+                error={pinterestError}
+              />
               {/* Playlist Creator */}
               <h3 className="home-step-title">🎵 Step 3: Create Your Playlist</h3>
               <PlaylistCreator 
