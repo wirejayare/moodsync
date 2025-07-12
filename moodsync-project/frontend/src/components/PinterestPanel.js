@@ -10,7 +10,7 @@ const PinterestPanel = ({
   isLoading,
   error
 }) => {
-  const [mode, setMode] = useState('picker'); // 'picker' or 'url'
+  const [mode, setMode] = useState('url'); // Default to URL mode for easier access
   const [boardUrl, setBoardUrl] = useState('');
 
   const handleBoardChange = (e) => {
@@ -55,21 +55,51 @@ const PinterestPanel = ({
 
   return (
     <div className={styles.panel}>
-      <div className={styles.panelTitle}>📌 Your Pinterest Board</div>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+      <div className={styles.panelTitle}>📌 Pinterest Board Analysis</div>
+      
+      {/* Mode Selection with better styling */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 8, 
+        marginBottom: 16,
+        background: 'rgba(255,255,255,0.1)',
+        padding: '8px',
+        borderRadius: '8px'
+      }}>
         <button
           className={mode === 'picker' ? styles.modeBtnActive : styles.modeBtn}
           onClick={() => setMode('picker')}
+          style={{
+            flex: 1,
+            padding: '8px 12px',
+            borderRadius: '6px',
+            border: 'none',
+            background: mode === 'picker' ? '#E60023' : 'transparent',
+            color: 'white',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
         >
-          Board Picker
+          📋 Your Boards
         </button>
         <button
           className={mode === 'url' ? styles.modeBtnActive : styles.modeBtn}
           onClick={() => setMode('url')}
+          style={{
+            flex: 1,
+            padding: '8px 12px',
+            borderRadius: '6px',
+            border: 'none',
+            background: mode === 'url' ? '#667eea' : 'transparent',
+            color: 'white',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
         >
-          Enter Board URL
+          🔗 Board URL
         </button>
       </div>
+      
       {mode === 'picker' ? (
         <div className={styles.boardSelector}>
           {isLoading ? (
@@ -103,23 +133,45 @@ const PinterestPanel = ({
         </div>
       ) : (
         <div className={styles.urlInputSection}>
+          <div style={{ marginBottom: '8px', fontSize: '14px', color: 'white', opacity: 0.8 }}>
+            💡 <strong>Quick Analysis:</strong> Enter any Pinterest board URL to analyze without connecting your account
+          </div>
           <input
             type="url"
             className={styles.urlInput}
             placeholder="https://www.pinterest.com/username/board-name/"
             value={boardUrl}
             onChange={e => setBoardUrl(e.target.value)}
-            style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ccc', fontSize: 14 }}
+            style={{ 
+              width: '100%', 
+              padding: '12px', 
+              borderRadius: '8px', 
+              border: '2px solid rgba(255,255,255,0.3)',
+              fontSize: '14px',
+              background: 'rgba(255,255,255,0.9)',
+              color: '#333'
+            }}
           />
         </div>
       )}
-      <div className={styles.boardPreviewLabel}>Board Preview</div>
-      <div className={styles.boardGrid}>
-        {/* Existing preview logic can remain for now */}
-        {/* Optionally, show selected board's pins here too */}
-      </div>
-      <button className={styles.btn} onClick={handleGeneratePlaylist}>
-        Generate Playlist
+      
+      <button 
+        className={styles.btn} 
+        onClick={handleGeneratePlaylist}
+        style={{
+          width: '100%',
+          padding: '12px',
+          borderRadius: '8px',
+          border: 'none',
+          background: mode === 'url' ? '#667eea' : '#E60023',
+          color: 'white',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          marginTop: '16px'
+        }}
+      >
+        {mode === 'url' ? '🔍 Analyze Board URL' : '🎵 Generate Playlist'}
       </button>
     </div>
   );
