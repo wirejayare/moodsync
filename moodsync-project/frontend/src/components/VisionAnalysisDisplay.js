@@ -8,13 +8,15 @@ const VisionAnalysisDisplay = ({ analysis }) => {
   // Check if we have any visual analysis data
   const hasVisualAnalysis = analysis && analysis.visual && analysis.visual.visual_analysis;
   const hasVisionMethod = analysis && analysis.analysis_method === 'pinterest_api_vision_enhanced';
+  const hasVisualData = analysis && analysis.visual;
   
   console.log('Has visual analysis:', hasVisualAnalysis);
   console.log('Has vision method:', hasVisionMethod);
+  console.log('Has visual data:', hasVisualData);
   
-  // Show component if we have vision analysis OR if the method indicates vision was used
-  if (!hasVisualAnalysis && !hasVisionMethod) {
-    console.log('No visual analysis data to display');
+  // Show component if we have any visual data, even if not from Vision API
+  if (!hasVisualData) {
+    console.log('No visual data to display');
     return null;
   }
 
@@ -118,9 +120,14 @@ const VisionAnalysisDisplay = ({ analysis }) => {
         <div className={styles.methodDescription}>
           {hasVisionMethod 
             ? 'Combined visual and textual analysis for enhanced accuracy'
-            : 'Text-based analysis (Vision API not available)'
+            : 'Text-based analysis (Connect Pinterest for Vision API analysis)'
           }
         </div>
+        {!hasVisionMethod && (
+          <div className={styles.upgradeNote}>
+            💡 <strong>Pro tip:</strong> Connect your Pinterest account to enable Vision API analysis for more accurate mood detection!
+          </div>
+        )}
       </div>
     </div>
   );

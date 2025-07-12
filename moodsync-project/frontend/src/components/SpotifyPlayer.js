@@ -1,17 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './SpotifyPlayer.module.css';
 
 const SpotifyPlayer = ({ spotifyToken, playlistUrl }) => {
-  const [player, setPlayer] = useState(null);
-  const [isActive, setIsActive] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(50);
   const [playlistId, setPlaylistId] = useState(null);
   const [playlistTracks, setPlaylistTracks] = useState([]);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Extract playlist ID from URL
   useEffect(() => {
@@ -23,136 +17,42 @@ const SpotifyPlayer = ({ spotifyToken, playlistUrl }) => {
     }
   }, [playlistUrl]);
 
-  // Initialize Spotify Web Playback SDK
-  useEffect(() => {
-    if (!spotifyToken || !playlistId) return;
-
-    const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-player.js';
-    script.async = true;
-
-    document.body.appendChild(script);
-
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      const player = new window.Spotify.Player({
-        name: 'MoodSync Web Player',
-        getOAuthToken: cb => { cb(spotifyToken); }
-      });
-
-      // Error handling
-      player.addListener('initialization_error', ({ message }) => {
-        setError('Failed to initialize player: ' + message);
-      });
-
-      player.addListener('authentication_error', ({ message }) => {
-        setError('Authentication failed: ' + message);
-      });
-
-      player.addListener('account_error', ({ message }) => {
-        setError('Account error: ' + message);
-      });
-
-      player.addListener('playback_error', ({ message }) => {
-        setError('Playback error: ' + message);
-      });
-
-      // Playback status updates
-      player.addListener('player_state_changed', state => {
-        if (!state) return;
-        
-        setCurrentTrack(state.track_window.current_track);
-        setIsPlaying(!state.paused);
-      });
-
-      // Ready
-      player.addListener('ready', ({ device_id }) => {
-        console.log('Ready with Device ID', device_id);
-        setIsActive(true);
-        setPlayer(player);
-        loadPlaylistTracks();
-      });
-
-      // Not Ready
-      player.addListener('not_ready', ({ device_id }) => {
-        console.log('Device ID has gone offline', device_id);
-        setIsActive(false);
-      });
-
-      // Connect to the player
-      player.connect();
-    };
-
-    return () => {
-      if (player) {
-        player.disconnect();
-      }
-    };
-  }, [spotifyToken, playlistId]);
-
   // Load playlist tracks
-  const loadPlaylistTracks = async () => {
-    if (!playlistId) return;
+  useEffect(() => {
+    if (!playlistId || !spotifyToken) return;
     
-    setIsLoading(true);
-    try {
-      const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-        headers: {
-          'Authorization': `Bearer ${spotifyToken}`
-        }
-      });
+    const loadPlaylistTracks = async () => {
+      setIsLoading(true);
+      setError(null);
       
-      const data = await response.json();
-      if (data.items) {
-        setPlaylistTracks(data.items.map(item => item.track).filter(track => track));
+      try {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+          headers: {
+            'Authorization': `Bearer ${spotifyToken}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to load playlist: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.items) {
+          setPlaylistTracks(data.items.map(item => item.track).filter(track => track));
+        }
+      } catch (error) {
+        console.error('Failed to load playlist tracks:', error);
+        setError('Failed to load playlist tracks: ' + error.message);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      setError('Failed to load playlist tracks: ' + error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  // Playback controls
-  const togglePlay = () => {
-    if (player) {
-      player.togglePlay();
-    }
-  };
+    loadPlaylistTracks();
+  }, [playlistId, spotifyToken]);
 
-  const skipNext = () => {
-    if (player) {
-      player.nextTrack();
-    }
-  };
-
-  const skipPrevious = () => {
-    if (player) {
-      player.previousTrack();
-    }
-  };
-
-  const setVolumeLevel = (newVolume) => {
-    setVolume(newVolume);
-    if (player) {
-      player.setVolume(newVolume / 100);
-    }
-  };
-
-  const playTrack = async (trackUri) => {
-    try {
-      await fetch(`https://api.spotify.com/v1/me/player/play`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${spotifyToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          uris: [trackUri]
-        })
-      });
-    } catch (error) {
-      setError('Failed to play track: ' + error.message);
-    }
+  const openInSpotify = (trackUri) => {
+    window.open(trackUri, '_blank');
   };
 
   if (!spotifyToken) {
@@ -160,7 +60,7 @@ const SpotifyPlayer = ({ spotifyToken, playlistUrl }) => {
       <div className={styles.spotifyPlayerContainer}>
         <div className={styles.spotifyPlayerPlaceholder}>
           <h3>🎵 Spotify Player</h3>
-          <p>Connect to Spotify to enable playback</p>
+          <p>Connect to Spotify to view playlist tracks</p>
         </div>
       </div>
     );
@@ -182,74 +82,30 @@ const SpotifyPlayer = ({ spotifyToken, playlistUrl }) => {
     <div className={styles.spotifyPlayerContainer}>
       <div className={styles.spotifyPlayer}>
         <div className={styles.playerHeader}>
-          <h3>🎵 MoodSync Player</h3>
-          {isActive && <span className={styles.playerStatus}>● Connected</span>}
+          <h3>🎵 Playlist Tracks</h3>
+          <a 
+            href={playlistUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className={styles.openInSpotify}
+          >
+            🎧 Open in Spotify
+          </a>
         </div>
 
-        {/* Current Track Display */}
-        {currentTrack && (
-          <div className={styles.currentTrack}>
-            <img 
-              src={currentTrack.album.images[0]?.url} 
-              alt={currentTrack.name}
-              className={styles.trackArtwork}
-            />
-            <div className={styles.trackInfo}>
-              <div className={styles.trackName}>{currentTrack.name}</div>
-              <div className={styles.trackArtist}>{currentTrack.artists[0].name}</div>
-            </div>
+        {isLoading && (
+          <div className={styles.playerLoading}>
+            <div className={styles.loadingSpinner}></div>
+            <p>Loading playlist tracks...</p>
           </div>
         )}
-
-        {/* Playback Controls */}
-        <div className={styles.playerControls}>
-          <button 
-            onClick={skipPrevious}
-            className={styles.controlBtn}
-            disabled={!isActive}
-          >
-            ⏮️
-          </button>
-          <button 
-            onClick={togglePlay}
-            className={`${styles.controlBtn} ${styles.playBtn}`}
-            disabled={!isActive}
-          >
-            {isPlaying ? '⏸️' : '▶️'}
-          </button>
-          <button 
-            onClick={skipNext}
-            className={styles.controlBtn}
-            disabled={!isActive}
-          >
-            ⏭️
-          </button>
-        </div>
-
-        {/* Volume Control */}
-        <div className={styles.volumeControl}>
-          <span>🔊</span>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={volume}
-            onChange={(e) => setVolumeLevel(parseInt(e.target.value))}
-            className={styles.volumeSlider}
-          />
-        </div>
 
         {/* Playlist Tracks */}
         {playlistTracks.length > 0 && (
           <div className={styles.playlistTracks}>
-            <h4>Playlist Tracks</h4>
             <div className={styles.tracksList}>
-              {playlistTracks.slice(0, 10).map((track, index) => (
-                <div 
-                  key={track.id} 
-                  className={`${styles.trackItem} ${currentTrack?.id === track.id ? styles.active : ''}`}
-                  onClick={() => playTrack(track.uri)}
-                >
+              {playlistTracks.slice(0, 15).map((track, index) => (
+                <div key={track.id} className={styles.trackItem}>
                   <span className={styles.trackNumber}>{index + 1}</span>
                   <img 
                     src={track.album.images[0]?.url} 
@@ -260,16 +116,35 @@ const SpotifyPlayer = ({ spotifyToken, playlistUrl }) => {
                     <div className={styles.trackTitle}>{track.name}</div>
                     <div className={styles.trackArtist}>{track.artists[0].name}</div>
                   </div>
+                  <button 
+                    onClick={() => openInSpotify(track.external_urls.spotify)}
+                    className={styles.playButton}
+                    title="Open in Spotify"
+                  >
+                    ▶️
+                  </button>
                 </div>
               ))}
             </div>
+            {playlistTracks.length > 15 && (
+              <div className={styles.moreTracks}>
+                <p>... and {playlistTracks.length - 15} more tracks</p>
+                <a 
+                  href={playlistUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={styles.viewAllButton}
+                >
+                  View All in Spotify
+                </a>
+              </div>
+            )}
           </div>
         )}
 
-        {isLoading && (
-          <div className={styles.playerLoading}>
-            <div className={styles.loadingSpinner}></div>
-            <p>Loading playlist...</p>
+        {!isLoading && playlistTracks.length === 0 && (
+          <div className={styles.noTracks}>
+            <p>No tracks found in this playlist</p>
           </div>
         )}
       </div>
