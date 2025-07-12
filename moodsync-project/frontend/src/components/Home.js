@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import PlaylistCreator from './PlaylistCreator';
 import PinterestPanel from './PinterestPanel';
 import PinterestConnector from './PinterestConnector';
+import AnimatedAnalysisDisplay from './AnimatedAnalysisDisplay';
+import VisionAnalysisDisplay from './VisionAnalysisDisplay';
 
 const Home = ({ 
   spotifyUser, 
@@ -198,6 +200,24 @@ const Home = ({
                 isLoading={isLoadingBoards}
                 error={pinterestError}
               />
+              {/* Analysis Results Display */}
+              {analysis && (
+                <section className="apple-glass home-analysis-results" aria-label="Analysis Results">
+                  <h3 className="home-step-title">📊 Analysis Results</h3>
+                  <div className="analysis-display-container">
+                    {/* Animated Analysis Display */}
+                    <AnimatedAnalysisDisplay 
+                      isAnalyzing={false}
+                      analysis={analysis}
+                      onAnalysisComplete={() => {}}
+                    />
+                    
+                    {/* Vision Analysis Display */}
+                    <VisionAnalysisDisplay analysis={analysis} />
+                  </div>
+                </section>
+              )}
+              
               {/* Playlist Creator */}
               <h3 className="home-step-title">🎵 Step 3: Create Your Playlist</h3>
               <PlaylistCreator 

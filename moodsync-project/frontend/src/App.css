@@ -1392,3 +1392,31 @@ textarea:focus {
   color: var(--primary-blue);
   font-weight: 600;
 }
+
+/* Analysis Results Section */
+.home-analysis-results {
+  margin: 2rem 0;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-large);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-light);
+}
+
+.analysis-display-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .home-analysis-results {
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  
+  .analysis-display-container {
+    gap: 1.5rem;
+  }
+}

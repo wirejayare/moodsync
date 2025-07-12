@@ -1,8 +1,6 @@
 // src/components/PlaylistCreator.js - Fixed version
 import React, { useState } from 'react';
 import SpotifyPlayer from './SpotifyPlayer';
-import VisionAnalysisDisplay from './VisionAnalysisDisplay';
-import AnimatedAnalysisDisplay from './AnimatedAnalysisDisplay';
 
 const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   const [playlistName, setPlaylistName] = useState('');
@@ -165,16 +163,6 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           >
             🎧 Open in Spotify
           </a>
-          
-          {/* Animated Analysis Display */}
-          <AnimatedAnalysisDisplay 
-            isAnalyzing={showAnimatedAnalysis}
-            analysis={analysis}
-            onAnalysisComplete={() => setShowAnimatedAnalysis(false)}
-          />
-          
-          {/* Vision Analysis Display */}
-          <VisionAnalysisDisplay analysis={analysis} />
           
           {/* Debug: Log analysis data */}
           <div style={{marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', fontSize: '12px'}}>
