@@ -51,6 +51,73 @@ const VISUAL_MOOD_MAPPING = {
   }
 };
 
+// Enhanced object and activity mapping
+const OBJECT_ACTIVITY_MAPPING = {
+  // Activities
+  cooking: {
+    moods: ['focused', 'creative', 'satisfied'],
+    genres: ['jazz', 'acoustic', 'lounge'],
+    settings: ['kitchen', 'home']
+  },
+  coffee: {
+    moods: ['relaxed', 'contemplative', 'morning'],
+    genres: ['coffee shop', 'acoustic', 'indie pop'],
+    settings: ['cafe', 'home', 'morning']
+  },
+  workout: {
+    moods: ['energetic', 'motivated', 'powerful'],
+    genres: ['hip hop', 'electronic', 'pop'],
+    settings: ['gym', 'outdoor', 'fitness']
+  },
+  reading: {
+    moods: ['calm', 'focused', 'intellectual'],
+    genres: ['ambient', 'classical', 'lo-fi'],
+    settings: ['home', 'library', 'cozy']
+  },
+  party: {
+    moods: ['excited', 'social', 'energetic'],
+    genres: ['dance', 'pop', 'electronic'],
+    settings: ['party', 'social', 'celebration']
+  },
+  nature: {
+    moods: ['peaceful', 'connected', 'refreshed'],
+    genres: ['folk', 'acoustic', 'nature sounds'],
+    settings: ['outdoor', 'nature', 'landscape']
+  },
+  work: {
+    moods: ['focused', 'productive', 'determined'],
+    genres: ['instrumental', 'ambient', 'focus'],
+    settings: ['office', 'workspace', 'professional']
+  },
+  travel: {
+    moods: ['adventurous', 'excited', 'curious'],
+    genres: ['world music', 'indie', 'adventure'],
+    settings: ['travel', 'exploration', 'new places']
+  },
+  art: {
+    moods: ['creative', 'inspired', 'artistic'],
+    genres: ['experimental', 'indie', 'alternative'],
+    settings: ['studio', 'gallery', 'creative space']
+  },
+  relaxation: {
+    moods: ['calm', 'peaceful', 'serene'],
+    genres: ['ambient', 'chill', 'meditation'],
+    settings: ['home', 'spa', 'wellness']
+  }
+};
+
+// Settings recognition patterns
+const SETTINGS_PATTERNS = {
+  home: ['home', 'house', 'room', 'living', 'bedroom', 'kitchen', 'couch', 'furniture'],
+  outdoor: ['outdoor', 'nature', 'landscape', 'garden', 'park', 'beach', 'mountain', 'forest'],
+  urban: ['city', 'urban', 'street', 'building', 'architecture', 'downtown', 'metropolitan'],
+  social: ['party', 'celebration', 'gathering', 'people', 'crowd', 'social', 'event'],
+  work: ['office', 'workspace', 'desk', 'computer', 'professional', 'business'],
+  fitness: ['gym', 'workout', 'exercise', 'fitness', 'sports', 'training'],
+  creative: ['studio', 'art', 'creative', 'gallery', 'workshop', 'design'],
+  wellness: ['spa', 'wellness', 'meditation', 'yoga', 'relaxation', 'healing']
+};
+
 // Analyze a single image using Google Vision API
 async function analyzeImage(imageUrl) {
   try {
@@ -84,6 +151,18 @@ async function analyzeImage(imageUrl) {
             },
             {
               type: 'FACE_DETECTION',
+              maxResults: 10
+            },
+            {
+              type: 'OBJECT_LOCALIZATION',
+              maxResults: 10
+            },
+            {
+              type: 'TEXT_DETECTION',
+              maxResults: 10
+            },
+            {
+              type: 'DOCUMENT_TEXT_DETECTION',
               maxResults: 10
             }
           ]
@@ -160,7 +239,11 @@ function processVisionAnalysis(analysis) {
     safeSearch: 'UNKNOWN',
     mood: null,
     confidence: 0,
-    visualElements: []
+    visualElements: [],
+    objects: [],
+    activities: [],
+    settings: [],
+    text: []
   };
 
   // Extract labels
@@ -168,6 +251,23 @@ function processVisionAnalysis(analysis) {
     result.labels = analysis.labelAnnotations.map(label => ({
       name: label.description,
       confidence: label.score
+    }));
+  }
+
+  // Extract objects (from object localization)
+  if (analysis.localizedObjectAnnotations) {
+    result.objects = analysis.localizedObjectAnnotations.map(obj => ({
+      name: obj.name,
+      confidence: obj.score,
+      boundingPoly: obj.boundingPoly
+    }));
+  }
+
+  // Extract text
+  if (analysis.textAnnotations) {
+    result.text = analysis.textAnnotations.map(text => ({
+      description: text.description,
+      confidence: text.confidence || 0
     }));
   }
 
@@ -199,10 +299,70 @@ function processVisionAnalysis(analysis) {
     result.safeSearch = analysis.safeSearchAnnotation.adult;
   }
 
+  // Analyze activities and settings
+  result.activities = detectActivities(result.labels, result.objects);
+  result.settings = detectSettings(result.labels, result.objects);
+
   // Determine mood based on visual analysis
   result.mood = determineVisualMood(result);
   
   return result;
+}
+
+// Detect activities based on labels and objects
+function detectActivities(labels, objects) {
+  const activities = [];
+  const allItems = [...labels, ...objects];
+  
+  for (const [activity, mapping] of Object.entries(OBJECT_ACTIVITY_MAPPING)) {
+    const activityKeywords = [activity, ...Object.keys(mapping)];
+    
+    for (const item of allItems) {
+      const itemName = item.name.toLowerCase();
+      
+      // Check if any activity keywords match
+      for (const keyword of activityKeywords) {
+        if (itemName.includes(keyword) || keyword.includes(itemName)) {
+          activities.push({
+            name: activity,
+            confidence: item.confidence || 0.5,
+            moods: mapping.moods,
+            genres: mapping.genres,
+            settings: mapping.settings
+          });
+          break;
+        }
+      }
+    }
+  }
+  
+  return activities;
+}
+
+// Detect settings based on labels and objects
+function detectSettings(labels, objects) {
+  const settings = [];
+  const allItems = [...labels, ...objects];
+  
+  for (const [setting, keywords] of Object.entries(SETTINGS_PATTERNS)) {
+    for (const item of allItems) {
+      const itemName = item.name.toLowerCase();
+      
+      // Check if any setting keywords match
+      for (const keyword of keywords) {
+        if (itemName.includes(keyword) || keyword.includes(itemName)) {
+          settings.push({
+            name: setting,
+            confidence: item.confidence || 0.5,
+            keywords: keywords
+          });
+          break;
+        }
+      }
+    }
+  }
+  
+  return settings;
 }
 
 // Convert RGB to hex
