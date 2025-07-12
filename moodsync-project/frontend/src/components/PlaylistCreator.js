@@ -16,7 +16,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
 
     setIsCreating(true);
     try {
-      console.log('Creating playlist with data:', {
+      console.log('🎵 Creating playlist with data:', {
         accessToken: spotifyToken ? 'present' : 'missing',
         analysis: analysis,
         playlistName: playlistName
@@ -32,17 +32,26 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         })
       });
 
+      console.log('📡 Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ HTTP Error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
       const data = await response.json();
-      console.log('Playlist creation response:', data);
+      console.log('✅ Playlist creation response:', data);
       
       if (data.success) {
         setCreatedPlaylist(data.playlist);
         alert(`🎉 Playlist "${data.playlist.name}" created successfully!`);
       } else {
+        console.error('❌ Playlist creation failed:', data);
         alert('Failed to create playlist: ' + data.message);
       }
     } catch (error) {
-      console.error('Playlist creation error:', error);
+      console.error('❌ Playlist creation error:', error);
       alert('Error creating playlist: ' + error.message);
     } finally {
       setIsCreating(false);

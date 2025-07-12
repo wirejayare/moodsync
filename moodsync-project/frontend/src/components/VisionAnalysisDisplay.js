@@ -2,38 +2,56 @@ import React from 'react';
 import styles from './VisionAnalysisDisplay.module.css';
 
 const VisionAnalysisDisplay = ({ analysis }) => {
-  if (!analysis || !analysis.visual || !analysis.visual.visual_analysis) {
+  // Debug logging
+  console.log('VisionAnalysisDisplay received analysis:', analysis);
+  
+  // Check if we have any visual analysis data
+  const hasVisualAnalysis = analysis && analysis.visual && analysis.visual.visual_analysis;
+  const hasVisionMethod = analysis && analysis.analysis_method === 'pinterest_api_vision_enhanced';
+  
+  console.log('Has visual analysis:', hasVisualAnalysis);
+  console.log('Has vision method:', hasVisionMethod);
+  
+  // Show component if we have vision analysis OR if the method indicates vision was used
+  if (!hasVisualAnalysis && !hasVisionMethod) {
+    console.log('No visual analysis data to display');
     return null;
   }
 
-  const visualAnalysis = analysis.visual.visual_analysis;
+  const visualAnalysis = analysis.visual?.visual_analysis;
 
   return (
     <div className={styles.visionAnalysisContainer}>
       <h3 className={styles.visionTitle}>🎨 Visual Analysis Results</h3>
       
       {/* Analysis Summary */}
-      <div className={styles.analysisSummary}>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>📸 Images Analyzed:</span>
-          <span className={styles.summaryValue}>{visualAnalysis.images_analyzed}</span>
+      {visualAnalysis && (
+        <div className={styles.analysisSummary}>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>📸 Images Analyzed:</span>
+            <span className={styles.summaryValue}>{visualAnalysis.images_analyzed || 'N/A'}</span>
+          </div>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>👥 Faces Detected:</span>
+            <span className={styles.summaryValue}>{visualAnalysis.total_faces || 0}</span>
+          </div>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>💡 Average Brightness:</span>
+            <span className={styles.summaryValue}>
+              {visualAnalysis.average_brightness ? Math.round(visualAnalysis.average_brightness * 100) : 0}%
+            </span>
+          </div>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>🌈 Color Diversity:</span>
+            <span className={styles.summaryValue}>
+              {visualAnalysis.color_diversity ? Math.round(visualAnalysis.color_diversity * 100) : 0}%
+            </span>
+          </div>
         </div>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>👥 Faces Detected:</span>
-          <span className={styles.summaryValue}>{visualAnalysis.total_faces}</span>
-        </div>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>💡 Average Brightness:</span>
-          <span className={styles.summaryValue}>{Math.round(visualAnalysis.average_brightness * 100)}%</span>
-        </div>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>🌈 Color Diversity:</span>
-          <span className={styles.summaryValue}>{Math.round(visualAnalysis.color_diversity * 100)}%</span>
-        </div>
-      </div>
+      )}
 
       {/* Color Palette */}
-      {analysis.visual.color_palette && analysis.visual.color_palette.length > 0 && (
+      {analysis.visual && analysis.visual.color_palette && analysis.visual.color_palette.length > 0 && (
         <div className={styles.colorSection}>
           <h4 className={styles.sectionTitle}>🎨 Dominant Colors</h4>
           <div className={styles.colorPalette}>
@@ -55,7 +73,7 @@ const VisionAnalysisDisplay = ({ analysis }) => {
       )}
 
       {/* Detected Objects */}
-      {visualAnalysis.common_labels && visualAnalysis.common_labels.length > 0 && (
+      {visualAnalysis && visualAnalysis.common_labels && visualAnalysis.common_labels.length > 0 && (
         <div className={styles.objectsSection}>
           <h4 className={styles.sectionTitle}>🏷️ Detected Elements</h4>
           <div className={styles.objectsList}>
@@ -70,33 +88,35 @@ const VisionAnalysisDisplay = ({ analysis }) => {
       )}
 
       {/* Mood Mapping */}
-      <div className={styles.moodSection}>
-        <h4 className={styles.sectionTitle}>🎭 Visual Mood Mapping</h4>
-        <div className={styles.moodMapping}>
-          <div className={styles.moodItem}>
-            <span className={styles.moodLabel}>Primary Mood:</span>
-            <span className={styles.moodValue}>{analysis.mood.primary}</span>
-          </div>
-          {analysis.mood.secondary && analysis.mood.secondary.length > 0 && (
+      {analysis.mood && (
+        <div className={styles.moodSection}>
+          <h4 className={styles.sectionTitle}>🎭 Visual Mood Mapping</h4>
+          <div className={styles.moodMapping}>
             <div className={styles.moodItem}>
-              <span className={styles.moodLabel}>Secondary:</span>
-              <span className={styles.moodValue}>{analysis.mood.secondary.join(', ')}</span>
+              <span className={styles.moodLabel}>Primary Mood:</span>
+              <span className={styles.moodValue}>{analysis.mood.primary}</span>
             </div>
-          )}
-          <div className={styles.moodItem}>
-            <span className={styles.moodLabel}>Confidence:</span>
-            <span className={styles.moodValue}>{Math.round(analysis.mood.confidence * 100)}%</span>
+            {analysis.mood.secondary && analysis.mood.secondary.length > 0 && (
+              <div className={styles.moodItem}>
+                <span className={styles.moodLabel}>Secondary:</span>
+                <span className={styles.moodValue}>{analysis.mood.secondary.join(', ')}</span>
+              </div>
+            )}
+            <div className={styles.moodItem}>
+              <span className={styles.moodLabel}>Confidence:</span>
+              <span className={styles.moodValue}>{Math.round(analysis.mood.confidence * 100)}%</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Analysis Method */}
       <div className={styles.methodSection}>
         <div className={styles.methodBadge}>
-          🔍 {analysis.analysis_method === 'pinterest_api_vision_enhanced' ? 'Vision + Text Analysis' : 'Text Analysis Only'}
+          🔍 {hasVisionMethod ? 'Vision + Text Analysis' : 'Text Analysis Only'}
         </div>
         <div className={styles.methodDescription}>
-          {analysis.analysis_method === 'pinterest_api_vision_enhanced' 
+          {hasVisionMethod 
             ? 'Combined visual and textual analysis for enhanced accuracy'
             : 'Text-based analysis (Vision API not available)'
           }
