@@ -210,21 +210,52 @@ Please provide sophisticated music recommendations based on this visual analysis
 3. How detected objects and labels inform genre preferences
 4. The overall aesthetic and lifestyle implications
 
-Return a JSON object with detailed music recommendations including genres, energy level, tempo, mood characteristics, search terms, and audio features to target.
+Return a JSON object with this EXACT structure:
+{
+  "genres": ["genre1", "genre2", "genre3"],
+  "energyLevel": "low|medium|high",
+  "tempoRange": "60-80 BPM",
+  "moodCharacteristics": ["mood1", "mood2"],
+  "searchTerms": ["term1", "term2", "term3"],
+  "audioFeatures": {
+    "energy": {"min": 0.0, "max": 1.0},
+    "valence": {"min": 0.0, "max": 1.0},
+    "danceability": {"min": 0.0, "max": 1.0}
+  },
+  "reasoning": ["reason1", "reason2", "reason3"]
+}
 `;
   }
 
   // Validate and enhance AI recommendations
   validateAndEnhanceRecommendations(recommendations) {
+    console.log('🔍 Raw AI recommendations:', recommendations);
+    
+    // Handle nested structure from Claude
+    let musicRecs = recommendations;
+    if (recommendations.musicRecommendations) {
+      musicRecs = recommendations.musicRecommendations;
+      console.log('📦 Extracted musicRecommendations from nested structure');
+    }
+    
+    // Handle different field names
+    const genres = musicRecs.genres || musicRecs.genre || [];
+    const energyLevel = musicRecs.energyLevel || musicRecs.energy || 'medium';
+    const tempoRange = musicRecs.tempoRange || musicRecs.tempo || '80-120 BPM';
+    const moodCharacteristics = musicRecs.moodCharacteristics || musicRecs.moods || musicRecs.mood || [];
+    const searchTerms = musicRecs.searchTerms || musicRecs.search || [];
+    const audioFeatures = musicRecs.audioFeatures || {};
+    const reasoning = musicRecs.reasoning || [];
+    
     // Ensure required fields exist
     const validated = {
-      genres: Array.isArray(recommendations.genres) ? recommendations.genres.slice(0, 5) : ['pop', 'indie'],
-      energyLevel: recommendations.energyLevel || 'medium',
-      tempoRange: recommendations.tempoRange || '80-120 BPM',
-      moodCharacteristics: Array.isArray(recommendations.moodCharacteristics) ? recommendations.moodCharacteristics.slice(0, 3) : [],
-      searchTerms: Array.isArray(recommendations.searchTerms) ? recommendations.searchTerms.slice(0, 5) : [],
-      audioFeatures: recommendations.audioFeatures || {},
-      reasoning: Array.isArray(recommendations.reasoning) ? recommendations.reasoning : []
+      genres: Array.isArray(genres) ? genres.slice(0, 5) : ['pop', 'indie'],
+      energyLevel: energyLevel || 'medium',
+      tempoRange: tempoRange || '80-120 BPM',
+      moodCharacteristics: Array.isArray(moodCharacteristics) ? moodCharacteristics.slice(0, 3) : [],
+      searchTerms: Array.isArray(searchTerms) ? searchTerms.slice(0, 5) : [],
+      audioFeatures: audioFeatures || {},
+      reasoning: Array.isArray(reasoning) ? reasoning : []
     };
 
     // Add AI reasoning if not present
