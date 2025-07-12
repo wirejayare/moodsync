@@ -1672,66 +1672,130 @@ async function searchTracksForMood(accessToken, genres, limit = 20) {
   const tracks = [];
   
   try {
+    console.log('🎵 Starting track search with genres:', genres);
+    
+    // Ensure genres is an array and has valid values
+    if (!Array.isArray(genres) || genres.length === 0) {
+      console.log('⚠️ No valid genres provided, using fallback genres');
+      genres = ['pop', 'indie'];
+    }
+    
+    // Clean and validate genres
+    const validGenres = genres
+      .filter(genre => genre && typeof genre === 'string' && genre.trim().length > 0)
+      .map(genre => genre.trim().toLowerCase())
+      .slice(0, 5); // Limit to 5 genres max
+    
+    if (validGenres.length === 0) {
+      console.log('⚠️ No valid genres after filtering, using fallback');
+      validGenres.push('pop', 'indie');
+    }
+    
+    console.log('🎵 Using valid genres:', validGenres);
+    
     // Add mood-based keywords to make searches more diverse
-    const moodKeywords = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic'];
+    const moodKeywords = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic', 'happy', 'calm'];
     const randomMood = moodKeywords[Math.floor(Math.random() * moodKeywords.length)];
     
-    for (const genre of genres.slice(0, 3)) {
+    // Try multiple search strategies for each genre
+    for (const genre of validGenres) {
+      if (tracks.length >= limit) break;
+      
       try {
+        console.log(`🎵 Searching for genre: ${genre}`);
+        
         // Use different search strategies for variety
         const searchStrategies = [
-          // Strategy 1: Genre + mood keyword
+          // Strategy 1: Simple genre search
+          `genre:"${genre}"`,
+          // Strategy 2: Genre + mood keyword
           `genre:"${genre}" ${randomMood}`,
-          // Strategy 2: Genre with popularity filter (less popular = more variety)
-          `genre:"${genre}" popularity:10-50`,
-          // Strategy 3: Genre with year range (recent but not too recent)
-          `genre:"${genre}" year:2015-2023`,
-          // Strategy 4: Pure genre search
-          `genre:"${genre}"`
+          // Strategy 3: Genre with popularity filter
+          `genre:"${genre}" popularity:10-70`,
+          // Strategy 4: Genre with year range
+          `genre:"${genre}" year:2010-2024`,
+          // Strategy 5: Just the genre name without quotes
+          genre
         ];
         
         for (const strategy of searchStrategies) {
           if (tracks.length >= limit) break;
           
-          const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-            params: {
-              q: strategy,
-              type: 'track',
-              limit: Math.min(10, limit - tracks.length),
-              market: 'US',
-              offset: Math.floor(Math.random() * 50) // Random offset for variety
+          try {
+            console.log(`🎵 Trying search strategy: "${strategy}"`);
+            
+            const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
+              headers: { 'Authorization': `Bearer ${accessToken}` },
+              params: {
+                q: strategy,
+                type: 'track',
+                limit: Math.min(10, limit - tracks.length),
+                market: 'US',
+                offset: Math.floor(Math.random() * 20) // Random offset for variety
+              }
+            });
+            
+            if (searchResponse.data.tracks && searchResponse.data.tracks.items && searchResponse.data.tracks.items.length > 0) {
+              console.log(`✅ Found ${searchResponse.data.tracks.items.length} tracks for strategy: "${strategy}"`);
+              tracks.push(...searchResponse.data.tracks.items);
+            } else {
+              console.log(`❌ No tracks found for strategy: "${strategy}"`);
             }
-          });
-          
-          if (searchResponse.data.tracks.items.length > 0) {
-            tracks.push(...searchResponse.data.tracks.items);
+          } catch (strategyError) {
+            console.error(`❌ Search strategy failed: "${strategy}"`, strategyError.message);
           }
         }
       } catch (genreError) {
-        console.error(`Search failed for genre ${genre}:`, genreError.message);
+        console.error(`❌ Search failed for genre ${genre}:`, genreError.message);
       }
     }
     
-    // Fallback search if no results
+    // Fallback searches if no results
     if (tracks.length === 0) {
-      const fallbackResponse = await axios.get('https://api.spotify.com/v1/search', {
-        headers: { 'Authorization': `Bearer ${accessToken}` },
-        params: {
-          q: genres.join(' OR '),
-          type: 'track',
-          limit: limit,
-          market: 'US'
-        }
-      });
+      console.log('🔄 No tracks found, trying fallback searches...');
       
-      tracks.push(...fallbackResponse.data.tracks.items);
+      const fallbackStrategies = [
+        'pop',
+        'indie',
+        'chill',
+        'relaxing',
+        'upbeat'
+      ];
+      
+      for (const fallback of fallbackStrategies) {
+        if (tracks.length >= limit) break;
+        
+        try {
+          console.log(`🔄 Trying fallback search: "${fallback}"`);
+          
+          const fallbackResponse = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            params: {
+              q: fallback,
+              type: 'track',
+              limit: Math.min(limit, limit - tracks.length),
+              market: 'US'
+            }
+          });
+          
+          if (fallbackResponse.data.tracks && fallbackResponse.data.tracks.items && fallbackResponse.data.tracks.items.length > 0) {
+            console.log(`✅ Found ${fallbackResponse.data.tracks.items.length} tracks with fallback: "${fallback}"`);
+            tracks.push(...fallbackResponse.data.tracks.items);
+          }
+        } catch (fallbackError) {
+          console.error(`❌ Fallback search failed: "${fallback}"`, fallbackError.message);
+        }
+      }
     }
+    
+    console.log(`🎵 Total tracks found: ${tracks.length}`);
     
     // Remove duplicates
     const uniqueTracks = tracks.filter((track, index, self) => 
       index === self.findIndex(t => t.id === track.id)
     );
+    
+    console.log(`🎵 Unique tracks after deduplication: ${uniqueTracks.length}`);
     
     // Enhanced shuffling with more randomness
     const shuffled = shuffleArray(uniqueTracks);
@@ -1748,10 +1812,11 @@ async function searchTracksForMood(accessToken, genres, limit = 20) {
       }
     }
     
+    console.log(`🎵 Final track selection: ${finalTracks.length} tracks`);
     return finalTracks;
     
   } catch (error) {
-    console.error('Track search error:', error);
+    console.error('❌ Track search error:', error);
     return [];
   }
 }
@@ -2180,9 +2245,27 @@ app.post('/api/create-playlist', async (req, res) => {
     const user = userResponse.data;
     console.log('Spotify user:', user.id);
     
-    // Get genres from analysis
-    const genres = analysis.genres || analysis.music?.primary_genres || ['pop', 'indie'];
+    // Get genres from analysis - handle both old and new analysis formats
+    let genres = ['pop', 'indie']; // Default fallback
+    
+    if (analysis.music && analysis.music.primary_genres && analysis.music.primary_genres.length > 0) {
+      // New AI-powered analysis format
+      genres = analysis.music.primary_genres;
+    } else if (analysis.genres && analysis.genres.length > 0) {
+      // Old analysis format
+      genres = analysis.genres;
+    } else if (analysis.music && analysis.music.search_terms && analysis.music.search_terms.length > 0) {
+      // Use search terms as genres if available
+      genres = analysis.music.search_terms.slice(0, 3);
+    }
+    
     console.log('Using genres:', genres);
+    console.log('Analysis structure:', {
+      hasMusic: !!analysis.music,
+      hasPrimaryGenres: !!(analysis.music && analysis.music.primary_genres),
+      hasSearchTerms: !!(analysis.music && analysis.music.search_terms),
+      hasOldGenres: !!(analysis.genres)
+    });
     
     // Search for tracks
     console.log('Searching for tracks...');
