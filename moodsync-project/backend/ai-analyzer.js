@@ -149,7 +149,17 @@ class AIAnalyzer {
       reasoning: []
     };
 
-    // Analyze colors for mood
+    // 🎯 BOARD NAME ANALYSIS (HIGHEST PRIORITY)
+    if (boardInfo.boardName) {
+      const boardNameAnalysis = this.analyzeBoardNameForMusic(boardInfo.boardName);
+      recommendations.reasoning.push(`Board name analysis: ${boardNameAnalysis.reasoning}`);
+      recommendations.genres.push(...boardNameAnalysis.genres);
+      recommendations.moodCharacteristics.push(...boardNameAnalysis.moods);
+      recommendations.searchTerms.push(...boardNameAnalysis.searchTerms);
+      recommendations.energyLevel = boardNameAnalysis.energyLevel || recommendations.energyLevel;
+    }
+
+    // Analyze colors for mood (secondary to board name)
     if (visualAnalysis.dominantColors) {
       const colorAnalysis = this.analyzeColorsForMood(visualAnalysis.dominantColors);
       recommendations.reasoning.push(`Color analysis: ${colorAnalysis.reasoning}`);
@@ -190,12 +200,15 @@ class AIAnalyzer {
     return `
 Analyze this Pinterest board and recommend music genres and characteristics:
 
-BOARD INFO:
-- Name: ${boardInfo.boardName}
-- Username: ${boardInfo.username}
-- URL: ${boardInfo.url}
+🎯 PRIMARY FOCUS - BOARD NAME ANALYSIS:
+Board Name: "${boardInfo.boardName}"
+Username: ${boardInfo.username}
+URL: ${boardInfo.url}
 
-VISUAL ANALYSIS:
+The board name is the MOST IMPORTANT indicator of the intended vibe and theme. 
+Please analyze the board name first and give it the highest priority in your recommendations.
+
+VISUAL ANALYSIS (Secondary to board name):
 - Dominant Colors: ${visualAnalysis.dominantColors?.map(c => c.hex).join(', ') || 'None'}
 - Detected Objects: ${visualAnalysis.objects?.map(o => o.name).join(', ') || 'None'}
 - Activities: ${visualAnalysis.activities?.map(a => a.name).join(', ') || 'None'}
@@ -204,11 +217,18 @@ VISUAL ANALYSIS:
 - Color Temperature: ${visualAnalysis.visualElements?.colorTemperature || 'Unknown'}
 - Common Labels: ${visualAnalysis.commonLabels?.map(l => l.name).join(', ') || 'None'}
 
-Please provide sophisticated music recommendations based on this visual analysis. Consider:
-1. How the color palette influences mood and energy
-2. What activities and settings suggest about the desired atmosphere
-3. How detected objects and labels inform genre preferences
-4. The overall aesthetic and lifestyle implications
+ANALYSIS PRIORITY:
+1. 🎯 BOARD NAME ANALYSIS (HIGHEST PRIORITY) - Extract themes, moods, genres, and cultural references from the board name
+2. 🎨 Visual elements should SUPPORT and ENHANCE the board name theme, not override it
+3. Consider how the board name suggests specific music genres, eras, or cultural movements
+4. Use the board name to determine the primary mood and energy level
+
+Examples of board name analysis:
+- "Retro Rock 'n' Roll Aesthetic" → 1950s rockabilly, doo-wop, vintage pop
+- "Cozy Fall Vibes" → acoustic, folk, warm, relaxing
+- "Summer Beach Party" → upbeat, tropical, dance, energetic
+- "Dark Academia" → classical, indie, mysterious, intellectual
+- "Vintage Paris" → French jazz, chanson, romantic, sophisticated
 
 Return a JSON object with this EXACT structure:
 {
@@ -321,6 +341,121 @@ Return a JSON object with this EXACT structure:
     }
 
     result.reasoning = `Activities detected: ${activities.map(a => a.name).join(', ')}`;
+    return result;
+  }
+
+  // 🎯 Board name analysis for music recommendations
+  analyzeBoardNameForMusic(boardName) {
+    const name = boardName.toLowerCase();
+    const result = {
+      genres: [],
+      moods: [],
+      searchTerms: [],
+      energyLevel: 'medium',
+      reasoning: ''
+    };
+
+    // Retro/Vintage themes
+    if (name.includes('retro') || name.includes('vintage') || name.includes('old school')) {
+      result.genres.push('rockabilly', 'doo-wop', 'vintage pop', 'classic rock');
+      result.searchTerms.push('retro', 'vintage', 'oldies', 'classic');
+      result.moods.push('nostalgic', 'timeless');
+      result.energyLevel = 'medium';
+      result.reasoning = 'Retro/vintage theme detected in board name';
+    }
+
+    // Rock 'n' Roll themes
+    if (name.includes('rock') || name.includes('rockabilly') || name.includes('rock and roll')) {
+      result.genres.push('rockabilly', 'classic rock', 'rock and roll', 'blues rock');
+      result.searchTerms.push('rock and roll', 'rockabilly', '1950s rock', 'classic rock');
+      result.moods.push('energetic', 'rebellious');
+      result.energyLevel = 'high';
+      result.reasoning = 'Rock and roll theme detected in board name';
+    }
+
+    // Cozy/Comfort themes
+    if (name.includes('cozy') || name.includes('comfort') || name.includes('warm') || name.includes('snug')) {
+      result.genres.push('acoustic', 'folk', 'indie', 'ambient');
+      result.searchTerms.push('cozy', 'warm', 'comfortable', 'relaxing');
+      result.moods.push('cozy', 'warm', 'comfortable');
+      result.energyLevel = 'low';
+      result.reasoning = 'Cozy/comfort theme detected in board name';
+    }
+
+    // Summer/Beach themes
+    if (name.includes('summer') || name.includes('beach') || name.includes('tropical') || name.includes('vacation')) {
+      result.genres.push('tropical', 'reggae', 'calypso', 'beach pop');
+      result.searchTerms.push('summer', 'beach', 'tropical', 'vacation');
+      result.moods.push('carefree', 'energetic', 'relaxed');
+      result.energyLevel = 'medium';
+      result.reasoning = 'Summer/beach theme detected in board name';
+    }
+
+    // Fall/Autumn themes
+    if (name.includes('fall') || name.includes('autumn') || name.includes('cozy fall')) {
+      result.genres.push('folk', 'acoustic', 'indie', 'ambient');
+      result.searchTerms.push('fall', 'autumn', 'cozy', 'warm');
+      result.moods.push('cozy', 'melancholic', 'warm');
+      result.energyLevel = 'low';
+      result.reasoning = 'Fall/autumn theme detected in board name';
+    }
+
+    // Dark/Academia themes
+    if (name.includes('dark') || name.includes('academia') || name.includes('gothic') || name.includes('mysterious')) {
+      result.genres.push('classical', 'indie', 'ambient', 'gothic');
+      result.searchTerms.push('dark', 'mysterious', 'academic', 'gothic');
+      result.moods.push('mysterious', 'intellectual', 'melancholic');
+      result.energyLevel = 'low';
+      result.reasoning = 'Dark/academia theme detected in board name';
+    }
+
+    // Paris/French themes
+    if (name.includes('paris') || name.includes('french') || name.includes('chic') || name.includes('sophisticated')) {
+      result.genres.push('jazz', 'chanson', 'french pop', 'classical');
+      result.searchTerms.push('paris', 'french', 'chic', 'sophisticated');
+      result.moods.push('romantic', 'sophisticated', 'elegant');
+      result.energyLevel = 'medium';
+      result.reasoning = 'Paris/French theme detected in board name';
+    }
+
+    // Party/Party themes
+    if (name.includes('party') || name.includes('celebration') || name.includes('festive')) {
+      result.genres.push('pop', 'dance', 'electronic', 'party');
+      result.searchTerms.push('party', 'celebration', 'festive', 'upbeat');
+      result.moods.push('energetic', 'joyful', 'celebratory');
+      result.energyLevel = 'high';
+      result.reasoning = 'Party/celebration theme detected in board name';
+    }
+
+    // Minimalist themes
+    if (name.includes('minimal') || name.includes('simple') || name.includes('clean')) {
+      result.genres.push('ambient', 'minimal', 'lo-fi', 'indie');
+      result.searchTerms.push('minimal', 'simple', 'clean', 'ambient');
+      result.moods.push('calm', 'peaceful', 'serene');
+      result.energyLevel = 'low';
+      result.reasoning = 'Minimalist theme detected in board name';
+    }
+
+    // Bohemian/Hippie themes
+    if (name.includes('bohemian') || name.includes('hippie') || name.includes('free spirit')) {
+      result.genres.push('folk', 'psychedelic', 'indie', 'acoustic');
+      result.searchTerms.push('bohemian', 'hippie', 'free spirit', 'folk');
+      result.moods.push('free-spirited', 'peaceful', 'natural');
+      result.energyLevel = 'medium';
+      result.reasoning = 'Bohemian/hippie theme detected in board name';
+    }
+
+    // If no specific theme detected, analyze keywords
+    if (result.genres.length === 0) {
+      const keywords = name.split(/[\s\-_]+/);
+      for (const keyword of keywords) {
+        if (keyword.length > 2) { // Only consider meaningful keywords
+          result.searchTerms.push(keyword);
+        }
+      }
+      result.reasoning = `Analyzed board name keywords: ${keywords.join(', ')}`;
+    }
+
     return result;
   }
 
