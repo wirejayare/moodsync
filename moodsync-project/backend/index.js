@@ -1597,20 +1597,41 @@ async function searchTracksForMood(accessToken, genres, limit = 20) {
   const tracks = [];
   
   try {
+    // Add mood-based keywords to make searches more diverse
+    const moodKeywords = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic'];
+    const randomMood = moodKeywords[Math.floor(Math.random() * moodKeywords.length)];
+    
     for (const genre of genres.slice(0, 3)) {
       try {
-        const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-          params: {
-            q: `genre:"${genre}"`,
-            type: 'track',
-            limit: Math.ceil(limit / 3),
-            market: 'US'
-          }
-        });
+        // Use different search strategies for variety
+        const searchStrategies = [
+          // Strategy 1: Genre + mood keyword
+          `genre:"${genre}" ${randomMood}`,
+          // Strategy 2: Genre with popularity filter (less popular = more variety)
+          `genre:"${genre}" popularity:10-50`,
+          // Strategy 3: Genre with year range (recent but not too recent)
+          `genre:"${genre}" year:2015-2023`,
+          // Strategy 4: Pure genre search
+          `genre:"${genre}"`
+        ];
         
-        if (searchResponse.data.tracks.items.length > 0) {
-          tracks.push(...searchResponse.data.tracks.items);
+        for (const strategy of searchStrategies) {
+          if (tracks.length >= limit) break;
+          
+          const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            params: {
+              q: strategy,
+              type: 'track',
+              limit: Math.min(10, limit - tracks.length),
+              market: 'US',
+              offset: Math.floor(Math.random() * 50) // Random offset for variety
+            }
+          });
+          
+          if (searchResponse.data.tracks.items.length > 0) {
+            tracks.push(...searchResponse.data.tracks.items);
+          }
         }
       } catch (genreError) {
         console.error(`Search failed for genre ${genre}:`, genreError.message);
@@ -1637,7 +1658,22 @@ async function searchTracksForMood(accessToken, genres, limit = 20) {
       index === self.findIndex(t => t.id === track.id)
     );
     
-    return shuffleArray(uniqueTracks).slice(0, limit);
+    // Enhanced shuffling with more randomness
+    const shuffled = shuffleArray(uniqueTracks);
+    
+    // Add some randomness to the final selection
+    const finalTracks = [];
+    const usedIndices = new Set();
+    
+    while (finalTracks.length < Math.min(limit, shuffled.length)) {
+      const randomIndex = Math.floor(Math.random() * shuffled.length);
+      if (!usedIndices.has(randomIndex)) {
+        finalTracks.push(shuffled[randomIndex]);
+        usedIndices.add(randomIndex);
+      }
+    }
+    
+    return finalTracks;
     
   } catch (error) {
     console.error('Track search error:', error);
