@@ -37,6 +37,14 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ HTTP Error:', response.status, errorText);
+        
+        // Check if it's a token expiration error
+        if (errorText.includes('access token expired') || errorText.includes('token expired')) {
+          alert('Your Spotify session has expired. Please reconnect your Spotify account to create playlists.');
+          // You could also trigger a reconnection flow here
+          return;
+        }
+        
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
@@ -87,6 +95,19 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
       <section className="apple-glass playlist-creator empty" aria-label="Create Playlist">
         <h3 className="pc-title">🎵 Create Playlist</h3>
         <p className="pc-desc">Analyze a Pinterest board first to create a mood-based playlist</p>
+      </section>
+    );
+  }
+
+  // Check if Spotify is connected
+  if (!spotifyToken) {
+    return (
+      <section className="apple-glass playlist-creator" aria-label="Create Spotify Playlist">
+        <h3 className="pc-title">🎵 Create Spotify Playlist</h3>
+        <div className="pc-warning">
+          <p>⚠️ Spotify connection required</p>
+          <p>Please connect your Spotify account to create playlists</p>
+        </div>
       </section>
     );
   }
