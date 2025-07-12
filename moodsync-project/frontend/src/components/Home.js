@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PlaylistCreator from './PlaylistCreator';
 import PinterestPanel from './PinterestPanel';
+import PinterestConnector from './PinterestConnector';
 
 const Home = ({ 
   spotifyUser, 
@@ -174,14 +175,24 @@ const Home = ({
             {/* Pinterest Analyzer */}
             <section className="home-analyzer-section">
               <h3 className="home-step-title">📌 Step 2: Analyze Pinterest Board</h3>
-              <PinterestPanel
-                boards={pinterestBoards}
-                selectedBoard={selectedBoard}
-                onBoardSelect={handleBoardSelect}
-                onGeneratePlaylist={handleGeneratePlaylist}
-                isLoading={isLoadingBoards}
-                error={pinterestError}
-              />
+              {/* Show Pinterest Connector if not connected */}
+              {!pinterestUser && (
+                <PinterestConnector 
+                  onPinterestAuth={onPinterestAuth}
+                  pinterestUser={pinterestUser}
+                />
+              )}
+              {/* Show Pinterest Panel if connected */}
+              {pinterestUser && (
+                <PinterestPanel
+                  boards={pinterestBoards}
+                  selectedBoard={selectedBoard}
+                  onBoardSelect={handleBoardSelect}
+                  onGeneratePlaylist={handleGeneratePlaylist}
+                  isLoading={isLoadingBoards}
+                  error={pinterestError}
+                />
+              )}
               {/* Playlist Creator */}
               <h3 className="home-step-title">🎵 Step 3: Create Your Playlist</h3>
               <PlaylistCreator 
