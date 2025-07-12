@@ -2633,7 +2633,13 @@ async function generateEnhancedAnalysisWithVision(url) {
   // Generate AI-powered music recommendations
   let aiRecommendations = null;
   if (visualAnalysis) {
+    console.log('🎯 Starting AI recommendation generation...');
     aiRecommendations = await generateAIMusicRecommendations(visualAnalysis, boardInfo);
+    console.log('🎯 AI recommendations result:', aiRecommendations ? 'Success' : 'Failed');
+    if (aiRecommendations) {
+      console.log('🎯 AI genres:', aiRecommendations.genres);
+      console.log('🎯 AI reasoning:', aiRecommendations.reasoning);
+    }
   }
   
   // Combine text-based and visual analysis

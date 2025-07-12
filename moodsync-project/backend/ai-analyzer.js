@@ -17,13 +17,24 @@ class AIAnalyzer {
   async generateRecommendations(visualAnalysis, boardInfo) {
     try {
       console.log('🤖 Generating AI-powered music recommendations...');
+      console.log('🔧 AI Configuration:', {
+        provider: this.provider,
+        hasOpenAIKey: !!this.openaiKey,
+        hasAnthropicKey: !!this.anthropicKey,
+        openaiKeyLength: this.openaiKey ? this.openaiKey.length : 0,
+        anthropicKeyLength: this.anthropicKey ? this.anthropicKey.length : 0
+      });
       
       if (this.provider === 'openai' && this.openaiKey) {
+        console.log('🤖 Using OpenAI GPT-4...');
         return await this.generateOpenAIRecommendations(visualAnalysis, boardInfo);
       } else if (this.provider === 'anthropic' && this.anthropicKey) {
+        console.log('🤖 Using Anthropic Claude...');
         return await this.generateClaudeRecommendations(visualAnalysis, boardInfo);
       } else {
         console.log('⚠️ No AI API configured, using rule-based system');
+        console.log('🔧 Provider:', this.provider);
+        console.log('🔧 Has Anthropic Key:', !!this.anthropicKey);
         return await this.generateRuleBasedRecommendations(visualAnalysis, boardInfo);
       }
     } catch (error) {
