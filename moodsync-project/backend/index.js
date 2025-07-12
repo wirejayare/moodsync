@@ -1,5 +1,9 @@
 // ENHANCED MOOD DETECTION SYSTEM WITH NLP AND VISION ANALYSIS
 const visionAnalyzer = require('./vision-analyzer');
+const AIAnalyzer = require('./ai-analyzer');
+
+// Initialize AI analyzer
+const aiAnalyzer = new AIAnalyzer();
 
 // ===== CACHING SYSTEM =====
 const boardCache = new Map();
@@ -2728,12 +2732,8 @@ async function generateAIMusicRecommendations(visualAnalysis, boardInfo) {
   try {
     console.log('🤖 Generating AI-powered music recommendations...');
     
-    // Create a comprehensive analysis prompt
-    const analysisPrompt = createAnalysisPrompt(visualAnalysis, boardInfo);
-    
-    // For now, we'll use a sophisticated rule-based system
-    // In production, you could integrate with Claude/GPT API here
-    const recommendations = await generateSophisticatedRecommendations(visualAnalysis, boardInfo);
+    // Use the new AI analyzer
+    const recommendations = await aiAnalyzer.generateRecommendations(visualAnalysis, boardInfo);
     
     console.log('✅ AI recommendations generated:', recommendations);
     return recommendations;
