@@ -63,6 +63,13 @@ const Home = ({
   const handleGeneratePlaylist = async (boardOrUrl) => {
     setAnalysis(null);
     let analysisData = null;
+    
+    // Start animated analysis
+    const startAnimatedAnalysis = () => {
+      // This will be triggered by the PlaylistCreator component
+      // when it receives the analysis data
+    };
+    
     try {
       if (typeof boardOrUrl === 'string' && boardOrUrl.includes('pinterest.com')) {
         // Board URL mode

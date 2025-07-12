@@ -2,11 +2,20 @@
 import React, { useState } from 'react';
 import SpotifyPlayer from './SpotifyPlayer';
 import VisionAnalysisDisplay from './VisionAnalysisDisplay';
+import AnimatedAnalysisDisplay from './AnimatedAnalysisDisplay';
 
 const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   const [playlistName, setPlaylistName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createdPlaylist, setCreatedPlaylist] = useState(null);
+  const [showAnimatedAnalysis, setShowAnimatedAnalysis] = useState(false);
+
+  // Auto-trigger animated analysis when analysis data is received
+  React.useEffect(() => {
+    if (analysis && !showAnimatedAnalysis) {
+      setShowAnimatedAnalysis(true);
+    }
+  }, [analysis]);
 
   const handleCreatePlaylist = async () => {
     if (!playlistName.trim()) {
@@ -156,6 +165,13 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           >
             🎧 Open in Spotify
           </a>
+          
+          {/* Animated Analysis Display */}
+          <AnimatedAnalysisDisplay 
+            isAnalyzing={showAnimatedAnalysis}
+            analysis={analysis}
+            onAnalysisComplete={() => setShowAnimatedAnalysis(false)}
+          />
           
           {/* Vision Analysis Display */}
           <VisionAnalysisDisplay analysis={analysis} />
