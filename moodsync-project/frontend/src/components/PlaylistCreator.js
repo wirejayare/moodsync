@@ -160,6 +160,12 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           {/* Vision Analysis Display */}
           <VisionAnalysisDisplay analysis={analysis} />
           
+          {/* Debug: Log analysis data */}
+          <div style={{marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', fontSize: '12px'}}>
+            <strong>Debug - Analysis Data:</strong>
+            <pre>{JSON.stringify(analysis, null, 2)}</pre>
+          </div>
+          
           {/* Embedded Spotify Player */}
           <SpotifyPlayer 
             spotifyToken={spotifyToken}
