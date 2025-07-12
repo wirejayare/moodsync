@@ -59,7 +59,7 @@ async function analyzeImage(imageUrl) {
       return null;
     }
 
-    console.log('Analyzing image:', imageUrl);
+    console.log('🔍 Analyzing image:', imageUrl);
 
     const requestBody = {
       requests: [
@@ -94,17 +94,60 @@ async function analyzeImage(imageUrl) {
     const response = await axios.post(`${VISION_API_URL}?key=${VISION_API_KEY}`, requestBody);
     
     if (!response.data.responses || response.data.responses.length === 0) {
-      console.log('No analysis results for image');
+      console.log('❌ No analysis results for image');
       return null;
     }
 
     const analysis = response.data.responses[0];
-    return processVisionAnalysis(analysis);
+    const processedAnalysis = processVisionAnalysis(analysis);
+    
+    // Log detailed results
+    logVisionAnalysis(imageUrl, processedAnalysis);
+    
+    return processedAnalysis;
 
   } catch (error) {
-    console.error('Vision API error:', error.response?.data || error.message);
+    console.error('❌ Vision API error:', error.response?.data || error.message);
     return null;
   }
+}
+
+// Log detailed vision analysis results
+function logVisionAnalysis(imageUrl, analysis) {
+  console.log('\n🎨 VISION API ANALYSIS RESULTS');
+  console.log('================================');
+  console.log(`📸 Image: ${imageUrl}`);
+  
+  // Log labels
+  if (analysis.labels && analysis.labels.length > 0) {
+    console.log('\n🏷️  DETECTED LABELS:');
+    analysis.labels.forEach((label, index) => {
+      console.log(`  ${index + 1}. ${label.name} (${Math.round(label.confidence * 100)}% confidence)`);
+    });
+  }
+  
+  // Log colors
+  if (analysis.dominantColors && analysis.dominantColors.length > 0) {
+    console.log('\n🎨 DOMINANT COLORS:');
+    analysis.dominantColors.forEach((color, index) => {
+      console.log(`  ${index + 1}. ${color.hex} (${Math.round(color.score * 100)}% coverage)`);
+    });
+  }
+  
+  // Log faces
+  console.log(`\n👥 FACES DETECTED: ${analysis.faces}`);
+  
+  // Log mood analysis
+  if (analysis.mood) {
+    console.log('\n🎭 MOOD ANALYSIS:');
+    console.log(`  Primary Mood: ${analysis.mood.primary}`);
+    console.log(`  Confidence: ${Math.round(analysis.mood.confidence * 100)}%`);
+    if (analysis.mood.secondary && analysis.mood.secondary.length > 0) {
+      console.log(`  Secondary Moods: ${analysis.mood.secondary.join(', ')}`);
+    }
+  }
+  
+  console.log('================================\n');
 }
 
 // Process Vision API results into mood analysis
@@ -174,59 +217,73 @@ function rgbToHex(r, g, b) {
 function determineVisualMood(analysis) {
   const moodScores = {};
   
+  console.log('\n🧠 MOOD DETECTION PROCESS:');
+  console.log('==========================');
+  
   // Analyze colors
   if (analysis.dominantColors.length > 0) {
     const dominantColor = analysis.dominantColors[0];
     const { r, g, b } = hexToRgb(dominantColor.hex);
     
+    console.log(`🎨 Color Analysis: ${dominantColor.hex} (R:${r}, G:${g}, B:${b})`);
+    
     // Bright colors
     if (r > 200 && g > 200 && b > 200) {
       addMoodScore(moodScores, 'energetic', 0.8);
       addMoodScore(moodScores, 'joyful', 0.7);
+      console.log('  → Bright colors detected → Energetic/Joyful mood');
     }
     // Warm colors (reds, oranges, yellows)
     else if (r > g && r > b && r > 150) {
       addMoodScore(moodScores, 'passionate', 0.8);
       addMoodScore(moodScores, 'romantic', 0.7);
+      console.log('  → Warm colors detected → Passionate/Romantic mood');
     }
     // Cool colors (blues, greens)
     else if (b > r && b > g && b > 150) {
       addMoodScore(moodScores, 'calm', 0.8);
       addMoodScore(moodScores, 'peaceful', 0.7);
+      console.log('  → Cool colors detected → Calm/Peaceful mood');
     }
     // Dark colors
     else if (r < 100 && g < 100 && b < 100) {
       addMoodScore(moodScores, 'melancholic', 0.7);
       addMoodScore(moodScores, 'mysterious', 0.6);
+      console.log('  → Dark colors detected → Melancholic/Mysterious mood');
     }
   }
 
   // Analyze labels for content-based mood
   if (analysis.labels.length > 0) {
     const labelText = analysis.labels.map(l => l.name.toLowerCase()).join(' ');
+    console.log(`🏷️  Content Analysis: "${labelText}"`);
     
     // Nature scenes
     if (labelText.includes('nature') || labelText.includes('landscape') || labelText.includes('forest')) {
       addMoodScore(moodScores, 'peaceful', 0.8);
       addMoodScore(moodScores, 'grounded', 0.7);
+      console.log('  → Nature scene detected → Peaceful/Grounded mood');
     }
     
     // Urban scenes
     if (labelText.includes('city') || labelText.includes('urban') || labelText.includes('building')) {
       addMoodScore(moodScores, 'energetic', 0.7);
       addMoodScore(moodScores, 'modern', 0.6);
+      console.log('  → Urban scene detected → Energetic/Modern mood');
     }
     
     // People/social
     if (labelText.includes('person') || labelText.includes('people') || labelText.includes('group')) {
       addMoodScore(moodScores, 'social', 0.8);
       addMoodScore(moodScores, 'connected', 0.7);
+      console.log('  → People detected → Social/Connected mood');
     }
     
     // Abstract/artistic
     if (labelText.includes('art') || labelText.includes('abstract') || labelText.includes('creative')) {
       addMoodScore(moodScores, 'creative', 0.7);
       addMoodScore(moodScores, 'inspired', 0.6);
+      console.log('  → Artistic content detected → Creative/Inspired mood');
     }
   }
 
@@ -234,13 +291,14 @@ function determineVisualMood(analysis) {
   if (analysis.faces > 0) {
     addMoodScore(moodScores, 'social', 0.6);
     addMoodScore(moodScores, 'connected', 0.5);
+    console.log(`  → ${analysis.faces} face(s) detected → Social/Connected mood`);
   }
 
   // Return the highest scoring mood
   const sortedMoods = Object.entries(moodScores)
     .sort(([,a], [,b]) => b - a);
   
-  return sortedMoods.length > 0 ? {
+  const finalMood = sortedMoods.length > 0 ? {
     primary: sortedMoods[0][0],
     confidence: sortedMoods[0][1],
     secondary: sortedMoods.slice(1, 3).map(([mood]) => mood)
@@ -249,6 +307,11 @@ function determineVisualMood(analysis) {
     confidence: 0.5,
     secondary: []
   };
+  
+  console.log(`🎯 FINAL MOOD: ${finalMood.primary} (${Math.round(finalMood.confidence * 100)}% confidence)`);
+  console.log('==========================\n');
+  
+  return finalMood;
 }
 
 // Helper function to add mood scores
@@ -269,7 +332,7 @@ function hexToRgb(hex) {
 // Analyze multiple images and aggregate results
 async function analyzeMultipleImages(imageUrls, maxImages = 10) {
   try {
-    console.log(`Analyzing ${Math.min(imageUrls.length, maxImages)} images for visual mood...`);
+    console.log(`🔍 Starting Vision API analysis of ${Math.min(imageUrls.length, maxImages)} images...`);
     
     const imagesToAnalyze = imageUrls.slice(0, maxImages);
     const analysisPromises = imagesToAnalyze.map(url => analyzeImage(url));
@@ -280,16 +343,49 @@ async function analyzeMultipleImages(imageUrls, maxImages = 10) {
       .map(result => result.value);
 
     if (successfulResults.length === 0) {
-      console.log('No successful image analyses');
+      console.log('❌ No successful image analyses');
       return null;
     }
 
-    return aggregateVisualAnalysis(successfulResults);
+    console.log(`✅ Successfully analyzed ${successfulResults.length} images`);
+    const aggregatedResults = aggregateVisualAnalysis(successfulResults);
+    
+    // Log aggregated results
+    logAggregatedResults(aggregatedResults);
+    
+    return aggregatedResults;
 
   } catch (error) {
-    console.error('Multiple image analysis error:', error);
+    console.error('❌ Multiple image analysis error:', error);
     return null;
   }
+}
+
+// Log aggregated vision analysis results
+function logAggregatedResults(results) {
+  console.log('\n📊 AGGREGATED VISION ANALYSIS');
+  console.log('===============================');
+  console.log(`📸 Images Analyzed: ${results.imagesAnalyzed}`);
+  console.log(`🎭 Primary Mood: ${results.primaryMood} (${Math.round(results.confidence * 100)}% confidence)`);
+  
+  if (results.dominantColors && results.dominantColors.length > 0) {
+    console.log('\n🎨 Overall Color Palette:');
+    results.dominantColors.forEach((color, index) => {
+      console.log(`  ${index + 1}. ${color}`);
+    });
+  }
+  
+  if (results.commonLabels && results.commonLabels.length > 0) {
+    console.log('\n🏷️  Most Common Elements:');
+    results.commonLabels.slice(0, 5).forEach((label, index) => {
+      console.log(`  ${index + 1}. ${label.name} (${label.count} times)`);
+    });
+  }
+  
+  console.log(`👥 Total Faces: ${results.visualElements.totalFaces}`);
+  console.log(`💡 Average Brightness: ${Math.round(results.visualElements.averageBrightness * 100)}%`);
+  console.log(`🌈 Color Diversity: ${Math.round(results.visualElements.colorDiversity * 100)}%`);
+  console.log('===============================\n');
 }
 
 // Aggregate multiple image analyses into overall mood

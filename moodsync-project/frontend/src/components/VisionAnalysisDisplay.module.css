@@ -1,0 +1,272 @@
+.visionAnalysisContainer {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 24px;
+  margin: 20px 0;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.visionTitle {
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-align: center;
+  color: white;
+}
+
+.analysisSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summaryLabel {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.summaryValue {
+  font-weight: 600;
+  color: white;
+}
+
+.sectionTitle {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.colorSection {
+  margin-bottom: 24px;
+}
+
+.colorPalette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.colorSwatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.colorBox {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.colorBox:hover {
+  transform: scale(1.1);
+}
+
+.colorInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.colorHex {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  font-family: 'Courier New', monospace;
+}
+
+.colorName {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: capitalize;
+}
+
+.objectsSection {
+  margin-bottom: 24px;
+}
+
+.objectsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.objectItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.85rem;
+}
+
+.objectName {
+  color: white;
+  font-weight: 500;
+}
+
+.objectCount {
+  background: rgba(29, 185, 84, 0.2);
+  color: #1db954;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.moodSection {
+  margin-bottom: 24px;
+}
+
+.moodMapping {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.moodItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.moodLabel {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.moodValue {
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+}
+
+.methodSection {
+  text-align: center;
+  padding: 16px;
+  background: rgba(29, 185, 84, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(29, 185, 84, 0.3);
+}
+
+.methodBadge {
+  font-weight: 600;
+  color: #1db954;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.methodDescription {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .visionAnalysisContainer {
+    padding: 16px;
+    margin: 16px 0;
+  }
+  
+  .analysisSummary {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .colorPalette {
+    justify-content: center;
+  }
+  
+  .objectsList {
+    justify-content: center;
+  }
+  
+  .moodItem {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+}
+
+/* Animation for new analysis results */
+.visionAnalysisContainer {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects */
+.colorSwatch:hover .colorBox {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.objectItem:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.moodItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Loading state */
+.visionAnalysisContainer.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.visionAnalysisContainer.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #1db954;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 

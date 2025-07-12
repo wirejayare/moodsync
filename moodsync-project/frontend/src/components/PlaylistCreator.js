@@ -1,6 +1,7 @@
 // src/components/PlaylistCreator.js - Fixed version
 import React, { useState } from 'react';
 import SpotifyPlayer from './SpotifyPlayer';
+import VisionAnalysisDisplay from './VisionAnalysisDisplay';
 
 const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   const [playlistName, setPlaylistName] = useState('');
@@ -125,6 +126,9 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           >
             🎧 Open in Spotify
           </a>
+          
+          {/* Vision Analysis Display */}
+          <VisionAnalysisDisplay analysis={analysis} />
           
           {/* Embedded Spotify Player */}
           <SpotifyPlayer 
