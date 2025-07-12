@@ -152,7 +152,7 @@ class AIAnalyzer {
     // 🎯 BOARD NAME ANALYSIS (HIGHEST PRIORITY)
     if (boardInfo.boardName) {
       const boardNameAnalysis = this.analyzeBoardNameForMusic(boardInfo.boardName);
-      recommendations.reasoning.push(`Board name analysis: ${boardNameAnalysis.reasoning}`);
+      recommendations.reasoning.push(`Board vibe: ${boardNameAnalysis.reasoning}`);
       recommendations.genres.push(...boardNameAnalysis.genres);
       recommendations.moodCharacteristics.push(...boardNameAnalysis.moods);
       recommendations.searchTerms.push(...boardNameAnalysis.searchTerms);
@@ -162,7 +162,7 @@ class AIAnalyzer {
     // Analyze colors for mood (secondary to board name)
     if (visualAnalysis.dominantColors) {
       const colorAnalysis = this.analyzeColorsForMood(visualAnalysis.dominantColors);
-      recommendations.reasoning.push(`Color analysis: ${colorAnalysis.reasoning}`);
+      recommendations.reasoning.push(`Color energy: ${colorAnalysis.reasoning}`);
       recommendations.genres.push(...colorAnalysis.genres);
       recommendations.moodCharacteristics.push(...colorAnalysis.moods);
     }
@@ -198,37 +198,40 @@ class AIAnalyzer {
   // Create comprehensive analysis prompt for AI
   createAnalysisPrompt(visualAnalysis, boardInfo) {
     return `
-Analyze this Pinterest board and recommend music genres and characteristics:
+Yo! Let's vibe with this Pinterest board and find the perfect music match.
 
-🎯 PRIMARY FOCUS - BOARD NAME ANALYSIS:
+🎯 THE MAIN VIBE - BOARD NAME ANALYSIS:
 Board Name: "${boardInfo.boardName}"
 Username: ${boardInfo.username}
 URL: ${boardInfo.url}
 
-The board name is the MOST IMPORTANT indicator of the intended vibe and theme. 
-Please analyze the board name first and give it the highest priority in your recommendations.
+The board name is EVERYTHING - it's the vibe you're going for. 
+Let's read between the lines and catch the energy you're putting out there.
 
-VISUAL ANALYSIS (Secondary to board name):
-- Dominant Colors: ${visualAnalysis.dominantColors?.map(c => c.hex).join(', ') || 'None'}
-- Detected Objects: ${visualAnalysis.objects?.map(o => o.name).join(', ') || 'None'}
+WHAT WE'RE LOOKING AT:
+- Colors: ${visualAnalysis.dominantColors?.map(c => c.hex).join(', ') || 'None'}
+- Stuff: ${visualAnalysis.objects?.map(o => o.name).join(', ') || 'None'}
 - Activities: ${visualAnalysis.activities?.map(a => a.name).join(', ') || 'None'}
-- Settings: ${visualAnalysis.settings?.map(s => s.name).join(', ') || 'None'}
-- Mood Indicators: ${visualAnalysis.mood?.primary || 'Unknown'}
-- Color Temperature: ${visualAnalysis.visualElements?.colorTemperature || 'Unknown'}
-- Common Labels: ${visualAnalysis.commonLabels?.map(l => l.name).join(', ') || 'None'}
+- Places: ${visualAnalysis.settings?.map(s => s.name).join(', ') || 'None'}
+- Mood: ${visualAnalysis.mood?.primary || 'Unknown'}
+- Color Feel: ${visualAnalysis.visualElements?.colorTemperature || 'Unknown'}
+- Labels: ${visualAnalysis.commonLabels?.map(l => l.name).join(', ') || 'None'}
 
-ANALYSIS PRIORITY:
-1. 🎯 BOARD NAME ANALYSIS (HIGHEST PRIORITY) - Extract themes, moods, genres, and cultural references from the board name
-2. 🎨 Visual elements should SUPPORT and ENHANCE the board name theme, not override it
-3. Consider how the board name suggests specific music genres, eras, or cultural movements
-4. Use the board name to determine the primary mood and energy level
+HOW TO READ THE VIBE:
+1. 🎯 BOARD NAME FIRST - What's the story behind this name? What energy is it giving off?
+2. 🎨 Visual stuff should BACK UP the board name vibe, not fight it
+3. Think about what this board name says about the music you want to hear
+4. Let's match the energy level to the vibe you're creating
 
-Examples of board name analysis:
-- "Retro Rock 'n' Roll Aesthetic" → 1950s rockabilly, doo-wop, vintage pop
-- "Cozy Fall Vibes" → acoustic, folk, warm, relaxing
-- "Summer Beach Party" → upbeat, tropical, dance, energetic
-- "Dark Academia" → classical, indie, mysterious, intellectual
-- "Vintage Paris" → French jazz, chanson, romantic, sophisticated
+VIBE EXAMPLES:
+- "Retro Rock 'n' Roll Aesthetic" → Time to rock out with some 50s swagger
+- "Cozy Fall Vibes" → Perfect for those warm, fuzzy autumn feels
+- "Summer Beach Party" → Let's get the party started with some tropical beats
+- "Dark Academia" → Moody, intellectual vibes with a mysterious edge
+- "Vintage Paris" → Sophisticated, romantic French café energy
+
+TONE: Keep it casual, fun, and conversational. Like you're talking to a friend about music. 
+Use phrases like "This vibe is giving..." or "Let's match this energy with..." or "Perfect for when you're feeling..."
 
 Return a JSON object with this EXACT structure:
 {
@@ -361,7 +364,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('retro', 'vintage', 'oldies', 'classic');
       result.moods.push('nostalgic', 'timeless');
       result.energyLevel = 'medium';
-      result.reasoning = 'Retro/vintage theme detected in board name';
+      result.reasoning = 'This vibe is giving major retro energy - time to bring back the classics!';
     }
 
     // Rock 'n' Roll themes
@@ -370,7 +373,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('rock and roll', 'rockabilly', '1950s rock', 'classic rock');
       result.moods.push('energetic', 'rebellious');
       result.energyLevel = 'high';
-      result.reasoning = 'Rock and roll theme detected in board name';
+      result.reasoning = 'Rock and roll energy detected - let\'s get this party started!';
     }
 
     // Cozy/Comfort themes
@@ -379,7 +382,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('cozy', 'warm', 'comfortable', 'relaxing');
       result.moods.push('cozy', 'warm', 'comfortable');
       result.energyLevel = 'low';
-      result.reasoning = 'Cozy/comfort theme detected in board name';
+      result.reasoning = 'Cozy vibes detected - perfect for those warm, fuzzy feels';
     }
 
     // Summer/Beach themes
@@ -388,7 +391,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('summer', 'beach', 'tropical', 'vacation');
       result.moods.push('carefree', 'energetic', 'relaxed');
       result.energyLevel = 'medium';
-      result.reasoning = 'Summer/beach theme detected in board name';
+      result.reasoning = 'Summer vibes detected - time to catch those beach waves!';
     }
 
     // Fall/Autumn themes
@@ -397,7 +400,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('fall', 'autumn', 'cozy', 'warm');
       result.moods.push('cozy', 'melancholic', 'warm');
       result.energyLevel = 'low';
-      result.reasoning = 'Fall/autumn theme detected in board name';
+      result.reasoning = 'Fall energy detected - perfect for those crisp autumn feels';
     }
 
     // Dark/Academia themes
@@ -406,7 +409,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('dark', 'mysterious', 'academic', 'gothic');
       result.moods.push('mysterious', 'intellectual', 'melancholic');
       result.energyLevel = 'low';
-      result.reasoning = 'Dark/academia theme detected in board name';
+      result.reasoning = 'Dark academia vibes detected - moody and mysterious energy';
     }
 
     // Paris/French themes
@@ -415,7 +418,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('paris', 'french', 'chic', 'sophisticated');
       result.moods.push('romantic', 'sophisticated', 'elegant');
       result.energyLevel = 'medium';
-      result.reasoning = 'Paris/French theme detected in board name';
+      result.reasoning = 'Paris vibes detected - sophisticated and romantic energy';
     }
 
     // Party/Party themes
@@ -424,7 +427,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('party', 'celebration', 'festive', 'upbeat');
       result.moods.push('energetic', 'joyful', 'celebratory');
       result.energyLevel = 'high';
-      result.reasoning = 'Party/celebration theme detected in board name';
+      result.reasoning = 'Party energy detected - time to celebrate!';
     }
 
     // Minimalist themes
@@ -433,7 +436,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('minimal', 'simple', 'clean', 'ambient');
       result.moods.push('calm', 'peaceful', 'serene');
       result.energyLevel = 'low';
-      result.reasoning = 'Minimalist theme detected in board name';
+      result.reasoning = 'Minimalist vibes detected - clean and peaceful energy';
     }
 
     // Bohemian/Hippie themes
@@ -442,7 +445,7 @@ Return a JSON object with this EXACT structure:
       result.searchTerms.push('bohemian', 'hippie', 'free spirit', 'folk');
       result.moods.push('free-spirited', 'peaceful', 'natural');
       result.energyLevel = 'medium';
-      result.reasoning = 'Bohemian/hippie theme detected in board name';
+      result.reasoning = 'Bohemian vibes detected - free-spirited and natural energy';
     }
 
     // If no specific theme detected, analyze keywords
@@ -453,7 +456,7 @@ Return a JSON object with this EXACT structure:
           result.searchTerms.push(keyword);
         }
       }
-      result.reasoning = `Analyzed board name keywords: ${keywords.join(', ')}`;
+      result.reasoning = `Reading the vibes from: ${keywords.join(', ')}`;
     }
 
     return result;
