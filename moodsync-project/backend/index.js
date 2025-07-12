@@ -2129,17 +2129,15 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
       });
     }
 
-    console.log('Starting enhanced analysis for:', url);
+    console.log('Starting enhanced analysis with Vision API for:', url);
 
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 2500));
-
-    const analysis = generateEnhancedAnalysis(url);
+    // Use the new Vision API-enhanced analysis
+    const analysis = await generateEnhancedAnalysisWithVision(url);
 
     res.json({
       success: true,
       analysis,
-      method: 'enhanced_analysis',
+      method: analysis.analysis_method,
       timestamp: new Date().toISOString()
     });
 
@@ -2480,3 +2478,149 @@ app.get('/api/pinterest/test-v5-endpoints', async (req, res) => {
     });
   }
 });
+
+// ===== VISION API FUNCTIONS =====
+
+// Extract images from Pinterest board URL using web scraping
+async function extractImagesFromBoardUrl(boardUrl) {
+  try {
+    console.log('🔍 Extracting images from board URL:', boardUrl);
+    
+    // Use a simple web scraping approach to get image URLs
+    // This is a basic implementation - in production you might want to use a proper scraping service
+    const response = await axios.get(boardUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      },
+      timeout: 10000
+    });
+    
+    const html = response.data;
+    
+    // Extract image URLs from Pinterest page
+    const imageRegex = /https:\/\/i\.pinimg\.com\/[^"'\s]+\.(jpg|jpeg|png|webp)/gi;
+    const matches = html.match(imageRegex) || [];
+    
+    // Filter and limit to unique images
+    const uniqueImages = [...new Set(matches)].slice(0, 5); // Limit to 5 images for cost efficiency
+    
+    console.log(`📸 Found ${uniqueImages.length} images from board URL`);
+    return uniqueImages;
+    
+  } catch (error) {
+    console.error('❌ Error extracting images from board URL:', error.message);
+    return [];
+  }
+}
+
+// Enhanced analysis with Vision API for URL-based analysis
+async function generateEnhancedAnalysisWithVision(url) {
+  console.log('🔍 Starting enhanced analysis with Vision API for:', url);
+  
+  const boardInfo = extractBoardInfo(url);
+  const analysisText = [
+    boardInfo.boardName,
+    boardInfo.username,
+    ...boardInfo.urlParts
+  ].join(' ').toLowerCase();
+  
+  const themeAnalysis = detectThemes(analysisText);
+  const theme = themeAnalysis.themeData;
+  
+  // Extract images from the board URL
+  const imageUrls = await extractImagesFromBoardUrl(url);
+  
+  // Analyze images with Vision API if available
+  let visualAnalysis = null;
+  if (imageUrls.length > 0) {
+    try {
+      console.log(`🎨 Analyzing ${imageUrls.length} images with Vision API...`);
+      visualAnalysis = await visionAnalyzer.analyzeMultipleImages(imageUrls, 5);
+      console.log('Vision API analysis completed:', visualAnalysis ? 'Success' : 'Failed');
+    } catch (visionError) {
+      console.error('Vision API error:', visionError.message);
+      // Continue without vision analysis if it fails
+    }
+  }
+  
+  // Combine text-based and visual analysis
+  let finalMood = theme.mood;
+  let finalConfidence = themeAnalysis.confidence;
+  let visualMood = null;
+  
+  if (visualAnalysis) {
+    visualMood = visualAnalysis.primaryMood;
+    const visualConfidence = visualAnalysis.confidence;
+    
+    // If visual analysis has higher confidence, use it
+    if (visualConfidence > finalConfidence) {
+      finalMood = visualMood;
+      finalConfidence = visualConfidence;
+    } else {
+      // Blend the moods if confidence is similar
+      if (Math.abs(visualConfidence - finalConfidence) < 0.2) {
+        finalMood = visualMood; // Prefer visual mood for similar confidence
+        finalConfidence = Math.max(visualConfidence, finalConfidence);
+      }
+    }
+  }
+  
+  return {
+    mood: {
+      primary: finalMood,
+      confidence: finalConfidence,
+      secondary: visualAnalysis ? [visualMood, 'Modern'] : ['Modern', 'Fresh'],
+      emotional_spectrum: [
+        { name: finalMood, confidence: finalConfidence },
+        { name: 'Modern', confidence: 0.7 },
+        { name: 'Fresh', confidence: 0.6 }
+      ]
+    },
+    visual: {
+      color_palette: visualAnalysis ? 
+        visualAnalysis.dominantColors.map((hex, i) => ({
+          hex,
+          mood: i === 0 ? 'primary' : 'secondary',
+          name: `Color ${i + 1}`
+        })) :
+        theme.colors.map((hex, i) => ({
+          hex,
+          mood: i === 0 ? 'primary' : 'secondary',
+          name: `Color ${i + 1}`
+        })),
+      dominant_colors: visualAnalysis ? 
+        { hex: visualAnalysis.dominantColors[0], name: 'Primary' } :
+        { hex: theme.colors[0], name: 'Primary' },
+      aesthetic_style: themeAnalysis.primaryTheme,
+      visual_complexity: 'medium',
+      visual_analysis: visualAnalysis ? {
+        images_analyzed: visualAnalysis.imagesAnalyzed,
+        total_faces: visualAnalysis.visualElements.totalFaces,
+        average_brightness: visualAnalysis.visualElements.averageBrightness,
+        color_diversity: visualAnalysis.visualElements.colorDiversity,
+        common_labels: visualAnalysis.commonLabels.slice(0, 5)
+      } : null
+    },
+    content: {
+      sentiment: { score: 0.7, label: 'positive' },
+      keywords: [{ word: boardInfo.boardName.split(' ')[0], count: 1 }],
+      topics: ['Lifestyle', 'Design', 'Mood']
+    },
+    music: {
+      primary_genres: theme.genres,
+      energy_level: finalMood === 'Energetic' ? 'high' : 'medium',
+      tempo_range: finalMood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'
+    },
+    board: {
+      name: boardInfo.boardName,
+      url: url,
+      username: boardInfo.username,
+      detected_theme: themeAnalysis.primaryTheme,
+      theme_confidence: finalConfidence
+    },
+    confidence: finalConfidence,
+    analysis_method: visualAnalysis ? 'url_vision_enhanced' : 'url_enhanced',
+    data_source: 'url_analysis' + (visualAnalysis ? '+vision_api' : ''),
+    timestamp: new Date().toISOString()
+  };
+}
