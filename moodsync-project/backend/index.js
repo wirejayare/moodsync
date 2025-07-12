@@ -1194,10 +1194,13 @@ app.post('/api/pinterest/callback', async (req, res) => {
     });
 
     if (!userResponse.ok) {
-      console.error('Failed to get user info:', userResponse.status);
+      const errorText = await userResponse.text();
+      console.error('Failed to get user info:', userResponse.status, errorText);
       return res.status(500).json({
         success: false,
-        message: 'Failed to get user information from Pinterest'
+        message: 'Failed to get user information from Pinterest',
+        status: userResponse.status,
+        pinterest_error: errorText
       });
     }
 
@@ -1966,6 +1969,13 @@ app.post('/api/create-playlist', async (req, res) => {
   try {
     const { accessToken, analysis, playlistName } = req.body;
     
+    console.log('Create playlist request received:', {
+      hasAccessToken: !!accessToken,
+      hasAnalysis: !!analysis,
+      playlistName: playlistName,
+      analysisKeys: analysis ? Object.keys(analysis) : []
+    });
+    
     if (!accessToken || !analysis) {
       return res.status(400).json({
         success: false,
@@ -1976,17 +1986,22 @@ app.post('/api/create-playlist', async (req, res) => {
     console.log('Creating playlist...');
 
     // Get user info
+    console.log('Getting Spotify user info...');
     const userResponse = await axios.get('https://api.spotify.com/v1/me', {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
     
     const user = userResponse.data;
+    console.log('Spotify user:', user.id);
     
     // Get genres from analysis
     const genres = analysis.genres || analysis.music?.primary_genres || ['pop', 'indie'];
+    console.log('Using genres:', genres);
     
     // Search for tracks
+    console.log('Searching for tracks...');
     const tracks = await searchTracksForMood(accessToken, genres, 15);
+    console.log('Found tracks:', tracks.length);
     
     if (tracks.length === 0) {
       return res.status(400).json({
@@ -2000,6 +2015,7 @@ app.post('/api/create-playlist', async (req, res) => {
     const description = `${analysis.description || 'Generated from your Pinterest board analysis'} Created by MoodSync.`;
     const trackUris = tracks.map(track => track.uri);
     
+    console.log('Creating playlist:', { name, description, trackCount: trackUris.length });
     const playlist = await createSpotifyPlaylist(accessToken, user.id, name, description, trackUris);
     
     res.json({
@@ -2024,6 +2040,7 @@ app.post('/api/create-playlist', async (req, res) => {
 
   } catch (error) {
     console.error('Create playlist error:', error);
+    console.error('Error response:', error.response?.data);
     res.status(500).json({
       success: false,
       message: 'Failed to create playlist',
