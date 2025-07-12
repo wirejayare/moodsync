@@ -1,6 +1,67 @@
 // ENHANCED MOOD DETECTION SYSTEM WITH NLP AND VISION ANALYSIS
 const visionAnalyzer = require('./vision-analyzer');
 
+// ===== CACHING SYSTEM =====
+const boardCache = new Map();
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+const MAX_PINS_PER_BOARD = 8; // Limit pins fetched per board
+
+// Cache management functions
+function getCachedBoard(boardId, accessToken) {
+  const cacheKey = `${boardId}:${accessToken}`;
+  const cached = boardCache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`📦 Using cached board data for: ${boardId}`);
+    return cached.data;
+  }
+  
+  return null;
+}
+
+function setCachedBoard(boardId, accessToken, data) {
+  const cacheKey = `${boardId}:${accessToken}`;
+  boardCache.set(cacheKey, {
+    data: data,
+    timestamp: Date.now()
+  });
+  console.log(`💾 Cached board data for: ${boardId}`);
+}
+
+function clearExpiredCache() {
+  const now = Date.now();
+  for (const [key, value] of boardCache.entries()) {
+    if (now - value.timestamp > CACHE_DURATION) {
+      boardCache.delete(key);
+    }
+  }
+}
+
+// Clear expired cache entries every 5 minutes
+setInterval(clearExpiredCache, 5 * 60 * 1000);
+
+// ===== RATE LIMITING =====
+const userRequestCounts = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 3; // Max 3 requests per minute per user
+
+function checkRateLimit(userId) {
+  const now = Date.now();
+  const userRequests = userRequestCounts.get(userId) || [];
+  
+  // Remove old requests outside the window
+  const recentRequests = userRequests.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+  
+  if (recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
+    return false; // Rate limited
+  }
+  
+  // Add current request
+  recentRequests.push(now);
+  userRequestCounts.set(userId, recentRequests);
+  return true; // Allowed
+}
+
 function detectThemes(analysisText) {
   // Comprehensive mood database with 60 moods
   const moodDatabase = {
@@ -1370,6 +1431,12 @@ async function getBoardById(boardId, accessToken) {
   try {
     console.log('Fetching board details for:', boardId);
     
+    // Check cache first
+    const cachedBoard = getCachedBoard(boardId, accessToken);
+    if (cachedBoard) {
+      return cachedBoard;
+    }
+    
     const boardResponse = await axios.get(`https://api.pinterest.com/v5/boards/${boardId}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
@@ -1378,7 +1445,7 @@ async function getBoardById(boardId, accessToken) {
     
     const board = boardResponse.data;
     
-    // Also fetch some pins for preview
+    // Fetch limited pins for preview (reduced from 10 to MAX_PINS_PER_BOARD)
     let pins = [];
     try {
       const pinsResponse = await axios.get(`https://api.pinterest.com/v5/boards/${boardId}/pins`, {
@@ -1386,7 +1453,7 @@ async function getBoardById(boardId, accessToken) {
           'Authorization': `Bearer ${accessToken}`
         },
         params: {
-          page_size: 10
+          page_size: MAX_PINS_PER_BOARD // Use the constant instead of hardcoded 10
         }
       });
       
@@ -1399,11 +1466,13 @@ async function getBoardById(boardId, accessToken) {
         created_at: pin.created_at
       }));
       
+      console.log(`📌 Fetched ${pins.length} pins for board ${board.name} (limited to ${MAX_PINS_PER_BOARD})`);
+      
     } catch (pinsError) {
       console.log('Could not fetch pins for board:', pinsError.message);
     }
     
-    return {
+    const boardData = {
       id: board.id,
       name: board.name,
       description: board.description || '',
@@ -1420,6 +1489,11 @@ async function getBoardById(boardId, accessToken) {
         last_name: board.owner?.last_name || ''
       }
     };
+    
+    // Cache the board data
+    setCachedBoard(boardId, accessToken, boardData);
+    
+    return boardData;
     
   } catch (error) {
     console.error('Error fetching board details:', error.response?.data || error.message);
@@ -1829,6 +1903,15 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
       });
     }
 
+    // Rate limiting - use boardId as user identifier
+    if (!checkRateLimit(boardId)) {
+      return res.status(429).json({
+        success: false,
+        message: 'Rate limit exceeded. Please wait a minute before trying again.',
+        retryAfter: 60
+      });
+    }
+
     console.log('Starting API-enhanced analysis with Vision API for board:', boardId);
     
     // Simulate processing time
@@ -1837,11 +1920,11 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
     // Fetch board data from Pinterest API
     const boardData = await getBoardById(boardId, pinterestToken);
     
-    // Extract image URLs from pins for vision analysis
+    // Extract image URLs from pins for vision analysis (reduced from 10 to 5 for cost efficiency)
     const imageUrls = boardData.pins
       .map(pin => pin.image_url)
       .filter(url => url && url.startsWith('http'))
-      .slice(0, 10); // Limit to 10 images for cost efficiency
+      .slice(0, 5); // Limit to 5 images for cost efficiency
     
     console.log(`Found ${imageUrls.length} images to analyze with Vision API`);
     
@@ -2034,6 +2117,15 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid Pinterest board URL'
+      });
+    }
+
+    // Rate limiting - use URL as user identifier
+    if (!checkRateLimit(url)) {
+      return res.status(429).json({
+        success: false,
+        message: 'Rate limit exceeded. Please wait a minute before trying again.',
+        retryAfter: 60
       });
     }
 
