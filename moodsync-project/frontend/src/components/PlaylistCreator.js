@@ -14,6 +14,12 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
 
     setIsCreating(true);
     try {
+      console.log('Creating playlist with data:', {
+        accessToken: spotifyToken ? 'present' : 'missing',
+        analysis: analysis,
+        playlistName: playlistName
+      });
+
       const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/create-playlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -25,6 +31,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
       });
 
       const data = await response.json();
+      console.log('Playlist creation response:', data);
       
       if (data.success) {
         setCreatedPlaylist(data.playlist);
@@ -33,6 +40,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         alert('Failed to create playlist: ' + data.message);
       }
     } catch (error) {
+      console.error('Playlist creation error:', error);
       alert('Error creating playlist: ' + error.message);
     } finally {
       setIsCreating(false);
