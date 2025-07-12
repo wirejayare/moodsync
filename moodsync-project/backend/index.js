@@ -1714,12 +1714,18 @@ async function searchTracksForMood(accessToken, genres, limit = 20) {
           `genre:"${genre}"`,
           // Strategy 2: Genre + mood keyword
           `genre:"${genre}" ${randomMood}`,
-          // Strategy 3: Genre with popularity filter
-          `genre:"${genre}" popularity:10-70`,
-          // Strategy 4: Genre with year range
-          `genre:"${genre}" year:2010-2024`,
-          // Strategy 5: Just the genre name without quotes
-          genre
+          // Strategy 3: Genre with popularity filter (avoid top hits)
+          `genre:"${genre}" popularity:10-60`,
+          // Strategy 4: Genre with year range (vary the years)
+          `genre:"${genre}" year:${Math.floor(Math.random() * 20) + 1990}-${Math.floor(Math.random() * 10) + 2015}`,
+          // Strategy 5: Genre with different mood keywords
+          `genre:"${genre}" ${moodKeywords[Math.floor(Math.random() * moodKeywords.length)]}`,
+          // Strategy 6: Just the genre name without quotes
+          genre,
+          // Strategy 7: Genre with acoustic filter for variety
+          `genre:"${genre}" acoustic`,
+          // Strategy 8: Genre with instrumental filter
+          `genre:"${genre}" instrumental`
         ];
         
         for (const strategy of searchStrategies) {
@@ -1794,25 +1800,97 @@ async function searchTracksForMood(accessToken, genres, limit = 20) {
     
     console.log(`🎵 Total tracks found: ${tracks.length}`);
     
-    // Remove duplicates
-    const uniqueTracks = tracks.filter((track, index, self) => 
-      index === self.findIndex(t => t.id === track.id)
-    );
+    // Enhanced deduplication: Remove duplicates by track ID, track name, and artist name
+    const uniqueTracks = [];
+    const seenTrackIds = new Set();
+    const seenTrackArtistCombos = new Set();
     
-    console.log(`🎵 Unique tracks after deduplication: ${uniqueTracks.length}`);
+    for (const track of tracks) {
+      const trackId = track.id;
+      const trackName = track.name.toLowerCase().trim();
+      const artistName = track.artists[0]?.name.toLowerCase().trim() || 'unknown';
+      const trackArtistCombo = `${trackName} - ${artistName}`;
+      
+      // Skip if we've seen this track ID before
+      if (seenTrackIds.has(trackId)) {
+        console.log(`🔄 Skipping duplicate track ID: ${track.name} by ${track.artists[0]?.name}`);
+        continue;
+      }
+      
+      // Skip if we've seen this track name + artist combination before
+      if (seenTrackArtistCombos.has(trackArtistCombo)) {
+        console.log(`🔄 Skipping duplicate track+artist: ${track.name} by ${track.artists[0]?.name}`);
+        continue;
+      }
+      
+      // Skip if this artist already has another track in the playlist
+      if (seenTrackArtistCombos.has(artistName)) {
+        console.log(`🔄 Skipping duplicate artist: ${track.name} by ${track.artists[0]?.name}`);
+        continue;
+      }
+      
+      // Add to unique tracks
+      uniqueTracks.push(track);
+      seenTrackIds.add(trackId);
+      seenTrackArtistCombos.add(trackArtistCombo);
+      seenTrackArtistCombos.add(artistName); // Mark this artist as used
+    }
+    
+    console.log(`🎵 Unique tracks after enhanced deduplication: ${uniqueTracks.length}`);
     
     // Enhanced shuffling with more randomness
     const shuffled = shuffleArray(uniqueTracks);
     
-    // Add some randomness to the final selection
-    const finalTracks = [];
-    const usedIndices = new Set();
+    // Ensure we have enough unique tracks
+    let finalTracks = shuffled.slice(0, limit);
     
-    while (finalTracks.length < Math.min(limit, shuffled.length)) {
-      const randomIndex = Math.floor(Math.random() * shuffled.length);
-      if (!usedIndices.has(randomIndex)) {
-        finalTracks.push(shuffled[randomIndex]);
-        usedIndices.add(randomIndex);
+    // If we don't have enough unique tracks, try additional searches
+    if (finalTracks.length < limit && finalTracks.length > 0) {
+      console.log(`⚠️ Only found ${finalTracks.length} unique tracks, trying additional searches...`);
+      
+      // Try additional search terms to get more variety
+      const additionalTerms = ['vintage', 'classic', 'retro', 'oldies', 'timeless', 'iconic'];
+      
+      for (const term of additionalTerms) {
+        if (finalTracks.length >= limit) break;
+        
+        try {
+          const additionalResponse = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            params: {
+              q: term,
+              type: 'track',
+              limit: Math.min(limit - finalTracks.length, 10),
+              market: 'US',
+              offset: Math.floor(Math.random() * 50)
+            }
+          });
+          
+          if (additionalResponse.data.tracks && additionalResponse.data.tracks.items) {
+            // Apply the same deduplication logic
+            for (const track of additionalResponse.data.tracks.items) {
+              if (finalTracks.length >= limit) break;
+              
+              const trackName = track.name.toLowerCase().trim();
+              const artistName = track.artists[0]?.name.toLowerCase().trim() || 'unknown';
+              const trackArtistCombo = `${trackName} - ${artistName}`;
+              
+              // Check if this track/artist combination is already in finalTracks
+              const isDuplicate = finalTracks.some(existingTrack => {
+                const existingName = existingTrack.name.toLowerCase().trim();
+                const existingArtist = existingTrack.artists[0]?.name.toLowerCase().trim() || 'unknown';
+                return existingName === trackName && existingArtist === artistName;
+              });
+              
+              if (!isDuplicate) {
+                finalTracks.push(track);
+                console.log(`✅ Added additional track: ${track.name} by ${track.artists[0]?.name}`);
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Additional search failed for term "${term}":`, error.message);
+        }
       }
     }
     
