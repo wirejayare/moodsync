@@ -60,7 +60,11 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
       
       if (data.success) {
         setCreatedPlaylist(data.playlist);
-        alert(`🎉 Playlist "${data.playlist.name}" created successfully!`);
+        if (data.isPreview) {
+          alert(`👀 Playlist preview generated! Connect Spotify to create the actual playlist.`);
+        } else {
+          alert(`🎉 Playlist "${data.playlist.name}" created successfully!`);
+        }
       } else {
         console.error('❌ Playlist creation failed:', data);
         alert('Failed to create playlist: ' + data.message);
@@ -109,11 +113,33 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   // Check if Spotify is connected
   if (!spotifyToken) {
     return (
-      <section className="apple-glass playlist-creator" aria-label="Create Spotify Playlist">
-        <h3 className="pc-title">🎵 Create Spotify Playlist</h3>
-        <div className="pc-warning">
-          <p>⚠️ Spotify connection required</p>
-          <p>Please connect your Spotify account to create playlists</p>
+      <section className="apple-glass playlist-creator" aria-label="Create Playlist Preview">
+        <h3 className="pc-title">🎵 Create Playlist Preview</h3>
+        <p className="pc-desc">See what your playlist would look like without connecting Spotify</p>
+        <form className="pc-form" onSubmit={e => { e.preventDefault(); handleCreatePlaylist(); }}>
+          <input
+            type="text"
+            className="pc-input"
+            placeholder="Playlist name (optional)"
+            value={playlistName}
+            onChange={(e) => setPlaylistName(e.target.value)}
+            aria-label="Playlist name"
+            disabled={isCreating}
+          />
+          <button
+            type="submit"
+            className="pc-create-btn"
+            onClick={handleCreatePlaylist}
+            disabled={isCreating}
+            aria-busy={isCreating}
+          >
+            {isCreating ? '🎵 Creating Preview...' : '👀 Generate Preview'}
+          </button>
+        </form>
+        <div className="pc-summary">
+          <p><strong>Based on:</strong> {getMood(analysis)}</p>
+          <p><strong>Genres:</strong> {getGenres(analysis).slice(0, 3).join(', ')}</p>
+          <p><strong>Note:</strong> This will show representative tracks, not actual Spotify songs</p>
         </div>
       </section>
     );
@@ -152,17 +178,38 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
       </div>
       {createdPlaylist && (
         <div className="pc-created">
-          <h4 className="pc-created-title">🎉 Playlist Created!</h4>
+          <h4 className="pc-created-title">
+            {createdPlaylist.isPreview ? '👀 Playlist Preview Generated!' : '🎉 Playlist Created!'}
+          </h4>
           <p><strong>Name:</strong> {createdPlaylist.name}</p>
           <p><strong>Tracks:</strong> {createdPlaylist.trackCount} songs</p>
-          <a
-            href={createdPlaylist.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pc-open-spotify"
-          >
-            🎧 Open in Spotify
-          </a>
+          {createdPlaylist.isPreview ? (
+            <div className="pc-preview-info">
+              <p><strong>Note:</strong> This is a preview with representative tracks</p>
+              <p><strong>Genres:</strong> {createdPlaylist.genres?.join(', ')}</p>
+              <p><strong>Mood:</strong> {createdPlaylist.mood}</p>
+              <p><strong>Energy:</strong> {createdPlaylist.energyLevel}</p>
+              <div className="pc-preview-tracks">
+                <h5>Representative Tracks:</h5>
+                <ul>
+                  {createdPlaylist.tracks?.slice(0, 10).map((track, index) => (
+                    <li key={index}>
+                      <strong>{track.name}</strong> by {track.artist} ({track.genre})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <a
+              href={createdPlaylist.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="pc-open-spotify"
+            >
+              🎧 Open in Spotify
+            </a>
+          )}
           
           {/* Debug: Log analysis data */}
           <div style={{marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', fontSize: '12px'}}>

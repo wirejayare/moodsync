@@ -2309,10 +2309,21 @@ app.post('/api/create-playlist', async (req, res) => {
       analysisKeys: analysis ? Object.keys(analysis) : []
     });
     
-    if (!accessToken || !analysis) {
+    if (!analysis) {
       return res.status(400).json({
         success: false,
-        message: 'Access token and analysis required'
+        message: 'Analysis data required'
+      });
+    }
+    
+    // If no Spotify token, generate virtual preview
+    if (!accessToken) {
+      console.log('No Spotify token provided, generating virtual preview...');
+      const virtualPlaylist = await generateVirtualPlaylistPreview(analysis, playlistName);
+      return res.json({
+        success: true,
+        playlist: virtualPlaylist,
+        isPreview: true
       });
     }
 
@@ -3077,4 +3088,86 @@ function hexToRgb(hex) {
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
   } : { r: 0, g: 0, b: 0 };
+}
+
+// Generate virtual playlist preview without Spotify authentication
+async function generateVirtualPlaylistPreview(analysis, playlistName) {
+  try {
+    console.log('🎵 Generating virtual playlist preview...');
+    
+    const genres = analysis.genres || ['pop', 'indie'];
+    const mood = analysis.mood?.primary || 'chill';
+    const energyLevel = analysis.energyLevel || 'medium';
+    
+    // Generate representative track suggestions based on analysis
+    const virtualTracks = generateRepresentativeTracks(genres, mood, energyLevel);
+    
+    const preview = {
+      name: playlistName || `${mood} Vibes`,
+      description: `AI-generated playlist based on ${analysis.boardName || 'your Pinterest board'}`,
+      trackCount: virtualTracks.length,
+      tracks: virtualTracks,
+      genres: genres,
+      mood: mood,
+      energyLevel: energyLevel,
+      isPreview: true,
+      message: 'Connect Spotify to create this actual playlist!'
+    };
+    
+    console.log('✅ Virtual playlist preview generated:', preview);
+    return preview;
+    
+  } catch (error) {
+    console.error('❌ Virtual playlist preview error:', error);
+    throw error;
+  }
+}
+
+// Generate representative track suggestions
+function generateRepresentativeTracks(genres, mood, energyLevel) {
+  const tracks = [];
+  const genreExamples = {
+    'rockabilly': ['Johnny B. Goode', 'Blue Suede Shoes', 'Hound Dog'],
+    'doo-wop': ['In the Still of the Night', 'Earth Angel', 'Why Do Fools Fall in Love'],
+    'vintage pop': ['Dream Lover', 'Calendar Girl', 'Beyond the Sea'],
+    'acoustic': ['Wonderwall', 'Fast Car', 'Hallelujah'],
+    'folk': ['The Sound of Silence', 'Blowin\' in the Wind', 'This Land is Your Land'],
+    'indie': ['Float On', 'Such Great Heights', 'Skinny Love'],
+    'ambient': ['Claire de Lune', 'Weightless', 'Spiegel im Spiegel'],
+    'jazz': ['Take Five', 'So What', 'What a Wonderful World'],
+    'chill': ['Lofi Hip Hop', 'Peaceful Piano', 'Nature Sounds'],
+    'pop': ['Happy', 'Uptown Funk', 'Shake It Off']
+  };
+  
+  const artistExamples = {
+    'rockabilly': ['Elvis Presley', 'Chuck Berry', 'Carl Perkins'],
+    'doo-wop': ['The Platters', 'The Penguins', 'Frankie Lymon'],
+    'vintage pop': ['Bobby Darin', 'Neil Sedaka', 'Frankie Valli'],
+    'acoustic': ['Oasis', 'Tracy Chapman', 'Jeff Buckley'],
+    'folk': ['Simon & Garfunkel', 'Bob Dylan', 'Woody Guthrie'],
+    'indie': ['Modest Mouse', 'The Postal Service', 'Bon Iver'],
+    'ambient': ['Debussy', 'Marconi Union', 'Arvo Pärt'],
+    'jazz': ['Dave Brubeck', 'Miles Davis', 'Louis Armstrong'],
+    'chill': ['Various Artists', 'Classical Piano', 'Nature'],
+    'pop': ['Pharrell Williams', 'Mark Ronson', 'Taylor Swift']
+  };
+  
+  // Generate 15-20 representative tracks
+  for (let i = 0; i < 18; i++) {
+    const genre = genres[i % genres.length] || 'pop';
+    const trackIndex = Math.floor(i / genres.length);
+    const trackName = genreExamples[genre]?.[trackIndex] || `${genre} track ${i + 1}`;
+    const artistName = artistExamples[genre]?.[trackIndex] || `${genre} artist`;
+    
+    tracks.push({
+      name: trackName,
+      artist: artistName,
+      genre: genre,
+      id: `preview-${i}`,
+      preview_url: null,
+      isPreview: true
+    });
+  }
+  
+  return tracks;
 }
