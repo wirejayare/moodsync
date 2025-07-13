@@ -20,8 +20,8 @@ const PinterestPanel = ({
       }
       onGeneratePlaylist(selectedBoard);
     } else {
-      if (!boardUrl || !boardUrl.includes('pinterest.com')) {
-        alert('Please enter a valid Pinterest board URL!');
+      if (!boardUrl || (!boardUrl.includes('pinterest.com') && !boardUrl.includes('pin.it/'))) {
+        alert('Please enter a valid Pinterest board URL or shortlink (pin.it/...)!');
         return;
       }
       onGeneratePlaylist(boardUrl);
@@ -124,7 +124,7 @@ const PinterestPanel = ({
           </div>
           <input
             type="url"
-            placeholder="https://www.pinterest.com/username/board-name/"
+            placeholder="https://www.pinterest.com/username/board-name/ or https://pin.it/abc123"
             value={boardUrl}
             onChange={e => setBoardUrl(e.target.value)}
             style={{ 

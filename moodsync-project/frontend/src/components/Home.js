@@ -358,7 +358,7 @@ const Home = ({
                 </div>
                 <input
                   type="url"
-                  placeholder="https://www.pinterest.com/username/board-name/"
+                  placeholder="https://www.pinterest.com/username/board-name/ or https://pin.it/abc123"
                   value={boardUrl}
                   onChange={e => setBoardUrl(e.target.value)}
                   style={{ 
@@ -375,18 +375,18 @@ const Home = ({
                 
                 <button 
                   onClick={() => handleGeneratePlaylist(boardUrl)}
-                  disabled={!boardUrl || !boardUrl.includes('pinterest.com')}
+                  disabled={!boardUrl || (!boardUrl.includes('pinterest.com') && !boardUrl.includes('pin.it/'))}
                   style={{
                     width: '100%',
                     padding: '12px',
                     borderRadius: '8px',
                     border: 'none',
-                    background: (boardUrl && boardUrl.includes('pinterest.com')) ? '#667eea' : 'rgba(255,255,255,0.3)',
+                    background: (boardUrl && (boardUrl.includes('pinterest.com') || boardUrl.includes('pin.it/'))) ? '#667eea' : 'rgba(255,255,255,0.3)',
                     color: 'white',
                     fontSize: '16px',
                     fontWeight: 'bold',
-                    cursor: (boardUrl && boardUrl.includes('pinterest.com')) ? 'pointer' : 'not-allowed',
-                    opacity: (boardUrl && boardUrl.includes('pinterest.com')) ? 1 : 0.6
+                    cursor: (boardUrl && (boardUrl.includes('pinterest.com') || boardUrl.includes('pin.it/'))) ? 'pointer' : 'not-allowed',
+                    opacity: (boardUrl && (boardUrl.includes('pinterest.com') || boardUrl.includes('pin.it/'))) ? 1 : 0.6
                   }}
                 >
                   🔍 Analyze Board URL

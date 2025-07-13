@@ -19,8 +19,8 @@ const EnhancedPinterestAnalyzer = ({
   const [analysisMode, setAnalysisMode] = useState('url'); // 'url' or 'board'
 
   const handleAnalyzeUrl = async () => {
-    if (!pinterestUrl.includes('pinterest.com')) {
-      alert('Please enter a valid Pinterest board URL');
+    if (!pinterestUrl.includes('pinterest.com') && !pinterestUrl.includes('pin.it/')) {
+      alert('Please enter a valid Pinterest board URL or shortlink (pin.it/...)');
       return;
     }
 
@@ -347,7 +347,7 @@ const EnhancedPinterestAnalyzer = ({
         <div style={{ marginBottom: '1rem' }}>
           <input
             type="url"
-            placeholder="https://pinterest.com/username/board-name/"
+            placeholder="https://pinterest.com/username/board-name/ or https://pin.it/abc123"
             value={pinterestUrl}
             onChange={(e) => setPinterestUrl(e.target.value)}
             style={{
