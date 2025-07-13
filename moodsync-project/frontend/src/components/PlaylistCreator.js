@@ -141,6 +141,33 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           <p><strong>Genres:</strong> {getGenres(analysis).slice(0, 3).join(', ')}</p>
           <p><strong>Note:</strong> This will show representative tracks, not actual Spotify songs</p>
         </div>
+        
+        {/* Show preview results when generated */}
+        {createdPlaylist && (
+          <div className="pc-created">
+            <h4 className="pc-created-title">
+              👀 Playlist Preview Generated!
+            </h4>
+            <p><strong>Name:</strong> {createdPlaylist.name}</p>
+            <p><strong>Tracks:</strong> {createdPlaylist.trackCount} songs</p>
+            <div className="pc-preview-info">
+              <p><strong>Note:</strong> This is a preview with representative tracks</p>
+              <p><strong>Genres:</strong> {createdPlaylist.genres?.join(', ')}</p>
+              <p><strong>Mood:</strong> {createdPlaylist.mood}</p>
+              <p><strong>Energy:</strong> {createdPlaylist.energyLevel}</p>
+              <div className="pc-preview-tracks">
+                <h5>Representative Tracks:</h5>
+                <ul>
+                  {createdPlaylist.tracks?.slice(0, 10).map((track, index) => (
+                    <li key={index}>
+                      <strong>{track.name}</strong> by {track.artist} ({track.genre})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     );
   }
