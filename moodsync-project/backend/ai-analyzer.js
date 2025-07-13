@@ -5,6 +5,100 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const AI_PROVIDER = process.env.AI_PROVIDER || 'openai'; // 'openai' or 'anthropic'
 
+// ===== AI ANALYSIS CACHING SYSTEM =====
+const analysisCache = new Map();
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour for AI analysis results
+const MAX_CACHE_SIZE = 100; // Maximum number of cached analyses
+
+// Cache statistics
+let cacheStats = {
+  hits: 0,
+  misses: 0,
+  totalRequests: 0
+};
+
+// Cache management functions
+function getCachedAnalysis(cacheKey) {
+  const cached = analysisCache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`🤖 Using cached AI analysis for: ${cacheKey.substring(0, 50)}...`);
+    cacheStats.hits++;
+    return cached.data;
+  }
+  
+  cacheStats.misses++;
+  return null;
+}
+
+function setCachedAnalysis(cacheKey, data) {
+  // Clean up old entries if cache is too large
+  if (analysisCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = analysisCache.keys().next().value;
+    analysisCache.delete(oldestKey);
+    console.log(`🗑️ Removed oldest cached analysis to make room`);
+  }
+  
+  analysisCache.set(cacheKey, {
+    data: data,
+    timestamp: Date.now()
+  });
+  console.log(`💾 Cached AI analysis for: ${cacheKey.substring(0, 50)}...`);
+}
+
+function generateAnalysisCacheKey(visualAnalysis, boardInfo) {
+  // Create a unique cache key based on the analysis inputs
+  const keyComponents = [
+    boardInfo.boardName || '',
+    boardInfo.username || '',
+    boardInfo.url || '',
+    JSON.stringify(visualAnalysis.dominantColors || []),
+    JSON.stringify(visualAnalysis.objects || []),
+    JSON.stringify(visualAnalysis.activities || []),
+    JSON.stringify(visualAnalysis.settings || []),
+    visualAnalysis.mood?.primary || '',
+    visualAnalysis.visualElements?.colorTemperature || ''
+  ];
+  
+  // Create a hash-like key (simple but effective for our use case)
+  const keyString = keyComponents.join('|');
+  return Buffer.from(keyString).toString('base64').substring(0, 64);
+}
+
+function clearExpiredAnalysisCache() {
+  const now = Date.now();
+  let clearedCount = 0;
+  
+  for (const [key, value] of analysisCache.entries()) {
+    if (now - value.timestamp > CACHE_DURATION) {
+      analysisCache.delete(key);
+      clearedCount++;
+    }
+  }
+  
+  if (clearedCount > 0) {
+    console.log(`🧹 Cleared ${clearedCount} expired AI analysis cache entries`);
+  }
+}
+
+// Clear expired cache entries every 30 minutes
+setInterval(clearExpiredAnalysisCache, 30 * 60 * 1000);
+
+function getCacheStats() {
+  const hitRate = cacheStats.totalRequests > 0 ? 
+    ((cacheStats.hits / cacheStats.totalRequests) * 100).toFixed(1) : 0;
+  
+  return {
+    currentSize: analysisCache.size,
+    maxSize: MAX_CACHE_SIZE,
+    hits: cacheStats.hits,
+    misses: cacheStats.misses,
+    totalRequests: cacheStats.totalRequests,
+    hitRate: `${hitRate}%`,
+    cacheDuration: `${CACHE_DURATION / (60 * 60 * 1000)} hours`
+  };
+}
+
 // AI-powered music recommendation system
 class AIAnalyzer {
   constructor() {
@@ -15,6 +109,7 @@ class AIAnalyzer {
 
   // Main method to generate AI-powered recommendations
   async generateRecommendations(visualAnalysis, boardInfo) {
+    cacheStats.totalRequests++; // Increment total requests for cache stats
     try {
       console.log('🤖 Generating AI-powered music recommendations...');
       console.log('🔧 AI Configuration:', {
@@ -25,23 +120,45 @@ class AIAnalyzer {
         anthropicKeyLength: this.anthropicKey ? this.anthropicKey.length : 0
       });
       
+      // 🎯 CHECK CACHE FIRST
+      const cacheKey = generateAnalysisCacheKey(visualAnalysis, boardInfo);
+      const cachedResult = getCachedAnalysis(cacheKey);
+      
+      if (cachedResult) {
+        console.log('✅ Returning cached AI analysis result');
+        return cachedResult;
+      }
+      
+      let result;
+      
       if (this.provider === 'openai' && this.openaiKey) {
         console.log('🤖 Using OpenAI GPT-4...');
-        return await this.generateOpenAIRecommendations(visualAnalysis, boardInfo);
+        result = await this.generateOpenAIRecommendations(visualAnalysis, boardInfo);
       } else if (this.provider === 'anthropic' && this.anthropicKey) {
         console.log('🤖 Using Anthropic Claude...');
-        return await this.generateClaudeRecommendations(visualAnalysis, boardInfo);
+        result = await this.generateClaudeRecommendations(visualAnalysis, boardInfo);
       } else {
         console.log('⚠️ No AI API configured, using rule-based system');
         console.log('🔧 Provider:', this.provider);
         console.log('🔧 Has Anthropic Key:', !!this.anthropicKey);
-        return await this.generateRuleBasedRecommendations(visualAnalysis, boardInfo);
+        result = await this.generateRuleBasedRecommendations(visualAnalysis, boardInfo);
       }
+      
+      // 🎯 CACHE THE RESULT
+      setCachedAnalysis(cacheKey, result);
+      
+      return result;
+      
     } catch (error) {
       console.error('❌ AI recommendation error:', error);
       console.log('🔄 Falling back to rule-based system');
       return await this.generateRuleBasedRecommendations(visualAnalysis, boardInfo);
     }
+  }
+
+  // Get cache statistics for monitoring
+  getCacheStatistics() {
+    return getCacheStats();
   }
 
   // OpenAI GPT-4 Analysis

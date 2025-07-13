@@ -3263,3 +3263,22 @@ function generateRepresentativeTracks(genres, mood, energyLevel) {
   
   return tracks;
 }
+
+// ===== AI ANALYSIS CACHE STATISTICS =====
+
+app.get('/api/ai/cache-stats', (req, res) => {
+  try {
+    const cacheStats = aiAnalyzer.getCacheStatistics();
+    res.json({
+      success: true,
+      cache: cacheStats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Cache stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get cache statistics'
+    });
+  }
+});
