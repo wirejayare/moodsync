@@ -3190,6 +3190,10 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
   try {
     console.log('🎵 Generating virtual playlist preview...');
     console.log('📊 Analysis data for preview:', analysis);
+    console.log('📊 Analysis keys:', analysis ? Object.keys(analysis) : 'No analysis');
+    console.log('📊 Analysis.music:', analysis?.music);
+    console.log('📊 Analysis.mood:', analysis?.mood);
+    console.log('📊 Analysis.genres:', analysis?.genres);
     
     // Use Claude's AI analysis if available, otherwise fallback
     let genres = ['pop', 'indie']; // Default fallback
@@ -3209,6 +3213,8 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
       // Fallback to old analysis format
       genres = analysis.genres;
       console.log('🔄 Using fallback genres:', genres);
+    } else {
+      console.log('⚠️ No genres found in analysis, using default fallback');
     }
     
     // Get mood from analysis
@@ -3216,10 +3222,13 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
       mood = analysis.mood.primary;
     } else if (analysis.mood && typeof analysis.mood === 'string') {
       mood = analysis.mood;
+    } else {
+      console.log('⚠️ No mood found in analysis, using default');
     }
     
     console.log('🎭 Final mood:', mood);
     console.log('⚡ Final energy level:', energyLevel);
+    console.log('🎵 Final genres:', genres);
     
     // Generate representative track suggestions based on analysis
     const virtualTracks = generateRepresentativeTracks(genres, mood, energyLevel);
