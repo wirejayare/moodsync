@@ -112,6 +112,39 @@ const VisionAnalysisDisplay = ({ analysis }) => {
         </div>
       )}
 
+      {/* AI Reasoning */}
+      {analysis.music && analysis.music.reasoning && analysis.music.reasoning.length > 0 && (
+        <div style={{
+          background: 'rgba(255,255,255,0.1)',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginTop: '1rem',
+          border: '1px solid rgba(255,255,255,0.2)'
+        }}>
+          <h4 style={{ 
+            margin: '0 0 1rem 0', 
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            color: 'white'
+          }}>🧠 AI Reasoning</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {analysis.music.reasoning.map((reason, index) => (
+              <div key={index} style={{
+                background: 'rgba(255,255,255,0.05)',
+                padding: '0.75rem',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                fontSize: '0.95rem',
+                lineHeight: '1.4',
+                color: 'white'
+              }}>
+                {reason}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Analysis Method */}
       <div className={styles.methodSection}>
         <div className={styles.methodBadge}>
