@@ -2418,22 +2418,25 @@ app.post('/api/create-playlist', async (req, res) => {
     const user = userResponse.data;
     console.log('Spotify user:', user.id);
     
-    // Get genres from analysis - handle both old and new analysis formats
+    // Get genres from analysis - prioritize Claude's AI recommendations
     let genres = ['pop', 'indie']; // Default fallback
     
     if (analysis.music && analysis.music.primary_genres && analysis.music.primary_genres.length > 0) {
-      // New AI-powered analysis format
+      // Use Claude's AI recommendations
       genres = analysis.music.primary_genres;
+      console.log('🎯 Using Claude AI genres:', genres);
     } else if (analysis.genres && analysis.genres.length > 0) {
-      // Old analysis format
+      // Fallback to old analysis format
       genres = analysis.genres;
+      console.log('🔄 Using fallback genres:', genres);
     } else if (analysis.music && analysis.music.search_terms && analysis.music.search_terms.length > 0) {
       // Use search terms as genres if available
       genres = analysis.music.search_terms.slice(0, 3);
+      console.log('🔍 Using search terms as genres:', genres);
     }
     
-    console.log('Using genres:', genres);
-    console.log('Analysis structure:', {
+    console.log('🎵 Final genres for track search:', genres);
+    console.log('📊 Analysis structure:', {
       hasMusic: !!analysis.music,
       hasPrimaryGenres: !!(analysis.music && analysis.music.primary_genres),
       hasSearchTerms: !!(analysis.music && analysis.music.search_terms),
@@ -3186,17 +3189,44 @@ function hexToRgb(hex) {
 async function generateVirtualPlaylistPreview(analysis, playlistName) {
   try {
     console.log('🎵 Generating virtual playlist preview...');
+    console.log('📊 Analysis data for preview:', analysis);
     
-    const genres = analysis.genres || ['pop', 'indie'];
-    const mood = analysis.mood?.primary || 'chill';
-    const energyLevel = analysis.energyLevel || 'medium';
+    // Use Claude's AI analysis if available, otherwise fallback
+    let genres = ['pop', 'indie']; // Default fallback
+    let mood = 'chill'; // Default fallback
+    let energyLevel = 'medium'; // Default fallback
+    let searchTerms = [];
+    
+    if (analysis.music && analysis.music.primary_genres && analysis.music.primary_genres.length > 0) {
+      // Use Claude's AI recommendations
+      genres = analysis.music.primary_genres;
+      energyLevel = analysis.music.energy_level || 'medium';
+      searchTerms = analysis.music.search_terms || [];
+      console.log('🎯 Using Claude AI genres:', genres);
+      console.log('🎯 Using Claude AI energy level:', energyLevel);
+      console.log('🎯 Using Claude AI search terms:', searchTerms);
+    } else if (analysis.genres && analysis.genres.length > 0) {
+      // Fallback to old analysis format
+      genres = analysis.genres;
+      console.log('🔄 Using fallback genres:', genres);
+    }
+    
+    // Get mood from analysis
+    if (analysis.mood && analysis.mood.primary) {
+      mood = analysis.mood.primary;
+    } else if (analysis.mood && typeof analysis.mood === 'string') {
+      mood = analysis.mood;
+    }
+    
+    console.log('🎭 Final mood:', mood);
+    console.log('⚡ Final energy level:', energyLevel);
     
     // Generate representative track suggestions based on analysis
     const virtualTracks = generateRepresentativeTracks(genres, mood, energyLevel);
     
     const preview = {
       name: playlistName || `${mood} Vibes`,
-      description: `AI-generated playlist based on ${analysis.boardName || 'your Pinterest board'}`,
+      description: `AI-generated playlist based on your Pinterest board`,
       trackCount: virtualTracks.length,
       tracks: virtualTracks,
       genres: genres,
@@ -3218,7 +3248,15 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
 // Generate representative track suggestions
 function generateRepresentativeTracks(genres, mood, energyLevel) {
   const tracks = [];
+  
+  // Enhanced genre examples with more sophisticated mappings
   const genreExamples = {
+    // Claude AI genres
+    'Disco': ['Stayin\' Alive', 'Le Freak', 'I Will Survive', 'Dancing Queen', 'Boogie Wonderland'],
+    'Funk': ['Super Freak', 'Give Up the Funk', 'Brick House', 'Get Up Offa That Thing', 'Flash Light'],
+    'Dance-Punk': ['Take Me Out', 'Maps', 'Last Nite', 'Reptilia', 'The Modern Age'],
+    
+    // Fallback genres
     'rockabilly': ['Johnny B. Goode', 'Blue Suede Shoes', 'Hound Dog'],
     'doo-wop': ['In the Still of the Night', 'Earth Angel', 'Why Do Fools Fall in Love'],
     'vintage pop': ['Dream Lover', 'Calendar Girl', 'Beyond the Sea'],
@@ -3232,6 +3270,12 @@ function generateRepresentativeTracks(genres, mood, energyLevel) {
   };
   
   const artistExamples = {
+    // Claude AI artists
+    'Disco': ['Bee Gees', 'Chic', 'Gloria Gaynor', 'ABBA', 'Earth, Wind & Fire'],
+    'Funk': ['Rick James', 'Parliament', 'Commodores', 'James Brown', 'Parliament-Funkadelic'],
+    'Dance-Punk': ['Franz Ferdinand', 'Yeah Yeah Yeahs', 'The Strokes', 'The Strokes', 'The Strokes'],
+    
+    // Fallback artists
     'rockabilly': ['Elvis Presley', 'Chuck Berry', 'Carl Perkins'],
     'doo-wop': ['The Platters', 'The Penguins', 'Frankie Lymon'],
     'vintage pop': ['Bobby Darin', 'Neil Sedaka', 'Frankie Valli'],
@@ -3243,6 +3287,10 @@ function generateRepresentativeTracks(genres, mood, energyLevel) {
     'chill': ['Various Artists', 'Classical Piano', 'Nature'],
     'pop': ['Pharrell Williams', 'Mark Ronson', 'Taylor Swift']
   };
+  
+  console.log('🎵 Generating tracks for genres:', genres);
+  console.log('🎭 Mood:', mood);
+  console.log('⚡ Energy level:', energyLevel);
   
   // Generate 15-20 representative tracks
   for (let i = 0; i < 18; i++) {
@@ -3261,6 +3309,7 @@ function generateRepresentativeTracks(genres, mood, energyLevel) {
     });
   }
   
+  console.log('✅ Generated', tracks.length, 'representative tracks');
   return tracks;
 }
 
