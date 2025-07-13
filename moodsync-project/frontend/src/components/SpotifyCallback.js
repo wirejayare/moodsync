@@ -67,6 +67,7 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
                 console.log('📡 Create playlist response status:', createResponse.status);
                 const createData = await createResponse.json();
                 console.log('📡 Create playlist response data:', createData);
+                console.log('🎵 Full playlist object:', createData.playlist);
                 
                 if (createData.success) {
                   console.log('✅ Playlist created successfully');
@@ -79,13 +80,30 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
                   localStorage.setItem('moodsync_analysis', pendingAnalysis);
                   
                   // Launch Spotify player with the created playlist
-                  const playlistUrl = createData.playlist.external_urls?.spotify || createData.playlist.spotify_url;
+                  const playlistUrl = createData.playlist.url || createData.playlist.external_urls?.spotify || createData.playlist.spotify_url;
                   console.log('🎵 Playlist URL:', playlistUrl);
                   
                   if (playlistUrl) {
                     console.log('🚀 Launching Spotify player...');
-                    // Try to open in native app first, fallback to web
-                    window.location.href = playlistUrl;
+                    // Try multiple approaches to open Spotify
+                    try {
+                      // First, try to open in a new tab
+                      const newWindow = window.open(playlistUrl, '_blank');
+                      
+                      // If popup was blocked, try direct navigation
+                      if (!newWindow || newWindow.closed) {
+                        console.log('📱 Popup blocked, trying direct navigation...');
+                        window.location.href = playlistUrl;
+                      }
+                      
+                      // Show success message
+                      setTimeout(() => {
+                        alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created and opened in Spotify!`);
+                      }, 1000);
+                    } catch (error) {
+                      console.log('❌ Error opening Spotify, showing success message');
+                      alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created in Spotify! You can find it at: ${playlistUrl}`);
+                    }
                   } else {
                     console.log('⚠️ No playlist URL available, showing success message');
                     // Fallback: navigate back to home with success message
