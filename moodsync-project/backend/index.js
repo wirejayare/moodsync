@@ -1907,7 +1907,7 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
   const tracks = [];
   
   try {
-    console.log('🎵 Starting track search with genres:', genres);
+    console.log('🎵 Starting enhanced track search with genres:', genres);
     console.log('🎯 Board title keywords (search terms):', searchTerms);
     
     // Ensure genres is an array and has valid values
@@ -1936,10 +1936,6 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
     console.log('🎵 Using valid genres:', validGenres);
     console.log('🎯 Using board title keywords:', validSearchTerms);
     
-    // Add mood-based keywords to make searches more diverse
-    const moodKeywords = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic', 'happy', 'calm'];
-    const randomMood = moodKeywords[Math.floor(Math.random() * moodKeywords.length)];
-    
     // 🎯 PRIORITY 1: Search with board title keywords first (but limit results)
     const maxKeywordTracks = Math.floor(limit * 0.4); // Only 40% from keywords
     if (validSearchTerms.length > 0) {
@@ -1950,14 +1946,18 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
           console.log(`🎯 Searching with board title keyword: "${keyword}"`);
           
           const keywordStrategies = [
-            // Strategy 1: Keyword + mood (more variety)
-            `${keyword} ${randomMood}`,
+            // Strategy 1: Keyword + random mood
+            `${keyword} ${getRandomMood()}`,
             // Strategy 2: Keyword with genre context
             `${keyword} ${validGenres[0] || 'music'}`,
             // Strategy 3: Keyword with year range
-            `${keyword} year:${Math.floor(Math.random() * 20) + 1990}-${Math.floor(Math.random() * 10) + 2015}`,
+            `${keyword} year:${getRandomYearRange()}`,
             // Strategy 4: Keyword with popularity filter
-            `${keyword} popularity:10-80`
+            `${keyword} popularity:${getRandomPopularityRange()}`,
+            // Strategy 5: Keyword with tempo filter
+            `${keyword} tempo:${getRandomTempoRange()}`,
+            // Strategy 6: Keyword with energy level
+            `${keyword} ${getRandomEnergyLevel()}`
           ];
           
           for (const strategy of keywordStrategies) {
@@ -1971,9 +1971,9 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
                 params: {
                   q: strategy,
                   type: 'track',
-                  limit: Math.min(4, maxKeywordTracks - tracks.length), // Reduced limit
+                  limit: Math.min(3, maxKeywordTracks - tracks.length), // Smaller batches for variety
                   market: 'US',
-                  offset: Math.floor(Math.random() * 20)
+                  offset: Math.floor(Math.random() * 50) // Random offset for variety
                 }
               });
               
@@ -1993,55 +1993,61 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
       }
     }
     
-    // 🎵 PRIORITY 2: Search with genres (more diverse approach)
+    // 🎵 PRIORITY 2: Search with genres using enhanced variety
     for (const genre of validGenres) {
       if (tracks.length >= limit) break;
       
       try {
         console.log(`🎵 Searching for genre: ${genre}`);
         
-        // Use different search strategies for variety
+        // Use the same enhanced search strategies as client credentials
         const searchStrategies = [
-          // Strategy 1: Genre + mood keyword (avoid direct keyword)
-          `genre:"${genre}" ${randomMood}`,
-          // Strategy 2: Genre with popularity filter (avoid top hits)
-          `genre:"${genre}" popularity:10-60`,
-          // Strategy 3: Genre with year range (vary the years)
-          `genre:"${genre}" year:${Math.floor(Math.random() * 20) + 1990}-${Math.floor(Math.random() * 10) + 2015}`,
-          // Strategy 4: Genre with different mood keywords
-          `genre:"${genre}" ${moodKeywords[Math.floor(Math.random() * moodKeywords.length)]}`,
-          // Strategy 5: Genre with acoustic filter for variety
-          `genre:"${genre}" acoustic`,
-          // Strategy 6: Genre with instrumental filter
-          `genre:"${genre}" instrumental`,
-          // Strategy 7: Just the genre name without quotes
+          // Strategy 1: Direct genre search with different offsets
+          `genre:${genre}`,
+          // Strategy 2: Genre as keyword
           genre,
-          // Strategy 8: Genre with energy level
-          `genre:"${genre}" ${randomMood}`
-        ];
+          // Strategy 3: Genre with mood keywords
+          `${genre} ${getRandomMood()}`,
+          `${genre} ${getRandomMood()}`,
+          // Strategy 4: Genre with year ranges
+          `${genre} year:${getRandomYearRange()}`,
+          `${genre} year:${getRandomYearRange()}`,
+          // Strategy 5: Genre with popularity filters
+          `${genre} popularity:${getRandomPopularityRange()}`,
+          // Strategy 6: Genre with tempo filters
+          `${genre} tempo:${getRandomTempoRange()}`,
+          // Strategy 7: Genre with energy levels
+          `${genre} ${getRandomEnergyLevel()}`,
+          // Strategy 8: Common artists in the genre
+          getGenreArtists(genre),
+          // Strategy 9: Genre with acousticness
+          `${genre} acousticness:${getRandomAcousticness()}`,
+          // Strategy 10: Genre with danceability
+          `${genre} danceability:${getRandomDanceability()}`
+        ].filter(Boolean); // Remove empty strategies
         
-        for (const strategy of searchStrategies) {
+        for (const searchQuery of searchStrategies) {
           if (tracks.length >= limit) break;
           
           try {
-            console.log(`🎵 Trying search strategy: "${strategy}"`);
+            console.log(`🎵 Trying search strategy: "${searchQuery}"`);
             
             const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
               headers: { 'Authorization': `Bearer ${accessToken}` },
               params: {
-                q: strategy,
+                q: searchQuery,
                 type: 'track',
-                limit: Math.min(10, limit - tracks.length),
+                limit: Math.min(3, limit - tracks.length), // Smaller batches for variety
                 market: 'US',
-                offset: Math.floor(Math.random() * 20) // Random offset for variety
+                offset: Math.floor(Math.random() * 50) // Random offset for variety
               }
             });
             
             if (searchResponse.data.tracks && searchResponse.data.tracks.items && searchResponse.data.tracks.items.length > 0) {
-              console.log(`✅ Found ${searchResponse.data.tracks.items.length} tracks for strategy: "${strategy}"`);
+              console.log(`✅ Found ${searchResponse.data.tracks.items.length} tracks for strategy: "${searchQuery}"`);
               tracks.push(...searchResponse.data.tracks.items);
             } else {
-              console.log(`❌ No tracks found for strategy: "${strategy}"`);
+              console.log(`❌ No tracks found for strategy: "${searchQuery}"`);
             }
           } catch (strategyError) {
             console.error(`❌ Search strategy failed: "${strategy}"`, strategyError.message);
@@ -2052,161 +2058,70 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
       }
     }
     
-    // Fallback searches if no results
+    // Enhanced fallback searches if no results
     if (tracks.length === 0) {
-      console.log('🔄 No tracks found, trying fallback searches...');
+      console.log('🔄 No tracks found, trying enhanced fallback searches...');
       
       const fallbackStrategies = [
-        'pop',
-        'indie',
+        // Enhanced fallback with variety
+        `${getRandomMood()} music`,
+        `popularity:${getRandomPopularityRange()}`,
+        `year:${getRandomYearRange()}`,
+        `tempo:${getRandomTempoRange()}`,
+        `${getRandomEnergyLevel()} music`,
         'chill',
         'relaxing',
-        'upbeat'
+        'upbeat',
+        'indie',
+        'pop'
       ];
       
       for (const fallback of fallbackStrategies) {
         if (tracks.length >= limit) break;
         
         try {
-          console.log(`🔄 Trying fallback search: "${fallback}"`);
+          console.log(`🔄 Trying enhanced fallback search: "${fallback}"`);
           
           const fallbackResponse = await axios.get('https://api.spotify.com/v1/search', {
             headers: { 'Authorization': `Bearer ${accessToken}` },
             params: {
               q: fallback,
               type: 'track',
-              limit: Math.min(limit, limit - tracks.length),
-              market: 'US'
+              limit: Math.min(3, limit - tracks.length), // Smaller batches for variety
+              market: 'US',
+              offset: Math.floor(Math.random() * 50) // Random offset for variety
             }
           });
           
           if (fallbackResponse.data.tracks && fallbackResponse.data.tracks.items && fallbackResponse.data.tracks.items.length > 0) {
-            console.log(`✅ Found ${fallbackResponse.data.tracks.items.length} tracks with fallback: "${fallback}"`);
+            console.log(`✅ Found ${fallbackResponse.data.tracks.items.length} tracks with enhanced fallback: "${fallback}"`);
             tracks.push(...fallbackResponse.data.tracks.items);
           }
         } catch (fallbackError) {
-          console.error(`❌ Fallback search failed: "${fallback}"`, fallbackError.message);
+          console.error(`❌ Enhanced fallback search failed: "${fallback}"`, fallbackError.message);
         }
       }
     }
     
     console.log(`🎵 Total tracks found: ${tracks.length}`);
     
-    // Enhanced deduplication: Remove duplicates and prevent keyword repetition
+    // Remove duplicates and shuffle for variety
     const uniqueTracks = [];
     const seenTrackIds = new Set();
-    const seenTrackArtistCombos = new Set();
-    const keywordRepetitionCount = new Map(); // Track keyword repetition
     
     for (const track of tracks) {
-      const trackId = track.id;
-      const trackName = track.name.toLowerCase().trim();
-      const artistName = track.artists[0]?.name.toLowerCase().trim() || 'unknown';
-      const trackArtistCombo = `${trackName} - ${artistName}`;
-      
-      // Skip if we've seen this track ID before
-      if (seenTrackIds.has(trackId)) {
-        console.log(`🔄 Skipping duplicate track ID: ${track.name} by ${track.artists[0]?.name}`);
-        continue;
-      }
-      
-      // Skip if we've seen this track name + artist combination before
-      if (seenTrackArtistCombos.has(trackArtistCombo)) {
-        console.log(`🔄 Skipping duplicate track+artist: ${track.name} by ${track.artists[0]?.name}`);
-        continue;
-      }
-      
-      // Skip if this artist already has another track in the playlist
-      if (seenTrackArtistCombos.has(artistName)) {
-        console.log(`🔄 Skipping duplicate artist: ${track.name} by ${track.artists[0]?.name}`);
-        continue;
-      }
-      
-      // Check for keyword repetition in track names
-      let hasExcessiveKeywordRepetition = false;
-      for (const keyword of validSearchTerms) {
-        if (trackName.includes(keyword.toLowerCase())) {
-          const currentCount = keywordRepetitionCount.get(keyword) || 0;
-          if (currentCount >= 2) { // Allow max 2 tracks with same keyword
-            console.log(`🔄 Skipping track with excessive keyword repetition: "${keyword}" in "${track.name}"`);
-            hasExcessiveKeywordRepetition = true;
-            break;
-          }
-          keywordRepetitionCount.set(keyword, currentCount + 1);
-        }
-      }
-      
-      if (hasExcessiveKeywordRepetition) {
-        continue;
-      }
-      
-      // Add to unique tracks
-      uniqueTracks.push(track);
-      seenTrackIds.add(trackId);
-      seenTrackArtistCombos.add(trackArtistCombo);
-      seenTrackArtistCombos.add(artistName); // Mark this artist as used
-    }
-    
-    console.log(`🎵 Unique tracks after enhanced deduplication: ${uniqueTracks.length}`);
-    
-    // Enhanced shuffling with more randomness
-    const shuffled = shuffleArray(uniqueTracks);
-    
-    // Ensure we have enough unique tracks
-    let finalTracks = shuffled.slice(0, limit);
-    
-    // If we don't have enough unique tracks, try additional searches
-    if (finalTracks.length < limit && finalTracks.length > 0) {
-      console.log(`⚠️ Only found ${finalTracks.length} unique tracks, trying additional searches...`);
-      
-      // Try additional search terms to get more variety
-      const additionalTerms = ['vintage', 'classic', 'retro', 'oldies', 'timeless', 'iconic'];
-      
-      for (const term of additionalTerms) {
-        if (finalTracks.length >= limit) break;
-        
-        try {
-          const additionalResponse = await axios.get('https://api.spotify.com/v1/search', {
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-            params: {
-              q: term,
-              type: 'track',
-              limit: Math.min(limit - finalTracks.length, 10),
-              market: 'US',
-              offset: Math.floor(Math.random() * 50)
-            }
-          });
-          
-          if (additionalResponse.data.tracks && additionalResponse.data.tracks.items) {
-            // Apply the same deduplication logic
-            for (const track of additionalResponse.data.tracks.items) {
-              if (finalTracks.length >= limit) break;
-              
-              const trackName = track.name.toLowerCase().trim();
-              const artistName = track.artists[0]?.name.toLowerCase().trim() || 'unknown';
-              const trackArtistCombo = `${trackName} - ${artistName}`;
-              
-              // Check if this track/artist combination is already in finalTracks
-              const isDuplicate = finalTracks.some(existingTrack => {
-                const existingName = existingTrack.name.toLowerCase().trim();
-                const existingArtist = existingTrack.artists[0]?.name.toLowerCase().trim() || 'unknown';
-                return existingName === trackName && existingArtist === artistName;
-              });
-              
-              if (!isDuplicate) {
-                finalTracks.push(track);
-                console.log(`✅ Added additional track: ${track.name} by ${track.artists[0]?.name}`);
-              }
-            }
-          }
-        } catch (error) {
-          console.error(`❌ Additional search failed for term "${term}":`, error.message);
-        }
+      if (!seenTrackIds.has(track.id)) {
+        uniqueTracks.push(track);
+        seenTrackIds.add(track.id);
       }
     }
     
-    console.log(`🎵 Final track selection: ${finalTracks.length} tracks`);
-    return finalTracks;
+    // Shuffle the tracks for more variety
+    const shuffledTracks = shuffleArray([...uniqueTracks]);
+    
+    console.log(`🎵 Unique tracks after deduplication: ${shuffledTracks.length}`);
+    
+    return shuffledTracks.slice(0, limit);
     
   } catch (error) {
     console.error('❌ Track search error:', error);
