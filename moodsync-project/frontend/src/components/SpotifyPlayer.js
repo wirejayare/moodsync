@@ -218,15 +218,7 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated
         </div>
       </div>
 
-      {/* Connection Status */}
-      {!isConnected && (
-        <div className="connection-prompt">
-          <p>💡 <strong>Pro tip:</strong> Connect your Spotify account to save this playlist and get personalized recommendations!</p>
-          <button onClick={onConnectClick} className="connect-button">
-            Connect Spotify Account
-          </button>
-        </div>
-      )}
+
     </div>
   );
 };
