@@ -1,14 +1,22 @@
 // src/components/SpotifyCallback.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const SpotifyCallback = ({ onSpotifyAuth }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
+  const hasProcessedRef = useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Prevent multiple executions
+      if (hasProcessedRef.current) {
+        console.log('🔄 Callback already processed, skipping...');
+        return;
+      }
+      
+      hasProcessedRef.current = true;
       try {
         const code = searchParams.get('code');
         const error = searchParams.get('error');
