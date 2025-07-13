@@ -1670,6 +1670,132 @@ function analyzePinterestBoard(url) {
   };
 }
 
+// ===== SPOTIFY CLIENT CREDENTIALS =====
+
+// Cache for client credentials token
+let clientCredentialsToken = null;
+let tokenExpiry = 0;
+
+// Get client credentials token for server-to-server API calls
+async function getClientCredentialsToken() {
+  try {
+    // Check if we have a valid cached token
+    if (clientCredentialsToken && Date.now() < tokenExpiry) {
+      return clientCredentialsToken;
+    }
+
+    console.log('🔑 Getting new client credentials token...');
+    
+    const response = await axios.post('https://accounts.spotify.com/api/token', 
+      new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: process.env.SPOTIFY_CLIENT_ID,
+        client_secret: process.env.SPOTIFY_CLIENT_SECRET
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    const { access_token, expires_in } = response.data;
+    
+    // Cache the token with expiry
+    clientCredentialsToken = access_token;
+    tokenExpiry = Date.now() + (expires_in * 1000) - 60000; // Expire 1 minute early
+    
+    console.log('✅ Client credentials token obtained');
+    return access_token;
+    
+  } catch (error) {
+    console.error('❌ Client credentials error:', error.response?.data || error.message);
+    throw new Error('Failed to get client credentials token');
+  }
+}
+
+// Search tracks using client credentials (for previews)
+async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms = []) {
+  try {
+    const accessToken = await getClientCredentialsToken();
+    console.log('🎵 Searching tracks with client credentials for genres:', genres);
+    
+    const tracks = [];
+    
+    // Search for each genre
+    for (const genre of genres) {
+      if (tracks.length >= limit) break;
+      
+      try {
+        console.log(`🔍 Searching for genre: "${genre}"`);
+        
+        const response = await axios.get('https://api.spotify.com/v1/search', {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          params: {
+            q: `genre:${genre}`,
+            type: 'track',
+            limit: Math.min(limit, limit - tracks.length),
+            market: 'US'
+          }
+        });
+        
+        if (response.data.tracks && response.data.tracks.items && response.data.tracks.items.length > 0) {
+          console.log(`✅ Found ${response.data.tracks.items.length} tracks for genre: "${genre}"`);
+          tracks.push(...response.data.tracks.items);
+        }
+      } catch (error) {
+        console.error(`❌ Search failed for genre "${genre}":`, error.message);
+      }
+    }
+    
+    // If no results from genre search, try search terms
+    if (tracks.length === 0 && searchTerms.length > 0) {
+      for (const term of searchTerms) {
+        if (tracks.length >= limit) break;
+        
+        try {
+          console.log(`🔍 Searching for term: "${term}"`);
+          
+          const response = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            params: {
+              q: term,
+              type: 'track',
+              limit: Math.min(limit, limit - tracks.length),
+              market: 'US'
+            }
+          });
+          
+          if (response.data.tracks && response.data.tracks.items && response.data.tracks.items.length > 0) {
+            console.log(`✅ Found ${response.data.tracks.items.length} tracks for term: "${term}"`);
+            tracks.push(...response.data.tracks.items);
+          }
+        } catch (error) {
+          console.error(`❌ Search failed for term "${term}":`, error.message);
+        }
+      }
+    }
+    
+    // Remove duplicates
+    const uniqueTracks = [];
+    const seenTrackIds = new Set();
+    
+    for (const track of tracks) {
+      if (!seenTrackIds.has(track.id)) {
+        uniqueTracks.push(track);
+        seenTrackIds.add(track.id);
+      }
+    }
+    
+    console.log(`🎵 Found ${uniqueTracks.length} unique tracks with client credentials`);
+    return uniqueTracks.slice(0, limit);
+    
+  } catch (error) {
+    console.error('❌ Client credentials track search error:', error);
+    return [];
+  }
+}
+
 // ===== SPOTIFY FUNCTIONS =====
 
 async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms = []) {
@@ -3230,8 +3356,36 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
     console.log('⚡ Final energy level:', energyLevel);
     console.log('🎵 Final genres:', genres);
     
-    // Generate representative track suggestions based on analysis
-    const virtualTracks = generateRepresentativeTracks(genres, mood, energyLevel);
+    // Try to get real Spotify tracks using client credentials
+    console.log('🔍 Attempting to get real Spotify tracks for preview...');
+    let realTracks = [];
+    
+    try {
+      realTracks = await searchTracksWithClientCredentials(genres, 15, searchTerms);
+      console.log(`✅ Found ${realTracks.length} real Spotify tracks for preview`);
+    } catch (error) {
+      console.log('⚠️ Failed to get real Spotify tracks, falling back to examples:', error.message);
+    }
+    
+    // Convert real tracks to preview format or fall back to examples
+    let virtualTracks = [];
+    
+    if (realTracks.length > 0) {
+      // Use real Spotify tracks
+      virtualTracks = realTracks.map((track, index) => ({
+        name: track.name,
+        artist: track.artists[0]?.name || 'Unknown Artist',
+        genre: genres[index % genres.length] || 'pop',
+        id: `preview-${index}`,
+        preview_url: track.preview_url,
+        isPreview: true,
+        spotify_url: track.external_urls?.spotify
+      }));
+    } else {
+      // Fall back to representative examples
+      console.log('🔄 Using representative track examples');
+      virtualTracks = generateRepresentativeTracks(genres, mood, energyLevel);
+    }
     
     const preview = {
       name: playlistName || `${mood} Vibes`,
@@ -3242,7 +3396,8 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
       mood: mood,
       energyLevel: energyLevel,
       isPreview: true,
-      message: 'Connect Spotify to create this actual playlist!'
+      message: 'Connect Spotify to create this actual playlist!',
+      hasRealTracks: realTracks.length > 0
     };
     
     console.log('✅ Virtual playlist preview generated:', preview);
