@@ -155,7 +155,11 @@ class AIAnalyzer {
       recommendations.reasoning.push(`🎯 ${boardNameAnalysis.reasoning}`);
       recommendations.genres.push(...boardNameAnalysis.genres);
       recommendations.moodCharacteristics.push(...boardNameAnalysis.moods);
+      
+      // PRIORITIZE board title keywords at the beginning of search terms
+      recommendations.searchTerms.push(...boardNameAnalysis.primaryKeywords);
       recommendations.searchTerms.push(...boardNameAnalysis.searchTerms);
+      
       recommendations.energyLevel = boardNameAnalysis.energyLevel || recommendations.energyLevel;
     }
 
@@ -348,117 +352,148 @@ Return a JSON object with this EXACT structure:
     return result;
   }
 
-  // 🎯 Board name analysis for music recommendations
+  // 🎯 Enhanced board name analysis for music recommendations
   analyzeBoardNameForMusic(boardName) {
     const name = boardName.toLowerCase();
     const result = {
       genres: [],
       moods: [],
       searchTerms: [],
+      primaryKeywords: [], // NEW: Primary keywords from board title
       energyLevel: 'medium',
       reasoning: ''
     };
 
+    // Extract meaningful keywords from board name (ALWAYS do this)
+    const keywords = name.split(/[\s\-_]+/).filter(word => word.length > 2);
+    result.primaryKeywords = keywords; // These get top priority in search
+
+    // Enhanced theme detection with more specific keywords
     // Retro/Vintage themes
-    if (name.includes('retro') || name.includes('vintage') || name.includes('old school')) {
+    if (name.includes('retro') || name.includes('vintage') || name.includes('old school') || name.includes('classic')) {
       result.genres.push('rockabilly', 'doo-wop', 'vintage pop', 'classic rock');
-      result.searchTerms.push('retro', 'vintage', 'oldies', 'classic');
+      result.searchTerms.push('retro', 'vintage', 'oldies', 'classic', '1950s', '1960s');
       result.moods.push('nostalgic', 'timeless');
       result.energyLevel = 'medium';
       result.reasoning = 'This vibe is giving major retro energy - time to bring back the classics!';
     }
 
     // Rock 'n' Roll themes
-    if (name.includes('rock') || name.includes('rockabilly') || name.includes('rock and roll')) {
+    else if (name.includes('rock') || name.includes('rockabilly') || name.includes('rock and roll') || name.includes('guitar')) {
       result.genres.push('rockabilly', 'classic rock', 'rock and roll', 'blues rock');
-      result.searchTerms.push('rock and roll', 'rockabilly', '1950s rock', 'classic rock');
+      result.searchTerms.push('rock and roll', 'rockabilly', '1950s rock', 'classic rock', 'guitar');
       result.moods.push('energetic', 'rebellious');
       result.energyLevel = 'high';
       result.reasoning = 'Rock and roll energy detected - let\'s get this party started!';
     }
 
     // Cozy/Comfort themes
-    if (name.includes('cozy') || name.includes('comfort') || name.includes('warm') || name.includes('snug')) {
+    else if (name.includes('cozy') || name.includes('comfort') || name.includes('warm') || name.includes('snug') || name.includes('home')) {
       result.genres.push('acoustic', 'folk', 'indie', 'ambient');
-      result.searchTerms.push('cozy', 'warm', 'comfortable', 'relaxing');
+      result.searchTerms.push('cozy', 'warm', 'comfortable', 'relaxing', 'home');
       result.moods.push('cozy', 'warm', 'comfortable');
       result.energyLevel = 'low';
       result.reasoning = 'Cozy vibes detected - perfect for those warm, fuzzy feels';
     }
 
     // Summer/Beach themes
-    if (name.includes('summer') || name.includes('beach') || name.includes('tropical') || name.includes('vacation')) {
+    else if (name.includes('summer') || name.includes('beach') || name.includes('tropical') || name.includes('vacation') || name.includes('ocean')) {
       result.genres.push('tropical', 'reggae', 'calypso', 'beach pop');
-      result.searchTerms.push('summer', 'beach', 'tropical', 'vacation');
+      result.searchTerms.push('summer', 'beach', 'tropical', 'vacation', 'ocean', 'island');
       result.moods.push('carefree', 'energetic', 'relaxed');
       result.energyLevel = 'medium';
       result.reasoning = 'Summer vibes detected - time to catch those beach waves!';
     }
 
     // Fall/Autumn themes
-    if (name.includes('fall') || name.includes('autumn') || name.includes('cozy fall')) {
+    else if (name.includes('fall') || name.includes('autumn') || name.includes('cozy fall') || name.includes('pumpkin')) {
       result.genres.push('folk', 'acoustic', 'indie', 'ambient');
-      result.searchTerms.push('fall', 'autumn', 'cozy', 'warm');
+      result.searchTerms.push('fall', 'autumn', 'cozy', 'warm', 'pumpkin');
       result.moods.push('cozy', 'melancholic', 'warm');
       result.energyLevel = 'low';
       result.reasoning = 'Fall energy detected - perfect for those crisp autumn feels';
     }
 
     // Dark/Academia themes
-    if (name.includes('dark') || name.includes('academia') || name.includes('gothic') || name.includes('mysterious')) {
+    else if (name.includes('dark') || name.includes('academia') || name.includes('gothic') || name.includes('mysterious') || name.includes('moody')) {
       result.genres.push('classical', 'indie', 'ambient', 'gothic');
-      result.searchTerms.push('dark', 'mysterious', 'academic', 'gothic');
+      result.searchTerms.push('dark', 'mysterious', 'academic', 'gothic', 'moody');
       result.moods.push('mysterious', 'intellectual', 'melancholic');
       result.energyLevel = 'low';
       result.reasoning = 'Dark academia vibes detected - moody and mysterious energy';
     }
 
     // Paris/French themes
-    if (name.includes('paris') || name.includes('french') || name.includes('chic') || name.includes('sophisticated')) {
+    else if (name.includes('paris') || name.includes('french') || name.includes('chic') || name.includes('sophisticated') || name.includes('elegant')) {
       result.genres.push('jazz', 'chanson', 'french pop', 'classical');
-      result.searchTerms.push('paris', 'french', 'chic', 'sophisticated');
+      result.searchTerms.push('paris', 'french', 'chic', 'sophisticated', 'elegant');
       result.moods.push('romantic', 'sophisticated', 'elegant');
       result.energyLevel = 'medium';
       result.reasoning = 'Paris vibes detected - sophisticated and romantic energy';
     }
 
-    // Party/Party themes
-    if (name.includes('party') || name.includes('celebration') || name.includes('festive')) {
+    // Party/Celebration themes
+    else if (name.includes('party') || name.includes('celebration') || name.includes('festive') || name.includes('dance')) {
       result.genres.push('pop', 'dance', 'electronic', 'party');
-      result.searchTerms.push('party', 'celebration', 'festive', 'upbeat');
+      result.searchTerms.push('party', 'celebration', 'festive', 'upbeat', 'dance');
       result.moods.push('energetic', 'joyful', 'celebratory');
       result.energyLevel = 'high';
       result.reasoning = 'Party energy detected - time to celebrate!';
     }
 
     // Minimalist themes
-    if (name.includes('minimal') || name.includes('simple') || name.includes('clean')) {
+    else if (name.includes('minimal') || name.includes('simple') || name.includes('clean') || name.includes('quiet')) {
       result.genres.push('ambient', 'minimal', 'lo-fi', 'indie');
-      result.searchTerms.push('minimal', 'simple', 'clean', 'ambient');
+      result.searchTerms.push('minimal', 'simple', 'clean', 'ambient', 'quiet');
       result.moods.push('calm', 'peaceful', 'serene');
       result.energyLevel = 'low';
       result.reasoning = 'Minimalist vibes detected - clean and peaceful energy';
     }
 
     // Bohemian/Hippie themes
-    if (name.includes('bohemian') || name.includes('hippie') || name.includes('free spirit')) {
+    else if (name.includes('bohemian') || name.includes('hippie') || name.includes('free spirit') || name.includes('natural')) {
       result.genres.push('folk', 'psychedelic', 'indie', 'acoustic');
-      result.searchTerms.push('bohemian', 'hippie', 'free spirit', 'folk');
+      result.searchTerms.push('bohemian', 'hippie', 'free spirit', 'folk', 'natural');
       result.moods.push('free-spirited', 'peaceful', 'natural');
       result.energyLevel = 'medium';
       result.reasoning = 'Bohemian vibes detected - free-spirited and natural energy';
     }
 
-    // If no specific theme detected, analyze keywords
-    if (result.genres.length === 0) {
-      const keywords = name.split(/[\s\-_]+/);
-      for (const keyword of keywords) {
-        if (keyword.length > 2) { // Only consider meaningful keywords
-          result.searchTerms.push(keyword);
-        }
-      }
+    // Coffee/Cafe themes
+    else if (name.includes('coffee') || name.includes('cafe') || name.includes('morning') || name.includes('breakfast')) {
+      result.genres.push('coffee shop', 'acoustic', 'indie pop', 'folk');
+      result.searchTerms.push('coffee', 'cafe', 'morning', 'breakfast', 'acoustic');
+      result.moods.push('morning', 'contemplative', 'cozy');
+      result.energyLevel = 'low';
+      result.reasoning = 'Coffee shop vibes detected - perfect for those morning feels!';
+    }
+
+    // Night/Evening themes
+    else if (name.includes('night') || name.includes('evening') || name.includes('late') || name.includes('moon')) {
+      result.genres.push('ambient', 'lo-fi', 'chill', 'indie');
+      result.searchTerms.push('night', 'evening', 'late', 'moon', 'chill');
+      result.moods.push('calm', 'peaceful', 'dreamy');
+      result.energyLevel = 'low';
+      result.reasoning = 'Night vibes detected - perfect for those late-night feels';
+    }
+
+    // Workout/Fitness themes
+    else if (name.includes('workout') || name.includes('fitness') || name.includes('gym') || name.includes('exercise')) {
+      result.genres.push('workout', 'pop', 'hip hop', 'electronic');
+      result.searchTerms.push('workout', 'fitness', 'gym', 'exercise', 'energetic');
+      result.moods.push('energetic', 'motivated', 'pumped');
+      result.energyLevel = 'high';
+      result.reasoning = 'Workout energy detected - time to get pumped!';
+    }
+
+    // If no specific theme detected, still use the keywords
+    else {
+      result.searchTerms.push(...keywords);
       result.reasoning = `Reading the vibes from: ${keywords.join(', ')}`;
     }
+
+    // Always add board name keywords to search terms (they get priority)
+    result.searchTerms = [...result.primaryKeywords, ...result.searchTerms];
 
     return result;
   }

@@ -1672,11 +1672,12 @@ function analyzePinterestBoard(url) {
 
 // ===== SPOTIFY FUNCTIONS =====
 
-async function searchTracksForMood(accessToken, genres, limit = 20) {
+async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms = []) {
   const tracks = [];
   
   try {
     console.log('🎵 Starting track search with genres:', genres);
+    console.log('🎯 Board title keywords (search terms):', searchTerms);
     
     // Ensure genres is an array and has valid values
     if (!Array.isArray(genres) || genres.length === 0) {
@@ -1695,13 +1696,74 @@ async function searchTracksForMood(accessToken, genres, limit = 20) {
       validGenres.push('pop', 'indie');
     }
     
+    // Clean and validate search terms (board title keywords)
+    const validSearchTerms = searchTerms
+      .filter(term => term && typeof term === 'string' && term.trim().length > 0)
+      .map(term => term.trim().toLowerCase())
+      .slice(0, 3); // Limit to 3 primary keywords
+    
     console.log('🎵 Using valid genres:', validGenres);
+    console.log('🎯 Using board title keywords:', validSearchTerms);
     
     // Add mood-based keywords to make searches more diverse
     const moodKeywords = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic', 'happy', 'calm'];
     const randomMood = moodKeywords[Math.floor(Math.random() * moodKeywords.length)];
     
-    // Try multiple search strategies for each genre
+    // 🎯 PRIORITY 1: Search with board title keywords first
+    if (validSearchTerms.length > 0) {
+      for (const keyword of validSearchTerms) {
+        if (tracks.length >= limit) break;
+        
+        try {
+          console.log(`🎯 Searching with board title keyword: "${keyword}"`);
+          
+          const keywordStrategies = [
+            // Strategy 1: Direct keyword search
+            keyword,
+            // Strategy 2: Keyword + mood
+            `${keyword} ${randomMood}`,
+            // Strategy 3: Keyword with genre context
+            `${keyword} ${validGenres[0] || 'music'}`,
+            // Strategy 4: Keyword with year range
+            `${keyword} year:${Math.floor(Math.random() * 20) + 1990}-${Math.floor(Math.random() * 10) + 2015}`,
+            // Strategy 5: Keyword with popularity filter
+            `${keyword} popularity:10-80`
+          ];
+          
+          for (const strategy of keywordStrategies) {
+            if (tracks.length >= limit) break;
+            
+            try {
+              console.log(`🎯 Trying keyword strategy: "${strategy}"`);
+              
+              const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                params: {
+                  q: strategy,
+                  type: 'track',
+                  limit: Math.min(8, limit - tracks.length),
+                  market: 'US',
+                  offset: Math.floor(Math.random() * 20)
+                }
+              });
+              
+              if (searchResponse.data.tracks && searchResponse.data.tracks.items && searchResponse.data.tracks.items.length > 0) {
+                console.log(`✅ Found ${searchResponse.data.tracks.items.length} tracks for keyword strategy: "${strategy}"`);
+                tracks.push(...searchResponse.data.tracks.items);
+              } else {
+                console.log(`❌ No tracks found for keyword strategy: "${strategy}"`);
+              }
+            } catch (strategyError) {
+              console.error(`❌ Keyword search strategy failed: "${strategy}"`, strategyError.message);
+            }
+          }
+        } catch (keywordError) {
+          console.error(`❌ Search failed for keyword ${keyword}:`, keywordError.message);
+        }
+      }
+    }
+    
+    // 🎵 PRIORITY 2: Search with genres (if we still need more tracks)
     for (const genre of validGenres) {
       if (tracks.length >= limit) break;
       
@@ -2360,9 +2422,18 @@ app.post('/api/create-playlist', async (req, res) => {
       hasOldGenres: !!(analysis.genres)
     });
     
-    // Search for tracks
+    // Extract search terms from analysis (board title keywords)
+    let searchTerms = [];
+    if (analysis.music && analysis.music.search_terms && analysis.music.search_terms.length > 0) {
+      searchTerms = analysis.music.search_terms;
+    } else if (analysis.searchTerms && analysis.searchTerms.length > 0) {
+      searchTerms = analysis.searchTerms;
+    }
+    
+    // Search for tracks with board title keywords prioritized
     console.log('Searching for tracks...');
-    const tracks = await searchTracksForMood(accessToken, genres, 15);
+    console.log('Using search terms (board keywords):', searchTerms);
+    const tracks = await searchTracksForMood(accessToken, genres, 15, searchTerms);
     console.log('Found tracks:', tracks.length);
     
     if (tracks.length === 0) {
