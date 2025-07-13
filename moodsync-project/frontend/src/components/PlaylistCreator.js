@@ -1,8 +1,8 @@
-// src/components/PlaylistCreator.js - Fixed version with board name always used
+// src/components/PlaylistCreator.js - Fixed version with proper OAuth flow
 import React, { useState } from 'react';
 import SpotifyPlayer from './SpotifyPlayer';
 
-const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
+const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser, onSpotifyAuth }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [createdPlaylist, setCreatedPlaylist] = useState(null);
 
@@ -84,6 +84,17 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
     }
   };
 
+  // Handle Spotify OAuth
+  const handleSpotifyAuth = async () => {
+    try {
+      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/spotify/auth-url`);
+      const { authUrl } = await response.json();
+      window.location.href = authUrl;
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  };
+
   // Helper function to safely get genres from either analysis format
   const getGenres = (analysis) => {
     if (!analysis) return [];
@@ -146,10 +157,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
                 tracks={createdPlaylist.tracks || []}
                 isConnected={false}
                 title={getBoardName(analysis)}
-                onConnectClick={() => {
-                  // This would typically trigger Spotify OAuth
-                  alert('Please connect your Spotify account to save playlists and get personalized recommendations!');
-                }}
+                onConnectClick={null} // Remove redundant connect button from player
               />
             </div>
             
@@ -158,10 +166,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
               <p className="pc-pro-tip">💡 Pro tip: Connect your Spotify account to save this playlist and get personalized recommendations!</p>
               <button
                 className="pc-connect-btn"
-                onClick={() => {
-                  // This would typically trigger Spotify OAuth
-                  alert('Please connect your Spotify account to save playlists and get personalized recommendations!');
-                }}
+                onClick={handleSpotifyAuth}
               >
                 Connect Spotify Account
               </button>
@@ -211,10 +216,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
               tracks={createdPlaylist.tracks || []}
               isConnected={true}
               title={boardName}
-              onConnectClick={() => {
-                // Already connected, but could trigger reconnection if needed
-                console.log('Spotify already connected');
-              }}
+              onConnectClick={null} // Remove redundant connect button from player
             />
           </div>
         </div>

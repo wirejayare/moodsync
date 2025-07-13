@@ -460,6 +460,7 @@ const Home = ({
               spotifyToken={spotifyToken}
               analysis={analysis}
               spotifyUser={spotifyUser}
+              onSpotifyAuth={handleSpotifyAuth}
             />
           </>
         )}
