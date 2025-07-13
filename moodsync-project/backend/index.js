@@ -1507,27 +1507,60 @@ async function getBoardById(boardId, accessToken) {
 
 // ===== ANALYSIS FUNCTIONS =====
 
-function extractBoardInfo(url) {
-  const urlParts = url.split('/').filter(part => part && part.length > 0);
+async function extractBoardInfo(url) {
+  // Check if this is a shortlink and expand it
+  let processedUrl = url;
+  if (isPinterestShortlink(url)) {
+    console.log('🔗 Detected Pinterest shortlink, expanding...');
+    processedUrl = await expandPinterestShortlink(url);
+    console.log('🔗 Expanded URL:', processedUrl);
+  }
+  
+  const urlParts = processedUrl.split('/').filter(part => part && part.length > 0);
   let username = 'unknown';
   let boardName = 'unknown-board';
   
-  if (url.includes('pinterest.com') && urlParts.length >= 4) {
+  console.log('🔍 URL parts:', urlParts);
+  console.log('🔍 Processing URL:', processedUrl);
+  
+  if (processedUrl.includes('pinterest.com')) {
     const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
+    console.log('🔍 Pinterest index:', pinterestIndex);
+    
     if (pinterestIndex >= 0) {
-      username = urlParts[pinterestIndex + 1] || 'unknown';
-      boardName = urlParts[pinterestIndex + 2] || 'unknown-board';
+      // Handle different URL patterns
+      if (urlParts[pinterestIndex + 1] === 'pin') {
+        // This is a pin URL, not a board URL
+        console.log('⚠️ Detected pin URL, not board URL');
+        throw new Error('This appears to be a Pinterest pin URL, not a board URL. Please use a board URL instead.');
+      } else if (urlParts[pinterestIndex + 1] && urlParts[pinterestIndex + 2]) {
+        username = urlParts[pinterestIndex + 1];
+        boardName = urlParts[pinterestIndex + 2];
+        console.log('✅ Extracted board info:', { username, boardName });
+      } else {
+        console.log('⚠️ Could not extract board info from URL parts');
+        throw new Error('Could not extract board information from this Pinterest URL. Please ensure it\'s a board URL, not a pin URL.');
+      }
+    } else {
+      console.log('⚠️ No pinterest.com found in URL parts');
+      throw new Error('Invalid Pinterest URL format. Please use a board URL.');
     }
+  } else {
+    console.log('⚠️ URL does not contain pinterest.com');
+    throw new Error('Please provide a valid Pinterest board URL.');
   }
   
   const cleanBoardName = String(boardName)
     .replace(/[-_+%20]/g, ' ')
     .trim();
   
+  console.log('🎯 Final board info:', { username, boardName: cleanBoardName });
+  
   return {
     username,
     boardName: cleanBoardName,
     originalUrl: url,
+    processedUrl: processedUrl,
     urlParts: urlParts.filter(part => !part.includes('pinterest') && !part.includes('http'))
   };
 }
@@ -1596,10 +1629,10 @@ function detectThemes(analysisText) {
   };
 }
 
-function generateEnhancedAnalysis(url) {
+async function generateEnhancedAnalysis(url) {
   console.log('🔍 Starting enhanced analysis for:', url);
   
-  const boardInfo = extractBoardInfo(url);
+  const boardInfo = await extractBoardInfo(url);
   const analysisText = [
     boardInfo.boardName,
     boardInfo.username,
@@ -1654,8 +1687,8 @@ function generateEnhancedAnalysis(url) {
 }
 
 // Basic analysis for backward compatibility
-function analyzePinterestBoard(url) {
-  const boardInfo = extractBoardInfo(url);
+async function analyzePinterestBoard(url) {
+  const boardInfo = await extractBoardInfo(url);
   const analysisText = boardInfo.boardName.toLowerCase();
   const themeAnalysis = detectThemes(analysisText);
   
@@ -2192,6 +2225,46 @@ function shuffleArray(array) {
   return shuffled;
 }
 
+// ===== PINTEREST SHORTLINK EXPANSION =====
+
+// Detect if URL is a Pinterest shortlink
+function isPinterestShortlink(url) {
+  return url.includes('pin.it/') || url.includes('pinterest.com/pin/');
+}
+
+// Expand Pinterest shortlink to full URL
+async function expandPinterestShortlink(shortlink) {
+  try {
+    console.log('🔗 Expanding Pinterest shortlink:', shortlink);
+    
+    // Make a HEAD request to get the redirect location
+    const response = await axios.head(shortlink, {
+      maxRedirects: 5,
+      timeout: 10000,
+      validateStatus: function (status) {
+        return status >= 200 && status < 400; // Accept redirects
+      }
+    });
+    
+    const expandedUrl = response.request.res.responseUrl || shortlink;
+    console.log('✅ Expanded shortlink to:', expandedUrl);
+    
+    // Check if the expanded URL is a board URL or pin URL
+    if (expandedUrl.includes('/pin/')) {
+      console.log('⚠️ Shortlink expanded to a pin URL, not a board URL');
+      throw new Error('This shortlink points to a Pinterest pin, not a board. Please use a board shortlink instead.');
+    }
+    
+    return expandedUrl;
+  } catch (error) {
+    console.error('❌ Failed to expand shortlink:', error.message);
+    if (error.message.includes('pin URL')) {
+      throw error; // Re-throw pin URL errors
+    }
+    return shortlink; // Return original if expansion fails
+  }
+}
+
 // ===== PINTEREST BOARD ENDPOINTS =====
 
 app.get('/api/pinterest/boards', async (req, res) => {
@@ -2465,10 +2538,10 @@ app.post('/api/analyze-pinterest', async (req, res) => {
   try {
     const { pinterestUrl } = req.body;
     
-    if (!pinterestUrl || !pinterestUrl.includes('pinterest.com')) {
+    if (!pinterestUrl || (!pinterestUrl.includes('pinterest.com') && !pinterestUrl.includes('pin.it/'))) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide a valid Pinterest board URL'
+        message: 'Please provide a valid Pinterest board URL or shortlink'
       });
     }
 
@@ -2477,7 +2550,7 @@ app.post('/api/analyze-pinterest', async (req, res) => {
     // Simulate processing time
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const analysis = analyzePinterestBoard(pinterestUrl);
+    const analysis = await analyzePinterestBoard(pinterestUrl);
 
     res.json({
       success: true,
@@ -2498,10 +2571,10 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
   try {
     const { url } = req.body;
     
-    if (!url || !url.includes('pinterest.com')) {
+    if (!url || (!url.includes('pinterest.com') && !url.includes('pin.it/'))) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide a valid Pinterest board URL'
+        message: 'Please provide a valid Pinterest board URL or shortlink'
       });
     }
 
