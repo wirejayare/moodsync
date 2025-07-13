@@ -2564,8 +2564,17 @@ app.post('/api/create-playlist', async (req, res) => {
     const user = userResponse.data;
     console.log('Spotify user:', user.id);
     
-    // Get genres from analysis - prioritize Claude's AI recommendations
+    // Get genres from analysis - handle multiple formats
     let genres = ['pop', 'indie']; // Default fallback
+    
+    console.log('🔍 Analysis structure for genres:', {
+      hasMusic: !!analysis.music,
+      hasPrimaryGenres: !!(analysis.music && analysis.music.primary_genres),
+      hasGenres: !!(analysis.genres),
+      hasSearchTerms: !!(analysis.music && analysis.music.search_terms),
+      musicKeys: analysis.music ? Object.keys(analysis.music) : [],
+      analysisKeys: Object.keys(analysis)
+    });
     
     if (analysis.music && analysis.music.primary_genres && analysis.music.primary_genres.length > 0) {
       // Use Claude's AI recommendations
@@ -2579,6 +2588,10 @@ app.post('/api/create-playlist', async (req, res) => {
       // Use search terms as genres if available
       genres = analysis.music.search_terms.slice(0, 3);
       console.log('🔍 Using search terms as genres:', genres);
+    } else if (analysis.music && analysis.music.genres && analysis.music.genres.length > 0) {
+      // Handle direct genres in music object
+      genres = analysis.music.genres;
+      console.log('🎵 Using direct music genres:', genres);
     }
     
     console.log('🎵 Final genres for track search:', genres);
@@ -2591,10 +2604,23 @@ app.post('/api/create-playlist', async (req, res) => {
     
     // Extract search terms from analysis (board title keywords)
     let searchTerms = [];
+    console.log('🔍 Analysis structure for search terms:', {
+      hasMusicSearchTerms: !!(analysis.music && analysis.music.search_terms),
+      hasSearchTerms: !!(analysis.searchTerms),
+      musicSearchTerms: analysis.music?.search_terms,
+      directSearchTerms: analysis.searchTerms
+    });
+    
     if (analysis.music && analysis.music.search_terms && analysis.music.search_terms.length > 0) {
       searchTerms = analysis.music.search_terms;
+      console.log('🎯 Using music search terms:', searchTerms);
     } else if (analysis.searchTerms && analysis.searchTerms.length > 0) {
       searchTerms = analysis.searchTerms;
+      console.log('🔄 Using direct search terms:', searchTerms);
+    } else if (analysis.music && analysis.music.searchTerms && analysis.music.searchTerms.length > 0) {
+      // Handle alternative field name
+      searchTerms = analysis.music.searchTerms;
+      console.log('🔍 Using alternative search terms:', searchTerms);
     }
     
     // Search for tracks with board title keywords prioritized
@@ -3347,6 +3373,15 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
     let energyLevel = 'medium'; // Default fallback
     let searchTerms = [];
     
+    console.log('🔍 Preview analysis structure:', {
+      hasMusic: !!analysis.music,
+      hasPrimaryGenres: !!(analysis.music && analysis.music.primary_genres),
+      hasGenres: !!(analysis.genres),
+      hasSearchTerms: !!(analysis.music && analysis.music.search_terms),
+      musicKeys: analysis.music ? Object.keys(analysis.music) : [],
+      analysisKeys: Object.keys(analysis)
+    });
+    
     if (analysis.music && analysis.music.primary_genres && analysis.music.primary_genres.length > 0) {
       // Use Claude's AI recommendations
       genres = analysis.music.primary_genres;
@@ -3359,6 +3394,14 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
       // Fallback to old analysis format
       genres = analysis.genres;
       console.log('🔄 Using fallback genres:', genres);
+    } else if (analysis.music && analysis.music.genres && analysis.music.genres.length > 0) {
+      // Handle direct genres in music object
+      genres = analysis.music.genres;
+      energyLevel = analysis.music.energy_level || 'medium';
+      searchTerms = analysis.music.search_terms || analysis.music.searchTerms || [];
+      console.log('🎵 Using direct music genres:', genres);
+      console.log('🎵 Using direct music energy level:', energyLevel);
+      console.log('🎵 Using direct music search terms:', searchTerms);
     } else {
       console.log('⚠️ No genres found in analysis, using default fallback');
     }

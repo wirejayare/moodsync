@@ -35,6 +35,18 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated
       if (match) return match[1];
     }
     
+    // Try to extract from spotify_url
+    if (track.spotify_url) {
+      const match = track.spotify_url.match(/track\/([a-zA-Z0-9]+)/);
+      if (match) return match[1];
+    }
+    
+    // For preview tracks, try to construct a valid ID
+    if (track.isPreview && track.name && track.artist) {
+      console.log('🎵 Preview track detected, will show track info without embed');
+      return null;
+    }
+    
     console.warn('⚠️ Could not extract Spotify track ID from:', track);
     return null;
   };
