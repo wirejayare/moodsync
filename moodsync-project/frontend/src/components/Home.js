@@ -20,6 +20,7 @@ const Home = ({
   const [isLoadingBoards, setIsLoadingBoards] = useState(false);
   const [pinterestError, setPinterestError] = useState(null);
   const [boardUrl, setBoardUrl] = useState(''); // New state for board URL
+  const [mode, setMode] = useState('picker'); // 'picker' or 'url'
 
   useEffect(() => {
     // Test backend connection
@@ -58,6 +59,11 @@ const Home = ({
 
   // Handler for board selection
   const handleBoardSelect = (boardId) => {
+    setSelectedBoard(boardId);
+  };
+
+  // Handler for board selection (alias for consistency)
+  const onBoardSelect = (boardId) => {
     setSelectedBoard(boardId);
   };
 
@@ -145,121 +151,7 @@ const Home = ({
         <section className="home-analyzer-section">
           <h3 className="home-step-title">📌 Pinterest Board Analysis</h3>
           
-          {!pinterestUser ? (
-            // Not connected - Show connect button with clear messaging
-            <div style={{
-              background: 'rgba(255,255,255,0.1)',
-              padding: '2rem',
-              borderRadius: '15px',
-              marginBottom: '2rem',
-              color: 'white',
-              textAlign: 'center'
-            }}>
-              <h4 style={{ 
-                marginBottom: '1rem',
-                color: 'white',
-                fontSize: '1.2rem'
-              }}>
-                🔗 Connect to Pinterest
-              </h4>
-              <p style={{ 
-                marginBottom: '1.5rem',
-                opacity: 0.9,
-                lineHeight: '1.5'
-              }}>
-                Connect to Pinterest to choose from your boards and get enhanced analysis with AI-powered music recommendations.
-              </p>
-              <PinterestConnector 
-                onPinterestAuth={onPinterestAuth}
-                pinterestUser={pinterestUser}
-              />
-              <div style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                background: 'rgba(255,255,255,0.05)',
-                borderRadius: '8px',
-                fontSize: '0.9rem',
-                opacity: 0.8
-              }}>
-                💡 <strong>Or analyze any board URL</strong> below without connecting
-              </div>
-            </div>
-          ) : (
-            // Connected - Show board picker and analysis
-            <div style={{
-              background: 'rgba(255,255,255,0.1)',
-              padding: '2rem',
-              borderRadius: '15px',
-              marginBottom: '2rem',
-              color: 'white'
-            }}>
-              <h4 style={{ 
-                marginBottom: '1rem',
-                color: 'white',
-                textAlign: 'center'
-              }}>
-                🎯 Choose Your Board
-              </h4>
-              <p style={{ 
-                marginBottom: '1.5rem',
-                textAlign: 'center',
-                opacity: 0.9
-              }}>
-                Select from your Pinterest boards for enhanced AI analysis
-              </p>
-              
-              {isLoadingBoards ? ( // Changed from 'isLoading' to 'isLoadingBoards'
-                <div style={{ textAlign: 'center', padding: '1rem' }}>Loading your boards...</div>
-              ) : pinterestError ? (
-                <div style={{ color: '#ff6b6b', textAlign: 'center', padding: '1rem' }}>Error: {pinterestError}</div>
-              ) : (
-                <div>
-                  <select 
-                    value={selectedBoard || ''} 
-                    onChange={(e) => handleBoardSelect(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: '2px solid rgba(255,255,255,0.3)',
-                      fontSize: '14px',
-                      background: 'rgba(255,255,255,0.9)',
-                      color: '#333',
-                      marginBottom: '16px'
-                    }}
-                  >
-                    <option value="">Select a board...</option>
-                    {pinterestBoards.map(board => (
-                      <option key={board.id} value={board.id}>
-                        {board.name} ({board.pin_count || board.pinCount} pins)
-                      </option>
-                    ))}
-                  </select>
-                  
-                  <button 
-                    onClick={() => handleGeneratePlaylist(selectedBoard)}
-                    disabled={!selectedBoard}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: selectedBoard ? '#E60023' : 'rgba(255,255,255,0.3)',
-                      color: 'white',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      cursor: selectedBoard ? 'pointer' : 'not-allowed',
-                      opacity: selectedBoard ? 1 : 0.6
-                    }}
-                  >
-                    🎵 Generate Playlist
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* URL Analysis - Always available */}
+          {/* Toggle between Your Boards and Board URL */}
           <div style={{
             background: 'rgba(255,255,255,0.1)',
             padding: '2rem',
@@ -272,51 +164,159 @@ const Home = ({
               color: 'white',
               textAlign: 'center'
             }}>
-              🔗 Analyze Any Board URL
+              📌 Pinterest Board Analysis
             </h4>
-            <p style={{ 
-              marginBottom: '1rem',
-              textAlign: 'center',
-              opacity: 0.9,
-              fontSize: '0.9rem'
+            
+            {/* Mode Selection */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '8px', 
+              marginBottom: '16px',
+              background: 'rgba(255,255,255,0.1)',
+              padding: '8px',
+              borderRadius: '8px'
             }}>
-              Enter any Pinterest board URL to analyze without connecting your account
-            </p>
+              <button
+                onClick={() => setMode('picker')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: mode === 'picker' ? '#E60023' : 'transparent',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                📋 Your Boards
+              </button>
+              <button
+                onClick={() => setMode('url')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: mode === 'url' ? '#667eea' : 'transparent',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                🔗 Board URL
+              </button>
+            </div>
             
-            <input
-              type="url"
-              placeholder="https://www.pinterest.com/username/board-name/"
-              onChange={e => setBoardUrl(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                borderRadius: '8px', 
-                border: '2px solid rgba(255,255,255,0.3)',
-                fontSize: '14px',
-                background: 'rgba(255,255,255,0.9)',
-                color: '#333',
-                marginBottom: '16px'
-              }}
-            />
-            
-            <button 
-              onClick={() => handleGeneratePlaylist(boardUrl)}
-              disabled={!boardUrl || !boardUrl.includes('pinterest.com')}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                border: 'none',
-                background: (boardUrl && boardUrl.includes('pinterest.com')) ? '#667eea' : 'rgba(255,255,255,0.3)',
-                color: 'white',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: (boardUrl && boardUrl.includes('pinterest.com')) ? 'pointer' : 'not-allowed',
-                opacity: (boardUrl && boardUrl.includes('pinterest.com')) ? 1 : 0.6
-              }}
-            >
-              🔍 Analyze Board URL
-            </button>
+            {mode === 'picker' ? (
+              <div>
+                {!pinterestUser ? (
+                  // Not connected - Show simple connect button
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ marginBottom: '1rem', opacity: 0.9 }}>
+                      Connect to Pinterest to choose from your boards
+                    </p>
+                    <PinterestConnector 
+                      onPinterestAuth={onPinterestAuth}
+                      pinterestUser={pinterestUser}
+                    />
+                  </div>
+                ) : (
+                  // Connected - Show board picker
+                  <div>
+                    {isLoadingBoards ? (
+                      <div style={{ textAlign: 'center', padding: '1rem' }}>Loading boards...</div>
+                    ) : pinterestError ? (
+                      <div style={{ color: '#ff6b6b', textAlign: 'center', padding: '1rem' }}>Error: {pinterestError}</div>
+                    ) : (
+                      <div>
+                        <select 
+                          value={selectedBoard || ''} 
+                          onChange={(e) => handleBoardSelect(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            fontSize: '14px',
+                            background: 'rgba(255,255,255,0.9)',
+                            color: '#333',
+                            marginBottom: '16px'
+                          }}
+                        >
+                          <option value="">Select a board...</option>
+                          {pinterestBoards.map(board => (
+                            <option key={board.id} value={board.id}>
+                              {board.name} ({board.pin_count || board.pinCount} pins)
+                            </option>
+                          ))}
+                        </select>
+                        
+                        <button 
+                          onClick={() => handleGeneratePlaylist(selectedBoard)}
+                          disabled={!selectedBoard}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: selectedBoard ? '#E60023' : 'rgba(255,255,255,0.3)',
+                            color: 'white',
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            cursor: selectedBoard ? 'pointer' : 'not-allowed',
+                            opacity: selectedBoard ? 1 : 0.6
+                          }}
+                        >
+                          🎵 Generate Playlist
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <div style={{ marginBottom: '8px', fontSize: '14px', color: 'white', opacity: 0.8 }}>
+                  💡 <strong>Quick Analysis:</strong> Enter any Pinterest board URL to analyze without connecting your account
+                </div>
+                <input
+                  type="url"
+                  placeholder="https://www.pinterest.com/username/board-name/"
+                  value={boardUrl}
+                  onChange={e => setBoardUrl(e.target.value)}
+                  style={{ 
+                    width: '100%', 
+                    padding: '12px', 
+                    borderRadius: '8px', 
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    fontSize: '14px',
+                    background: 'rgba(255,255,255,0.9)',
+                    color: '#333',
+                    marginBottom: '16px'
+                  }}
+                />
+                
+                <button 
+                  onClick={() => handleGeneratePlaylist(boardUrl)}
+                  disabled={!boardUrl || !boardUrl.includes('pinterest.com')}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: (boardUrl && boardUrl.includes('pinterest.com')) ? '#667eea' : 'rgba(255,255,255,0.3)',
+                    color: 'white',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: (boardUrl && boardUrl.includes('pinterest.com')) ? 'pointer' : 'not-allowed',
+                    opacity: (boardUrl && boardUrl.includes('pinterest.com')) ? 1 : 0.6
+                  }}
+                >
+                  🔍 Analyze Board URL
+                </button>
+              </div>
+            )}
           </div>
           
           {/* Analysis Results Display */}
