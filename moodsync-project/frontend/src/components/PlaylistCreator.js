@@ -142,16 +142,19 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
               <p><strong>Genres:</strong> {createdPlaylist.genres?.join(', ')}</p>
               <p><strong>Mood:</strong> {createdPlaylist.mood}</p>
               <p><strong>Energy:</strong> {createdPlaylist.energyLevel}</p>
-              <div className="pc-preview-tracks">
-                <h5>Recommended Tracks:</h5>
-                <ul>
-                  {createdPlaylist.tracks?.slice(0, 10).map((track, index) => (
-                    <li key={index}>
-                      <strong>{track.name}</strong> by {track.artist} ({track.genre})
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            </div>
+            
+            {/* Spotify Player for Preview */}
+            <div className="pc-player-section">
+              <SpotifyPlayer
+                tracks={createdPlaylist.tracks || []}
+                isPreview={true}
+                spotifyToken={null}
+                playlistName={createdPlaylist.name}
+                onTrackSelect={(track) => {
+                  console.log('Selected preview track:', track);
+                }}
+              />
             </div>
           </div>
         ) : (
@@ -259,11 +262,18 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
             <pre>{JSON.stringify(analysis, null, 2)}</pre>
           </div>
           
-          {/* Embedded Spotify Player */}
-          <SpotifyPlayer 
-            spotifyToken={spotifyToken}
-            playlistUrl={createdPlaylist.url}
-          />
+          {/* Spotify Player */}
+          <div className="pc-player-section">
+            <SpotifyPlayer
+              tracks={createdPlaylist.tracks || []}
+              isPreview={createdPlaylist.isPreview}
+              spotifyToken={spotifyToken}
+              playlistName={createdPlaylist.name}
+              onTrackSelect={(track) => {
+                console.log('Selected track:', track);
+              }}
+            />
+          </div>
         </div>
       )}
     </section>
