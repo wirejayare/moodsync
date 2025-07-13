@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import EnhancedAnalysisDisplay from './EnhancedAnalysisDisplay';
+import VisionAnalysisDisplay from './VisionAnalysisDisplay';
 import PinterestConnector from './PinterestConnector';
 import PinterestBoardSelector from './PinterestBoardSelector';
 
@@ -429,6 +430,11 @@ const EnhancedPinterestAnalyzer = ({
 
       {/* Enhanced Analysis Display */}
       <EnhancedAnalysisDisplay analysis={analysis} />
+      
+      {/* Vision Analysis Display for detailed breakdown */}
+      {analysis && (
+        <VisionAnalysisDisplay analysis={analysis} />
+      )}
 
       {/* Analysis Method Indicator */}
       {analysis && (
