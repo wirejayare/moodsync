@@ -141,12 +141,61 @@ const Home = ({
             </div>
           )}
         </section>
-        {/* Spotify Connection */}
+        {/* Pinterest Analyzer - Available to everyone */}
+        <section className="home-analyzer-section">
+          <h3 className="home-step-title">📌 Step 1: Analyze Pinterest Board</h3>
+          <p className="home-step-desc">
+            Start by analyzing any Pinterest board to see the AI's music recommendations
+          </p>
+          
+          {/* Show Pinterest Connector if not connected */}
+          {!pinterestUser && (
+            <PinterestConnector 
+              onPinterestAuth={onPinterestAuth}
+              pinterestUser={pinterestUser}
+            />
+          )}
+          
+          {/* Show Pinterest Panel - always show for URL analysis */}
+          <PinterestPanel
+            boards={pinterestBoards}
+            selectedBoard={selectedBoard}
+            onBoardSelect={handleBoardSelect}
+            onGeneratePlaylist={handleGeneratePlaylist}
+            isLoading={isLoadingBoards}
+            error={pinterestError}
+          />
+          
+          {/* Analysis Results Display */}
+          {analysis && (
+            <section className="apple-glass home-analysis-results" aria-label="Analysis Results">
+              <h3 className="home-step-title">📊 Analysis Results</h3>
+              <div className="analysis-display-container">
+                {/* Animated Analysis Display */}
+                <AnimatedAnalysisDisplay 
+                  isAnalyzing={false}
+                  analysis={analysis}
+                  onAnalysisComplete={() => {}}
+                />
+                
+                {/* Vision Analysis Display */}
+                <VisionAnalysisDisplay analysis={analysis} />
+              </div>
+            </section>
+          )}
+        </section>
+
+        {/* Spotify Connection - Only show if no analysis yet or after analysis */}
         {!spotifyUser ? (
           <section className="apple-glass home-spotify-connect" aria-label="Connect Spotify">
-            <h3 className="home-step-title">🎵 Step 1: Connect Spotify</h3>
+            <h3 className="home-step-title">
+              {analysis ? '🎵 Step 2: Connect Spotify to Create Playlist' : '🎵 Connect Spotify (Optional)'}
+            </h3>
             <p className="home-step-desc">
-              Connect your Spotify account to create playlists
+              {analysis 
+                ? 'Connect your Spotify account to create the playlist from your analysis'
+                : 'Connect your Spotify account to create playlists from your board analysis'
+              }
             </p>
             <button 
               className="btn btn-spotify home-spotify-btn"
@@ -181,51 +230,18 @@ const Home = ({
                 </div>
               )}
             </section>
-            {/* Pinterest Analyzer */}
-            <section className="home-analyzer-section">
-              <h3 className="home-step-title">📌 Step 2: Analyze Pinterest Board</h3>
-              {/* Show Pinterest Connector if not connected */}
-              {!pinterestUser && (
-                <PinterestConnector 
-                  onPinterestAuth={onPinterestAuth}
-                  pinterestUser={pinterestUser}
+            
+            {/* Playlist Creator - Only show if Spotify is connected */}
+            {analysis && (
+              <>
+                <h3 className="home-step-title">🎵 Step 3: Create Your Playlist</h3>
+                <PlaylistCreator 
+                  spotifyToken={spotifyToken}
+                  analysis={analysis}
+                  spotifyUser={spotifyUser}
                 />
-              )}
-              {/* Show Pinterest Panel - always show for URL analysis */}
-              <PinterestPanel
-                boards={pinterestBoards}
-                selectedBoard={selectedBoard}
-                onBoardSelect={handleBoardSelect}
-                onGeneratePlaylist={handleGeneratePlaylist}
-                isLoading={isLoadingBoards}
-                error={pinterestError}
-              />
-              {/* Analysis Results Display */}
-              {analysis && (
-                <section className="apple-glass home-analysis-results" aria-label="Analysis Results">
-                  <h3 className="home-step-title">📊 Analysis Results</h3>
-                  <div className="analysis-display-container">
-                    {/* Animated Analysis Display */}
-                    <AnimatedAnalysisDisplay 
-                      isAnalyzing={false}
-                      analysis={analysis}
-                      onAnalysisComplete={() => {}}
-                    />
-                    
-                    {/* Vision Analysis Display */}
-                    <VisionAnalysisDisplay analysis={analysis} />
-                  </div>
-                </section>
-              )}
-              
-              {/* Playlist Creator */}
-              <h3 className="home-step-title">🎵 Step 3: Create Your Playlist</h3>
-              <PlaylistCreator 
-                spotifyToken={spotifyToken}
-                analysis={analysis}
-                spotifyUser={spotifyUser}
-              />
-            </section>
+              </>
+            )}
           </>
         )}
         <p className="home-flow-desc">
