@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PlaylistCreator from './PlaylistCreator';
 import PinterestConnector from './PinterestConnector';
-import AnimatedAnalysisDisplay from './AnimatedAnalysisDisplay';
-import VisionAnalysisDisplay from './VisionAnalysisDisplay';
 
 const Home = ({ 
   spotifyUser, 
@@ -322,78 +320,46 @@ const Home = ({
           {/* Analysis Results Display */}
           {analysis && (
             <section className="apple-glass home-analysis-results" aria-label="Analysis Results">
-              <h3 className="home-step-title">📊 Analysis Results</h3>
-              <div className="analysis-display-container">
-                {/* Animated Analysis Display */}
-                <AnimatedAnalysisDisplay 
-                  isAnalyzing={false}
-                  analysis={analysis}
-                  onAnalysisComplete={() => {}}
-                />
-                
-                {/* Vision Analysis Display */}
-                <VisionAnalysisDisplay analysis={analysis} />
-              </div>
+              <h3 className="home-step-title">🤖 AI Analysis</h3>
               
-              {/* Music Recommendations Summary */}
-              <div className="apple-glass home-music-recommendations" aria-label="Music Recommendations" style={{
-                marginTop: '1rem',
-                padding: '1.5rem',
-                borderRadius: '12px',
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.2)'
-              }}>
-                <h4 className="home-step-title" style={{ marginBottom: '1rem', textAlign: 'center' }}>🎵 Music Recommendations</h4>
+              {/* AI Reasoning Display */}
+              {analysis.ai_reasoning && analysis.ai_reasoning.length > 0 && (
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '1rem'
+                  background: 'rgba(255,255,255,0.1)',
+                  padding: '1.5rem',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  marginBottom: '1rem'
                 }}>
-                  <div style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    textAlign: 'center'
+                  <h4 style={{ 
+                    marginBottom: '1rem', 
+                    textAlign: 'center',
+                    color: 'white',
+                    fontSize: '1.1rem'
                   }}>
-                    <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>🎭 Mood</h5>
-                    <p style={{ margin: '0.5rem 0', fontSize: '1.1rem', fontWeight: 'bold' }}>{analysis.mood?.primary || 'Balanced'}</p>
-                    {analysis.mood?.confidence && (
-                      <small style={{ opacity: 0.8 }}>Confidence: {Math.round(analysis.mood.confidence * 100)}%</small>
-                    )}
-                  </div>
+                    🧠 AI Reasoning
+                  </h4>
                   <div style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    textAlign: 'center'
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.8rem'
                   }}>
-                    <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>🎵 Genres</h5>
-                    <p style={{ margin: '0.5rem 0', fontSize: '1.1rem', fontWeight: 'bold' }}>{(analysis.music?.primary_genres || analysis.genres || ['pop', 'indie']).slice(0, 3).join(', ')}</p>
-                  </div>
-                  <div style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    textAlign: 'center'
-                  }}>
-                    <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>⚡ Energy</h5>
-                    <p style={{ margin: '0.5rem 0', fontSize: '1.1rem', fontWeight: 'bold' }}>{analysis.music?.energy_level || 'medium'}</p>
-                  </div>
-                  <div style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    textAlign: 'center'
-                  }}>
-                    <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>🎨 Colors</h5>
-                    <p style={{ margin: '0.5rem 0', fontSize: '1.1rem', fontWeight: 'bold' }}>{(analysis.visual?.color_palette || []).slice(0, 3).map(c => c.name || c.hex).join(', ')}</p>
+                    {analysis.ai_reasoning.map((reason, index) => (
+                      <div key={index} style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        padding: '1rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'white',
+                        fontSize: '0.95rem',
+                        lineHeight: '1.4'
+                      }}>
+                        {reason}
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
             </section>
           )}
         </section>
