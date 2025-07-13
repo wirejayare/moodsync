@@ -42,6 +42,32 @@
   background: #282828;
 }
 
+.no-embed-message {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  color: white;
+}
+
+.no-embed-message h4 {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.no-embed-message p {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.embed-note {
+  margin-top: 20px !important;
+  font-size: 14px !important;
+  opacity: 0.8;
+  font-style: italic;
+}
+
 .track-navigation {
   display: flex;
   align-items: center;

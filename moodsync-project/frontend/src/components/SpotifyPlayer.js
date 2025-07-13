@@ -8,6 +8,40 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick }) => {
   // Get the current track
   const currentTrack = tracks && tracks.length > 0 ? tracks[currentTrackIndex] : null;
 
+  // Helper function to extract Spotify track ID
+  const getSpotifyTrackId = (track) => {
+    if (!track) return null;
+    
+    // Debug: Log the track object to see its structure
+    console.log('🎵 Current track data:', track);
+    
+    // Try different possible ID fields
+    if (track.id) return track.id;
+    if (track.spotify_id) return track.spotify_id;
+    if (track.track_id) return track.track_id;
+    
+    // Try to extract from URI
+    if (track.uri) {
+      const uriParts = track.uri.split(':');
+      if (uriParts.length >= 3) {
+        return uriParts[2]; // spotify:track:ID
+      }
+    }
+    
+    // Try to extract from external_urls
+    if (track.external_urls && track.external_urls.spotify) {
+      const url = track.external_urls.spotify;
+      const match = url.match(/track\/([a-zA-Z0-9]+)/);
+      if (match) return match[1];
+    }
+    
+    console.warn('⚠️ Could not extract Spotify track ID from:', track);
+    return null;
+  };
+
+  // Get the Spotify track ID for the current track
+  const spotifyTrackId = getSpotifyTrackId(currentTrack);
+
   // Handle track navigation
   const nextTrack = () => {
     if (tracks && tracks.length > 0) {
@@ -48,16 +82,25 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick }) => {
 
       {/* Spotify Embed Player */}
       <div className="spotify-embed-container">
-        {currentTrack && currentTrack.uri && (
+        {spotifyTrackId ? (
           <iframe
-            src={`https://open.spotify.com/embed/track/${currentTrack.uri.split(':').pop()}`}
+            src={`https://open.spotify.com/embed/track/${spotifyTrackId}`}
             width="100%"
             height="352"
             frameBorder="0"
             allowTransparency="true"
             allow="encrypted-media"
-            title={`Spotify Player - ${currentTrack.name}`}
+            title={`Spotify Player - ${currentTrack?.name || 'Track'}`}
           />
+        ) : (
+          <div className="no-embed-message">
+            <h4>🎵 Track Preview</h4>
+            <p><strong>{currentTrack?.name || 'Unknown Track'}</strong></p>
+            <p>by <strong>{currentTrack?.artist || 'Unknown Artist'}</strong></p>
+            <p className="embed-note">
+              💡 Connect your Spotify account to hear this track and save the playlist!
+            </p>
+          </div>
         )}
       </div>
 
