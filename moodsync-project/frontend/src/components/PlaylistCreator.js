@@ -15,6 +15,14 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
     }
   }, [analysis]);
 
+  // Auto-load preview if available
+  React.useEffect(() => {
+    if (analysis && analysis.autoPreview && !createdPlaylist) {
+      console.log('🎵 Auto-loading preview from analysis data');
+      setCreatedPlaylist(analysis.autoPreview);
+    }
+  }, [analysis, createdPlaylist]);
+
   const handleCreatePlaylist = async () => {
     if (!playlistName.trim()) {
       alert('Please enter a playlist name');
