@@ -407,8 +407,6 @@ const Home = ({
           {/* Analysis Results Display */}
           {analysis && (
             <section className="apple-glass home-analysis-results" aria-label="Analysis Results">
-              <h3 className="home-step-title">🤖 AI Analysis</h3>
-              
               {/* AI Reasoning Display */}
               {analysis.music && analysis.music.ai_reasoning && analysis.music.ai_reasoning.length > 0 ? (
                 <div style={{
