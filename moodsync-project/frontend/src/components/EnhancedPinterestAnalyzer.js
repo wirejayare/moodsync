@@ -190,21 +190,57 @@ const EnhancedPinterestAnalyzer = ({
     setAnalysisMode('board');
   };
 
+  // Generate gradient background from analysis colors
+  const generateGradientBackground = (analysis) => {
+    if (!analysis?.visual?.color_palette || analysis.visual.color_palette.length === 0) {
+      return 'rgba(255,255,255,0.1)'; // Default background
+    }
+
+    const colors = analysis.visual.color_palette.slice(0, 4); // Use up to 4 colors
+    const colorStops = colors.map((color, index) => {
+      const percentage = (index / (colors.length - 1)) * 100;
+      return `${color.hex} ${percentage}%`;
+    }).join(', ');
+
+    return `linear-gradient(135deg, ${colorStops})`;
+  };
+
+  // Get the current background style
+  const backgroundStyle = analysis ? generateGradientBackground(analysis) : 'rgba(255,255,255,0.1)';
+
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.1)',
+      background: backgroundStyle,
       padding: '2rem',
       borderRadius: '15px',
       marginBottom: '2rem',
-      color: 'white'
+      color: 'white',
+      transition: 'background 1s ease-in-out',
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: analysis ? '0 8px 32px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.1)'
     }}>
-      <h3 style={{ 
-        marginBottom: '1rem',
-        color: 'white',
-        textAlign: 'center'
-      }}>
-        📌 Enhanced Pinterest Analysis
-      </h3>
+      {/* Subtle overlay for better text readability */}
+      {analysis && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.1)',
+          pointerEvents: 'none',
+          borderRadius: '15px'
+        }} />
+      )}
+              <div style={{ position: 'relative', zIndex: 1 }}>
+          <h3 style={{ 
+            marginBottom: '1rem',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            📌 Enhanced Pinterest Analysis
+          </h3>
       
       {/* Pinterest Connection Component */}
       <PinterestConnector 
@@ -554,6 +590,7 @@ const EnhancedPinterestAnalyzer = ({
           </div>
         </div>
       )}
+        </div>
     </div>
   );
 };
