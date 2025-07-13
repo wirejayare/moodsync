@@ -3265,6 +3265,31 @@ function generateRepresentativeTracks(genres, mood, energyLevel) {
     'Funk': ['Super Freak', 'Give Up the Funk', 'Brick House', 'Get Up Offa That Thing', 'Flash Light'],
     'Dance-Punk': ['Take Me Out', 'Maps', 'Last Nite', 'Reptilia', 'The Modern Age'],
     
+    // Chill/Lo-fi genres
+    'Downtempo': ['Teardrop', 'Glory Box', 'Protection', 'Unfinished Sympathy', 'Angel'],
+    'Trip Hop': ['Teardrop', 'Glory Box', 'Protection', 'Unfinished Sympathy', 'Angel'],
+    'Chillwave': ['Teardrop', 'Glory Box', 'Protection', 'Unfinished Sympathy', 'Angel'],
+    'Lo-Fi': ['Teardrop', 'Glory Box', 'Protection', 'Unfinished Sympathy', 'Angel'],
+    'Chill': ['Teardrop', 'Glory Box', 'Protection', 'Unfinished Sympathy', 'Angel'],
+    
+    // Electronic genres
+    'Electronic': ['Teardrop', 'Glory Box', 'Protection', 'Unfinished Sympathy', 'Angel'],
+    'Ambient': ['Claire de Lune', 'Weightless', 'Spiegel im Spiegel', 'Teardrop', 'Glory Box'],
+    'Synthwave': ['Teardrop', 'Glory Box', 'Protection', 'Unfinished Sympathy', 'Angel'],
+    
+    // Rock genres
+    'Rock': ['Wonderwall', 'Sweet Child O\' Mine', 'Stairway to Heaven', 'Bohemian Rhapsody', 'Hotel California'],
+    'Alternative': ['Float On', 'Such Great Heights', 'Skinny Love', 'Creep', 'Smells Like Teen Spirit'],
+    'Indie Rock': ['Float On', 'Such Great Heights', 'Skinny Love', 'Creep', 'Smells Like Teen Spirit'],
+    
+    // Pop genres
+    'Pop': ['Happy', 'Uptown Funk', 'Shake It Off', 'Blinding Lights', 'Dance Monkey'],
+    'Indie Pop': ['Float On', 'Such Great Heights', 'Skinny Love', 'Creep', 'Smells Like Teen Spirit'],
+    
+    // Jazz/Classical
+    'Jazz': ['Take Five', 'So What', 'What a Wonderful World', 'Fly Me to the Moon', 'The Girl from Ipanema'],
+    'Classical': ['Claire de Lune', 'Weightless', 'Spiegel im Spiegel', 'Moonlight Sonata', 'Für Elise'],
+    
     // Fallback genres
     'rockabilly': ['Johnny B. Goode', 'Blue Suede Shoes', 'Hound Dog'],
     'doo-wop': ['In the Still of the Night', 'Earth Angel', 'Why Do Fools Fall in Love'],
@@ -3283,6 +3308,31 @@ function generateRepresentativeTracks(genres, mood, energyLevel) {
     'Disco': ['Bee Gees', 'Chic', 'Gloria Gaynor', 'ABBA', 'Earth, Wind & Fire'],
     'Funk': ['Rick James', 'Parliament', 'Commodores', 'James Brown', 'Parliament-Funkadelic'],
     'Dance-Punk': ['Franz Ferdinand', 'Yeah Yeah Yeahs', 'The Strokes', 'The Strokes', 'The Strokes'],
+    
+    // Chill/Lo-fi artists
+    'Downtempo': ['Massive Attack', 'Portishead', 'Tricky', 'Morcheeba', 'Zero 7'],
+    'Trip Hop': ['Massive Attack', 'Portishead', 'Tricky', 'Morcheeba', 'Zero 7'],
+    'Chillwave': ['Massive Attack', 'Portishead', 'Tricky', 'Morcheeba', 'Zero 7'],
+    'Lo-Fi': ['Massive Attack', 'Portishead', 'Tricky', 'Morcheeba', 'Zero 7'],
+    'Chill': ['Massive Attack', 'Portishead', 'Tricky', 'Morcheeba', 'Zero 7'],
+    
+    // Electronic artists
+    'Electronic': ['Massive Attack', 'Portishead', 'Tricky', 'Morcheeba', 'Zero 7'],
+    'Ambient': ['Debussy', 'Marconi Union', 'Arvo Pärt', 'Massive Attack', 'Portishead'],
+    'Synthwave': ['Massive Attack', 'Portishead', 'Tricky', 'Morcheeba', 'Zero 7'],
+    
+    // Rock artists
+    'Rock': ['Oasis', 'Guns N\' Roses', 'Led Zeppelin', 'Queen', 'Eagles'],
+    'Alternative': ['Modest Mouse', 'The Postal Service', 'Bon Iver', 'Radiohead', 'Nirvana'],
+    'Indie Rock': ['Modest Mouse', 'The Postal Service', 'Bon Iver', 'Radiohead', 'Nirvana'],
+    
+    // Pop artists
+    'Pop': ['Pharrell Williams', 'Mark Ronson', 'Taylor Swift', 'The Weeknd', 'Tones and I'],
+    'Indie Pop': ['Modest Mouse', 'The Postal Service', 'Bon Iver', 'Radiohead', 'Nirvana'],
+    
+    // Jazz/Classical artists
+    'Jazz': ['Dave Brubeck', 'Miles Davis', 'Louis Armstrong', 'Frank Sinatra', 'Stan Getz'],
+    'Classical': ['Debussy', 'Marconi Union', 'Arvo Pärt', 'Beethoven', 'Mozart'],
     
     // Fallback artists
     'rockabilly': ['Elvis Presley', 'Chuck Berry', 'Carl Perkins'],
