@@ -130,24 +130,14 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         <p className="pc-desc">AI-generated music recommendations based on your Pinterest board</p>
         
         {/* Show preview if available */}
-        {console.log('🎵 PlaylistCreator - Full createdPlaylist:', createdPlaylist)}
         {createdPlaylist ? (
           <div className="pc-created">
             <h4 className="pc-created-title">
               👀 AI-Generated Recommendations
             </h4>
-            <p><strong>Name:</strong> {createdPlaylist.name}</p>
-            <p><strong>Tracks:</strong> {createdPlaylist.trackCount} songs</p>
-            <div className="pc-preview-info">
-              <p><strong>Note:</strong> These are representative tracks based on your board analysis</p>
-              <p><strong>Genres:</strong> {createdPlaylist.genres?.join(', ')}</p>
-              <p><strong>Mood:</strong> {createdPlaylist.mood}</p>
-              <p><strong>Energy:</strong> {createdPlaylist.energyLevel}</p>
-            </div>
             
             {/* Spotify Player for Preview */}
             <div className="pc-player-section">
-              {console.log('🎵 PlaylistCreator - Tracks data:', createdPlaylist.tracks)}
               <SpotifyPlayer
                 tracks={createdPlaylist.tracks || []}
                 isConnected={false}
@@ -222,51 +212,14 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         <p><strong>Genres:</strong> {genres.slice(0, 3).join(', ')}</p>
         <p><strong>For:</strong> {spotifyUser?.display_name || 'You'}</p>
       </div>
-      {console.log('🎵 PlaylistCreator - Connected full createdPlaylist:', createdPlaylist)}
       {createdPlaylist && (
         <div className="pc-created">
           <h4 className="pc-created-title">
             {createdPlaylist.isPreview ? '👀 Playlist Preview Generated!' : '🎉 Playlist Created!'}
           </h4>
-          <p><strong>Name:</strong> {createdPlaylist.name}</p>
-          <p><strong>Tracks:</strong> {createdPlaylist.trackCount} songs</p>
-          {createdPlaylist.isPreview ? (
-            <div className="pc-preview-info">
-              <p><strong>Note:</strong> This is a preview with representative tracks</p>
-              <p><strong>Genres:</strong> {createdPlaylist.genres?.join(', ')}</p>
-              <p><strong>Mood:</strong> {createdPlaylist.mood}</p>
-              <p><strong>Energy:</strong> {createdPlaylist.energyLevel}</p>
-              <div className="pc-preview-tracks">
-                <h5>Representative Tracks:</h5>
-                <ul>
-                  {createdPlaylist.tracks?.slice(0, 10).map((track, index) => (
-                    <li key={index}>
-                      <strong>{track.name}</strong> by {track.artist} ({track.genre})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          ) : (
-            <a
-              href={createdPlaylist.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pc-open-spotify"
-            >
-              🎧 Open in Spotify
-            </a>
-          )}
-          
-          {/* Debug: Log analysis data */}
-          <div style={{marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', fontSize: '12px'}}>
-            <strong>Debug - Analysis Data:</strong>
-            <pre>{JSON.stringify(analysis, null, 2)}</pre>
-          </div>
           
           {/* Spotify Player */}
           <div className="pc-player-section">
-            {console.log('🎵 PlaylistCreator - Connected tracks data:', createdPlaylist.tracks)}
             <SpotifyPlayer
               tracks={createdPlaylist.tracks || []}
               isConnected={true}
