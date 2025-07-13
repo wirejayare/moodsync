@@ -9,6 +9,10 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
 
   // Auto-load preview when analysis changes
   React.useEffect(() => {
+    console.log('🔍 PlaylistCreator - Analysis changed:', analysis);
+    console.log('🔍 PlaylistCreator - AutoPreview available:', analysis?.autoPreview);
+    console.log('🔍 PlaylistCreator - Current createdPlaylist:', createdPlaylist);
+    
     if (analysis && analysis.autoPreview && !createdPlaylist) {
       console.log('🎵 Auto-loading preview from analysis data');
       setCreatedPlaylist(analysis.autoPreview);
@@ -18,6 +22,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   // Reset created playlist when analysis changes
   React.useEffect(() => {
     if (analysis && !analysis.autoPreview) {
+      console.log('🔄 Resetting created playlist - no autoPreview');
       setCreatedPlaylist(null);
     }
   }, [analysis]);

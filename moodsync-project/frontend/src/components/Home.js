@@ -116,16 +116,23 @@ const Home = ({
   const handleAutoGeneratePreview = async (analysisData) => {
     try {
       console.log('🎵 Auto-generating playlist preview...');
+      console.log('📊 Analysis data for preview:', analysisData);
+      
+      const requestBody = {
+        accessToken: null, // No Spotify token for preview
+        analysis: analysisData,
+        playlistName: `${analysisData.mood?.primary || 'Mood'} Vibes`
+      };
+      
+      console.log('📤 Sending preview request:', requestBody);
       
       const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/create-playlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accessToken: null, // No Spotify token for preview
-          analysis: analysisData,
-          playlistName: `${analysisData.mood?.primary || 'Mood'} Vibes`
-        })
+        body: JSON.stringify(requestBody)
       });
+
+      console.log('📡 Preview response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -137,11 +144,14 @@ const Home = ({
       console.log('✅ Auto-generated preview response:', data);
       
       if (data.success && data.playlist) {
+        console.log('🎉 Preview generated successfully:', data.playlist);
         // Update analysis with preview data
         setAnalysis(prevAnalysis => ({
           ...prevAnalysis,
           autoPreview: data.playlist
         }));
+      } else {
+        console.error('❌ Preview generation failed - no playlist in response:', data);
       }
       
     } catch (error) {
