@@ -336,6 +336,8 @@ const Home = ({
                 {analysis.ai_reasoning && <div>AI Reasoning found: {analysis.ai_reasoning.length} items</div>}
                 {analysis.music && analysis.music.reasoning && <div>Music Reasoning found: {analysis.music.reasoning.length} items</div>}
                 {analysis.reasoning && <div>General Reasoning found: {analysis.reasoning.length} items</div>}
+                {analysis.music && <div>Music object keys: {Object.keys(analysis.music).join(', ')}</div>}
+                {analysis.music && analysis.music.reasoning && <div>Music reasoning: {JSON.stringify(analysis.music.reasoning)}</div>}
               </div>
               
               {/* AI Reasoning Display */}
