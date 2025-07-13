@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './SpotifyPlayer.css';
 
 const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated Playlist" }) => {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const iframeRef = useRef(null);
 
   // Get the current track
   const currentTrack = tracks && tracks.length > 0 ? tracks[currentTrackIndex] : null;
@@ -54,23 +55,66 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated
   // Get the Spotify track ID for the current track
   const spotifyTrackId = getSpotifyTrackId(currentTrack);
 
-  // Handle track navigation
+  // Handle track navigation with auto-play
   const nextTrack = () => {
     if (tracks && tracks.length > 0) {
-      setCurrentTrackIndex((prev) => (prev + 1) % tracks.length);
+      const newIndex = (currentTrackIndex + 1) % tracks.length;
+      setCurrentTrackIndex(newIndex);
+      // Auto-play the new track after a short delay
+      setTimeout(() => {
+        triggerAutoPlay();
+      }, 100);
     }
   };
 
   const prevTrack = () => {
     if (tracks && tracks.length > 0) {
-      setCurrentTrackIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
+      const newIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+      setCurrentTrackIndex(newIndex);
+      // Auto-play the new track after a short delay
+      setTimeout(() => {
+        triggerAutoPlay();
+      }, 100);
     }
+  };
+
+  // Function to trigger auto-play
+  const triggerAutoPlay = () => {
+    if (spotifyTrackId && iframeRef.current) {
+      console.log('🎵 Auto-playing track:', currentTrack?.name);
+      // Try to focus the iframe to trigger play
+      iframeRef.current.focus();
+      // Add a visual indicator that auto-play was triggered
+      setIsPlaying(true);
+    }
+  };
+
+  // Handle track selection with auto-play
+  const handleTrackSelect = (index) => {
+    console.log('🎵 Track selected:', tracks[index]?.name);
+    setCurrentTrackIndex(index);
+    // Auto-play the selected track after a short delay
+    setTimeout(() => {
+      triggerAutoPlay();
+    }, 100);
   };
 
   // Reset to first track when tracks change
   useEffect(() => {
     setCurrentTrackIndex(0);
+    setIsPlaying(false);
   }, [tracks]);
+
+  // Auto-play when track changes
+  useEffect(() => {
+    if (currentTrack && spotifyTrackId) {
+      // Small delay to ensure iframe is loaded
+      const timer = setTimeout(() => {
+        triggerAutoPlay();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [currentTrackIndex, spotifyTrackId]);
 
   if (!tracks || tracks.length === 0) {
     return (
@@ -96,6 +140,7 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated
       <div className="spotify-embed-container">
         {spotifyTrackId ? (
           <iframe
+            ref={iframeRef}
             src={`https://open.spotify.com/embed/track/${spotifyTrackId}`}
             width="100%"
             height="352"
@@ -103,6 +148,13 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated
             allowTransparency="true"
             allow="encrypted-media"
             title={`Spotify Player - ${currentTrack?.name || 'Track'}`}
+            onLoad={() => {
+              console.log('🎵 Iframe loaded for track:', currentTrack?.name);
+              // Try to trigger play after iframe loads
+              setTimeout(() => {
+                triggerAutoPlay();
+              }, 500);
+            }}
           />
         ) : (
           <div className="no-embed-message">
@@ -129,6 +181,9 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated
         <div className="track-info">
           <div className="track-name">{currentTrack?.name || 'Unknown Track'}</div>
           <div className="track-artist">{currentTrack?.artist || 'Unknown Artist'}</div>
+          {isPlaying && (
+            <div className="auto-play-indicator">🎵 Auto-playing...</div>
+          )}
         </div>
         
         <button 
@@ -148,13 +203,16 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated
             <div 
               key={index} 
               className={`track-item ${index === currentTrackIndex ? 'active' : ''}`}
-              onClick={() => setCurrentTrackIndex(index)}
+              onClick={() => handleTrackSelect(index)}
             >
               <div className="track-number">{index + 1}</div>
               <div className="track-details">
                 <div className="track-name">{track.name}</div>
                 <div className="track-artist">{track.artist}</div>
               </div>
+              {index === currentTrackIndex && isPlaying && (
+                <div className="playing-indicator">▶️</div>
+              )}
             </div>
           ))}
         </div>
