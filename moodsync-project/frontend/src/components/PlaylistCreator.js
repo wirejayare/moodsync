@@ -6,22 +6,21 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   const [playlistName, setPlaylistName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createdPlaylist, setCreatedPlaylist] = useState(null);
-  const [showAnimatedAnalysis, setShowAnimatedAnalysis] = useState(false);
 
-  // Auto-trigger animated analysis when analysis data is received
-  React.useEffect(() => {
-    if (analysis && !showAnimatedAnalysis) {
-      setShowAnimatedAnalysis(true);
-    }
-  }, [analysis]);
-
-  // Auto-load preview if available
+  // Auto-load preview when analysis changes
   React.useEffect(() => {
     if (analysis && analysis.autoPreview && !createdPlaylist) {
       console.log('🎵 Auto-loading preview from analysis data');
       setCreatedPlaylist(analysis.autoPreview);
     }
   }, [analysis, createdPlaylist]);
+
+  // Reset created playlist when analysis changes
+  React.useEffect(() => {
+    if (analysis && !analysis.autoPreview) {
+      setCreatedPlaylist(null);
+    }
+  }, [analysis]);
 
   const handleCreatePlaylist = async () => {
     if (!playlistName.trim()) {
@@ -122,8 +121,43 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   if (!spotifyToken) {
     return (
       <section className="apple-glass playlist-creator" aria-label="Create Playlist Preview">
-        <h3 className="pc-title">🎵 Create Playlist Preview</h3>
-        <p className="pc-desc">See what your playlist would look like without connecting Spotify</p>
+        <h3 className="pc-title">🎵 Song Recommendations</h3>
+        <p className="pc-desc">AI-generated music recommendations based on your Pinterest board</p>
+        
+        {/* Show preview if available */}
+        {createdPlaylist ? (
+          <div className="pc-created">
+            <h4 className="pc-created-title">
+              👀 AI-Generated Recommendations
+            </h4>
+            <p><strong>Name:</strong> {createdPlaylist.name}</p>
+            <p><strong>Tracks:</strong> {createdPlaylist.trackCount} songs</p>
+            <div className="pc-preview-info">
+              <p><strong>Note:</strong> These are representative tracks based on your board analysis</p>
+              <p><strong>Genres:</strong> {createdPlaylist.genres?.join(', ')}</p>
+              <p><strong>Mood:</strong> {createdPlaylist.mood}</p>
+              <p><strong>Energy:</strong> {createdPlaylist.energyLevel}</p>
+              <div className="pc-preview-tracks">
+                <h5>Recommended Tracks:</h5>
+                <ul>
+                  {createdPlaylist.tracks?.slice(0, 10).map((track, index) => (
+                    <li key={index}>
+                      <strong>{track.name}</strong> by {track.artist} ({track.genre})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="pc-summary">
+            <p><strong>Based on:</strong> {getMood(analysis)}</p>
+            <p><strong>Genres:</strong> {getGenres(analysis).slice(0, 3).join(', ')}</p>
+            <p><strong>Status:</strong> Generating recommendations...</p>
+          </div>
+        )}
+        
+        {/* Manual generate button as fallback */}
         <form className="pc-form" onSubmit={e => { e.preventDefault(); handleCreatePlaylist(); }}>
           <input
             type="text"
@@ -141,41 +175,9 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
             disabled={isCreating}
             aria-busy={isCreating}
           >
-            {isCreating ? '🎵 Creating Preview...' : '👀 Generate Preview'}
+            {isCreating ? '🎵 Generating...' : '🔄 Regenerate Recommendations'}
           </button>
         </form>
-        <div className="pc-summary">
-          <p><strong>Based on:</strong> {getMood(analysis)}</p>
-          <p><strong>Genres:</strong> {getGenres(analysis).slice(0, 3).join(', ')}</p>
-          <p><strong>Note:</strong> This will show representative tracks, not actual Spotify songs</p>
-        </div>
-        
-        {/* Show preview results when generated */}
-        {createdPlaylist && (
-          <div className="pc-created">
-            <h4 className="pc-created-title">
-              👀 Playlist Preview Generated!
-            </h4>
-            <p><strong>Name:</strong> {createdPlaylist.name}</p>
-            <p><strong>Tracks:</strong> {createdPlaylist.trackCount} songs</p>
-            <div className="pc-preview-info">
-              <p><strong>Note:</strong> This is a preview with representative tracks</p>
-              <p><strong>Genres:</strong> {createdPlaylist.genres?.join(', ')}</p>
-              <p><strong>Mood:</strong> {createdPlaylist.mood}</p>
-              <p><strong>Energy:</strong> {createdPlaylist.energyLevel}</p>
-              <div className="pc-preview-tracks">
-                <h5>Representative Tracks:</h5>
-                <ul>
-                  {createdPlaylist.tracks?.slice(0, 10).map((track, index) => (
-                    <li key={index}>
-                      <strong>{track.name}</strong> by {track.artist} ({track.genre})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
       </section>
     );
   }
