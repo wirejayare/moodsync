@@ -322,28 +322,8 @@ const Home = ({
             <section className="apple-glass home-analysis-results" aria-label="Analysis Results">
               <h3 className="home-step-title">🤖 AI Analysis</h3>
               
-              {/* Debug: Show analysis data structure */}
-              <div style={{
-                background: 'rgba(255,255,255,0.05)',
-                padding: '1rem',
-                borderRadius: '8px',
-                marginBottom: '1rem',
-                fontSize: '12px',
-                color: 'white',
-                opacity: 0.8
-              }}>
-                <strong>Debug - Analysis Keys:</strong> {Object.keys(analysis).join(', ')}
-                {analysis.ai_reasoning && <div>AI Reasoning found: {analysis.ai_reasoning.length} items</div>}
-                {analysis.music && analysis.music.reasoning && <div>Music Reasoning found: {analysis.music.reasoning.length} items</div>}
-                {analysis.reasoning && <div>General Reasoning found: {analysis.reasoning.length} items</div>}
-                {analysis.music && <div>Music object keys: {Object.keys(analysis.music).join(', ')}</div>}
-                {analysis.music && analysis.music.reasoning && <div>Music reasoning: {JSON.stringify(analysis.music.reasoning)}</div>}
-              </div>
-              
               {/* AI Reasoning Display */}
-              {(analysis.ai_reasoning && analysis.ai_reasoning.length > 0) || 
-               (analysis.music && analysis.music.reasoning && analysis.music.reasoning.length > 0) ||
-               (analysis.reasoning && analysis.reasoning.length > 0) ? (
+              {analysis.music && analysis.music.ai_reasoning && analysis.music.ai_reasoning.length > 0 ? (
                 <div style={{
                   background: 'rgba(255,255,255,0.1)',
                   padding: '1.5rem',
@@ -364,7 +344,7 @@ const Home = ({
                     flexDirection: 'column',
                     gap: '0.8rem'
                   }}>
-                    {(analysis.ai_reasoning || analysis.music?.reasoning || analysis.reasoning || []).map((reason, index) => (
+                    {analysis.music.ai_reasoning.map((reason, index) => (
                       <div key={index} style={{
                         background: 'rgba(255,255,255,0.05)',
                         padding: '1rem',
