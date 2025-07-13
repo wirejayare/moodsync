@@ -59,8 +59,15 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
                   localStorage.setItem('moodsync_created_playlist', JSON.stringify(createData.playlist));
                   localStorage.setItem('moodsync_analysis', pendingAnalysis);
                   
-                  // Navigate back to home with success message
-                  alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created in Spotify!`);
+                  // Launch Spotify player with the created playlist
+                  const playlistUrl = createData.playlist.external_urls?.spotify || createData.playlist.spotify_url;
+                  if (playlistUrl) {
+                    // Try to open in native app first, fallback to web
+                    window.location.href = playlistUrl;
+                  } else {
+                    // Fallback: navigate back to home with success message
+                    alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created in Spotify!`);
+                  }
                 } else {
                   alert('Spotify connected! However, there was an issue creating your playlist. You can try creating it again from the home page.');
                 }
