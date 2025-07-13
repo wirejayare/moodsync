@@ -24,7 +24,13 @@ const EnhancedPinterestAnalyzer = ({
       return;
     }
 
+    // Set loading state immediately
     setIsAnalyzing(true);
+    setAnalysisStage('Initializing analysis...');
+    
+    // Small delay to show immediate feedback
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     setAnalysisStage(pinterestToken ? 
       'Analyzing Pinterest board with API...' : 
       'Analyzing Pinterest board URL...'
@@ -341,13 +347,26 @@ const EnhancedPinterestAnalyzer = ({
                 flex: '1',
                 minWidth: '200px',
                 opacity: (isAnalyzing || !pinterestUrl) ? 0.6 : 1,
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
-              {isAnalyzing ? 
-                '🔍 Analyzing...' : 
-                (pinterestToken ? '🚀 Deep API Analysis' : '🔍 Basic Analysis')
-              }
+              {isAnalyzing ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTop: '2px solid white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  🔍 Analyzing...
+                </div>
+              ) : (
+                pinterestToken ? '🚀 Deep API Analysis' : '🔍 Basic Analysis'
+              )}
             </button>
             
             <button
@@ -408,13 +427,14 @@ const EnhancedPinterestAnalyzer = ({
             overflow: 'hidden'
           }}>
             <div style={{
-              width: '40%',
+              width: '60%',
               height: '100%',
               background: analysisMode === 'board' || pinterestToken ? 
                 'linear-gradient(90deg, rgba(230,0,35,0.5), rgba(230,0,35,0.9), rgba(230,0,35,0.5))' :
                 'linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.7), rgba(255,255,255,0.3))',
               borderRadius: '3px',
-              animation: 'pulse 2s infinite'
+              animation: 'pulse 1.5s infinite',
+              transition: 'width 0.3s ease'
             }} />
           </div>
           <style>
@@ -422,6 +442,10 @@ const EnhancedPinterestAnalyzer = ({
               @keyframes pulse {
                 0%, 100% { opacity: 0.5; }
                 50% { opacity: 1; }
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
               }
             `}
           </style>
