@@ -423,59 +423,38 @@ const Home = ({
           )}
         </section>
 
-        {/* Spotify Connection - Only show if no analysis yet or after analysis */}
-        {!spotifyUser ? (
-          <section className="apple-glass home-spotify-connect" aria-label="Connect Spotify">
-            <h3 className="home-step-title">
-              {analysis ? '🎵 Step 2: Connect Spotify to Create Playlist' : '🎵 Connect Spotify (Optional)'}
-            </h3>
-            <p className="home-step-desc">
-              {analysis 
-                ? 'Connect your Spotify account to create the playlist from your analysis'
-                : 'Connect your Spotify account to create playlists from your board analysis'
-              }
-            </p>
-            <button 
-              className="btn btn-spotify home-spotify-btn"
-              onClick={handleSpotifyAuth}
-            >
-              🎵 Connect Spotify
-            </button>
-          </section>
-        ) : (
-          <>
-            {/* Services Connected */}
-            <section className="apple-glass home-services-connected" aria-label="Services Connected">
-              <h3 className="home-status-title">🎉 Services Connected!</h3>
+        {/* Services Connected - Only show if user is connected */}
+        {spotifyUser && (
+          <section className="apple-glass home-services-connected" aria-label="Services Connected">
+            <h3 className="home-status-title">🎉 Services Connected!</h3>
+            <div className="home-service-row">
+              <span><strong>Spotify:</strong> {spotifyUser.display_name}</span>
+              <button 
+                className="btn btn-secondary home-disconnect-btn"
+                onClick={() => onLogout('spotify')}
+              >
+                Disconnect
+              </button>
+            </div>
+            {pinterestUser && (
               <div className="home-service-row">
-                <span><strong>Spotify:</strong> {spotifyUser.display_name}</span>
+                <span><strong>Pinterest:</strong> @{pinterestUser.username}</span>
                 <button 
                   className="btn btn-secondary home-disconnect-btn"
-                  onClick={() => onLogout('spotify')}
+                  onClick={() => onLogout('pinterest')}
                 >
                   Disconnect
                 </button>
               </div>
-              {pinterestUser && (
-                <div className="home-service-row">
-                  <span><strong>Pinterest:</strong> @{pinterestUser.username}</span>
-                  <button 
-                    className="btn btn-secondary home-disconnect-btn"
-                    onClick={() => onLogout('pinterest')}
-                  >
-                    Disconnect
-                  </button>
-                </div>
-              )}
-            </section>
-          </>
+            )}
+          </section>
         )}
         
         {/* Playlist Creator - Show for both connected and not connected users */}
         {analysis && (
           <>
             <h3 className="home-step-title">
-              {spotifyUser ? '🎵 Step 3: Create Your Playlist' : '🎵 Song Recommendations'}
+              {spotifyUser ? '🎵 Create Your Playlist' : '🎵 Song Recommendations'}
             </h3>
             <PlaylistCreator 
               spotifyToken={spotifyToken}
