@@ -1508,6 +1508,8 @@ async function getBoardById(boardId, accessToken) {
 // ===== ANALYSIS FUNCTIONS =====
 
 async function extractBoardInfo(url) {
+  console.log('🔍 extractBoardInfo called with URL:', url);
+  
   // Check if this is a shortlink and expand it
   let processedUrl = url;
   if (isPinterestShortlink(url)) {
@@ -2589,7 +2591,10 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
   try {
     const { url } = req.body;
     
+    console.log('📡 Received analyze-pinterest-enhanced request:', { url });
+    
     if (!url || (!url.includes('pinterest.com') && !url.includes('pin.it/'))) {
+      console.log('❌ Invalid URL format:', url);
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid Pinterest board URL or shortlink'
@@ -2605,7 +2610,7 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
       });
     }
 
-    console.log('Starting enhanced analysis with Vision API for:', url);
+    console.log('✅ Starting enhanced analysis with Vision API for:', url);
 
     // Use the new Vision API-enhanced analysis
     const analysis = await generateEnhancedAnalysisWithVision(url);
