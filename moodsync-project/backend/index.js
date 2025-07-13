@@ -1709,29 +1709,28 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
     const moodKeywords = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic', 'happy', 'calm'];
     const randomMood = moodKeywords[Math.floor(Math.random() * moodKeywords.length)];
     
-    // 🎯 PRIORITY 1: Search with board title keywords first
+    // 🎯 PRIORITY 1: Search with board title keywords first (but limit results)
+    const maxKeywordTracks = Math.floor(limit * 0.4); // Only 40% from keywords
     if (validSearchTerms.length > 0) {
       for (const keyword of validSearchTerms) {
-        if (tracks.length >= limit) break;
+        if (tracks.length >= maxKeywordTracks) break; // Stop keyword search early
         
         try {
           console.log(`🎯 Searching with board title keyword: "${keyword}"`);
           
           const keywordStrategies = [
-            // Strategy 1: Direct keyword search
-            keyword,
-            // Strategy 2: Keyword + mood
+            // Strategy 1: Keyword + mood (more variety)
             `${keyword} ${randomMood}`,
-            // Strategy 3: Keyword with genre context
+            // Strategy 2: Keyword with genre context
             `${keyword} ${validGenres[0] || 'music'}`,
-            // Strategy 4: Keyword with year range
+            // Strategy 3: Keyword with year range
             `${keyword} year:${Math.floor(Math.random() * 20) + 1990}-${Math.floor(Math.random() * 10) + 2015}`,
-            // Strategy 5: Keyword with popularity filter
+            // Strategy 4: Keyword with popularity filter
             `${keyword} popularity:10-80`
           ];
           
           for (const strategy of keywordStrategies) {
-            if (tracks.length >= limit) break;
+            if (tracks.length >= maxKeywordTracks) break;
             
             try {
               console.log(`🎯 Trying keyword strategy: "${strategy}"`);
@@ -1741,7 +1740,7 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
                 params: {
                   q: strategy,
                   type: 'track',
-                  limit: Math.min(8, limit - tracks.length),
+                  limit: Math.min(4, maxKeywordTracks - tracks.length), // Reduced limit
                   market: 'US',
                   offset: Math.floor(Math.random() * 20)
                 }
@@ -1763,7 +1762,7 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
       }
     }
     
-    // 🎵 PRIORITY 2: Search with genres (if we still need more tracks)
+    // 🎵 PRIORITY 2: Search with genres (more diverse approach)
     for (const genre of validGenres) {
       if (tracks.length >= limit) break;
       
@@ -1772,22 +1771,22 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
         
         // Use different search strategies for variety
         const searchStrategies = [
-          // Strategy 1: Simple genre search
-          `genre:"${genre}"`,
-          // Strategy 2: Genre + mood keyword
+          // Strategy 1: Genre + mood keyword (avoid direct keyword)
           `genre:"${genre}" ${randomMood}`,
-          // Strategy 3: Genre with popularity filter (avoid top hits)
+          // Strategy 2: Genre with popularity filter (avoid top hits)
           `genre:"${genre}" popularity:10-60`,
-          // Strategy 4: Genre with year range (vary the years)
+          // Strategy 3: Genre with year range (vary the years)
           `genre:"${genre}" year:${Math.floor(Math.random() * 20) + 1990}-${Math.floor(Math.random() * 10) + 2015}`,
-          // Strategy 5: Genre with different mood keywords
+          // Strategy 4: Genre with different mood keywords
           `genre:"${genre}" ${moodKeywords[Math.floor(Math.random() * moodKeywords.length)]}`,
-          // Strategy 6: Just the genre name without quotes
-          genre,
-          // Strategy 7: Genre with acoustic filter for variety
+          // Strategy 5: Genre with acoustic filter for variety
           `genre:"${genre}" acoustic`,
-          // Strategy 8: Genre with instrumental filter
-          `genre:"${genre}" instrumental`
+          // Strategy 6: Genre with instrumental filter
+          `genre:"${genre}" instrumental`,
+          // Strategy 7: Just the genre name without quotes
+          genre,
+          // Strategy 8: Genre with energy level
+          `genre:"${genre}" ${randomMood}`
         ];
         
         for (const strategy of searchStrategies) {
@@ -1862,10 +1861,11 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
     
     console.log(`🎵 Total tracks found: ${tracks.length}`);
     
-    // Enhanced deduplication: Remove duplicates by track ID, track name, and artist name
+    // Enhanced deduplication: Remove duplicates and prevent keyword repetition
     const uniqueTracks = [];
     const seenTrackIds = new Set();
     const seenTrackArtistCombos = new Set();
+    const keywordRepetitionCount = new Map(); // Track keyword repetition
     
     for (const track of tracks) {
       const trackId = track.id;
@@ -1888,6 +1888,24 @@ async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms 
       // Skip if this artist already has another track in the playlist
       if (seenTrackArtistCombos.has(artistName)) {
         console.log(`🔄 Skipping duplicate artist: ${track.name} by ${track.artists[0]?.name}`);
+        continue;
+      }
+      
+      // Check for keyword repetition in track names
+      let hasExcessiveKeywordRepetition = false;
+      for (const keyword of validSearchTerms) {
+        if (trackName.includes(keyword.toLowerCase())) {
+          const currentCount = keywordRepetitionCount.get(keyword) || 0;
+          if (currentCount >= 2) { // Allow max 2 tracks with same keyword
+            console.log(`🔄 Skipping track with excessive keyword repetition: "${keyword}" in "${track.name}"`);
+            hasExcessiveKeywordRepetition = true;
+            break;
+          }
+          keywordRepetitionCount.set(keyword, currentCount + 1);
+        }
+      }
+      
+      if (hasExcessiveKeywordRepetition) {
         continue;
       }
       
