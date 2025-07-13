@@ -443,18 +443,20 @@ const Home = ({
                 </div>
               )}
             </section>
-            
-            {/* Playlist Creator - Only show if Spotify is connected */}
-            {analysis && (
-              <>
-                <h3 className="home-step-title">🎵 Step 3: Create Your Playlist</h3>
-                <PlaylistCreator 
-                  spotifyToken={spotifyToken}
-                  analysis={analysis}
-                  spotifyUser={spotifyUser}
-                />
-              </>
-            )}
+          </>
+        )}
+        
+        {/* Playlist Creator - Show for both connected and not connected users */}
+        {analysis && (
+          <>
+            <h3 className="home-step-title">
+              {spotifyUser ? '🎵 Step 3: Create Your Playlist' : '🎵 Song Recommendations'}
+            </h3>
+            <PlaylistCreator 
+              spotifyToken={spotifyToken}
+              analysis={analysis}
+              spotifyUser={spotifyUser}
+            />
           </>
         )}
         <p className="home-flow-desc">
