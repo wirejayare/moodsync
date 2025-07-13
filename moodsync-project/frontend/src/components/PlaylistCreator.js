@@ -113,6 +113,18 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
     return 'Mood';
   };
 
+  // Helper function to get board name from analysis
+  const getBoardName = (analysis) => {
+    if (!analysis) return 'Pinterest Board';
+    if (analysis.board && analysis.board.name) {
+      return analysis.board.name;
+    }
+    if (analysis.board && analysis.board.detected_theme) {
+      return `${analysis.board.detected_theme} Vibes`;
+    }
+    return 'Pinterest Board';
+  };
+
   if (!analysis) {
     return (
       <section className="apple-glass playlist-creator empty" aria-label="Create Playlist">
@@ -141,6 +153,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
               <SpotifyPlayer
                 tracks={createdPlaylist.tracks || []}
                 isConnected={false}
+                title={getBoardName(analysis)}
                 onConnectClick={() => {
                   // This would typically trigger Spotify OAuth
                   alert('Please connect your Spotify account to save playlists and get personalized recommendations!');
@@ -223,6 +236,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
             <SpotifyPlayer
               tracks={createdPlaylist.tracks || []}
               isConnected={true}
+              title={getBoardName(analysis)}
               onConnectClick={() => {
                 // Already connected, but could trigger reconnection if needed
                 console.log('Spotify already connected');

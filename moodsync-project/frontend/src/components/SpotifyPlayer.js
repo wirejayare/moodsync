@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './SpotifyPlayer.css';
 
-const SpotifyPlayer = ({ tracks, isConnected, onConnectClick }) => {
+const SpotifyPlayer = ({ tracks, isConnected, onConnectClick, title = "Generated Playlist" }) => {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -74,7 +74,7 @@ const SpotifyPlayer = ({ tracks, isConnected, onConnectClick }) => {
   return (
     <div className="spotify-player-container">
       <div className="player-header">
-        <h3>Generated Playlist</h3>
+        <h3>{title}</h3>
         <div className="track-counter">
           {currentTrackIndex + 1} of {tracks.length}
         </div>
