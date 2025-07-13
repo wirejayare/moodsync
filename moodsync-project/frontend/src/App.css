@@ -942,6 +942,52 @@ textarea:focus {
   outline: none;
 }
 
+/* New connect section styles */
+.pc-connect-section {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-medium);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.pc-pro-tip {
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-md);
+  font-style: italic;
+}
+
+.pc-connect-btn {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-medium);
+  font-family: var(--font-text);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-medium);
+}
+
+.pc-connect-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-heavy);
+  background: var(--gradient-secondary);
+}
+
+.pc-connect-btn:focus {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+
+.pc-player-section {
+  margin-bottom: var(--space-lg);
+}
+
 /* Apple-inspired Pinterest Callback Styles */
 .pcb-callback-bg {
   min-height: 100vh;

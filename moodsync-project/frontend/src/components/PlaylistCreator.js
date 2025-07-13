@@ -1,9 +1,8 @@
-// src/components/PlaylistCreator.js - Fixed version
+// src/components/PlaylistCreator.js - Cleaned up version
 import React, { useState } from 'react';
 import SpotifyPlayer from './SpotifyPlayer';
 
 const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
-  const [playlistName, setPlaylistName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createdPlaylist, setCreatedPlaylist] = useState(null);
 
@@ -28,17 +27,12 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   }, [analysis]);
 
   const handleCreatePlaylist = async () => {
-    if (!playlistName.trim()) {
-      alert('Please enter a playlist name');
-      return;
-    }
-
     setIsCreating(true);
     try {
       console.log('🎵 Creating playlist with data:', {
         accessToken: spotifyToken ? 'present' : 'missing',
         analysis: analysis,
-        playlistName: playlistName
+        playlistName: getBoardName(analysis)
       });
 
       const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/create-playlist`, {
@@ -47,7 +41,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         body: JSON.stringify({
           accessToken: spotifyToken,
           analysis: analysis,
-          playlistName: playlistName
+          playlistName: getBoardName(analysis)
         })
       });
 
@@ -60,7 +54,6 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         // Check if it's a token expiration error
         if (errorText.includes('access token expired') || errorText.includes('token expired')) {
           alert('Your Spotify session has expired. Please reconnect your Spotify account to create playlists.');
-          // You could also trigger a reconnection flow here
           return;
         }
         
@@ -73,7 +66,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
       if (data.success) {
         setCreatedPlaylist(data.playlist);
         if (data.isPreview) {
-          alert(`👀 Playlist preview generated! Connect Spotify to create the actual playlist.`);
+          console.log('👀 Playlist preview generated!');
         } else {
           alert(`🎉 Playlist "${data.playlist.name}" created successfully!`);
         }
@@ -137,10 +130,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   // Check if Spotify is connected
   if (!spotifyToken) {
     return (
-      <section className="apple-glass playlist-creator" aria-label="Create Playlist Preview">
-        <h3 className="pc-title">🎵 Song Recommendations</h3>
-        <p className="pc-desc">AI-generated music recommendations based on your Pinterest board</p>
-        
+      <section className="apple-glass playlist-creator" aria-label="AI-Generated Recommendations">
         {/* Show preview if available */}
         {createdPlaylist ? (
           <div className="pc-created">
@@ -160,6 +150,20 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
                 }}
               />
             </div>
+            
+            {/* Single connect button with pro tip */}
+            <div className="pc-connect-section">
+              <p className="pc-pro-tip">💡 Pro tip: Connect your Spotify account to save this playlist and get personalized recommendations!</p>
+              <button
+                className="pc-connect-btn"
+                onClick={() => {
+                  // This would typically trigger Spotify OAuth
+                  alert('Please connect your Spotify account to save playlists and get personalized recommendations!');
+                }}
+              >
+                Connect Spotify Account
+              </button>
+            </div>
           </div>
         ) : (
           <div className="pc-summary">
@@ -168,28 +172,6 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
             <p><strong>Status:</strong> Generating recommendations...</p>
           </div>
         )}
-        
-        {/* Manual generate button as fallback */}
-        <form className="pc-form" onSubmit={e => { e.preventDefault(); handleCreatePlaylist(); }}>
-          <input
-            type="text"
-            className="pc-input"
-            placeholder="Playlist name (optional)"
-            value={playlistName}
-            onChange={(e) => setPlaylistName(e.target.value)}
-            aria-label="Playlist name"
-            disabled={isCreating}
-          />
-          <button
-            type="submit"
-            className="pc-create-btn"
-            onClick={handleCreatePlaylist}
-            disabled={isCreating}
-            aria-busy={isCreating}
-          >
-            {isCreating ? '🎵 Generating...' : '🔄 Regenerate Recommendations'}
-          </button>
-        </form>
       </section>
     );
   }
@@ -205,8 +187,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           type="text"
           className="pc-input"
           placeholder={`${mood} Vibes`}
-          value={playlistName}
-          onChange={(e) => setPlaylistName(e.target.value)}
+          defaultValue={`${mood} Vibes`}
           aria-label="Playlist name"
           disabled={isCreating}
         />
@@ -214,7 +195,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           type="submit"
           className="pc-create-btn"
           onClick={handleCreatePlaylist}
-          disabled={isCreating || !playlistName.trim()}
+          disabled={isCreating}
           aria-busy={isCreating}
         >
           {isCreating ? '🎵 Creating...' : '🎵 Create Playlist'}
