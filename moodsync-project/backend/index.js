@@ -3422,10 +3422,12 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
         name: track.name,
         artist: track.artists[0]?.name || 'Unknown Artist',
         genre: genres[index % genres.length] || 'pop',
-        id: `preview-${index}`,
+        id: track.id, // Keep the real Spotify track ID
+        uri: track.uri, // Keep the real Spotify URI
         preview_url: track.preview_url,
         isPreview: true,
-        spotify_url: track.external_urls?.spotify
+        spotify_url: track.external_urls?.spotify,
+        external_urls: track.external_urls // Keep all external URLs
       }));
     } else {
       // Fall back to representative examples
