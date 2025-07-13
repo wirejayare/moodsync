@@ -85,18 +85,37 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
                   
                   if (playlistUrl) {
                     console.log('🚀 Launching Spotify player...');
-                    // Try multiple approaches to open Spotify
+                    // Force open in new tab with multiple fallback strategies
                     try {
-                      // First, try to open in a new tab
-                      const newWindow = window.open(playlistUrl, '_blank');
+                      // Strategy 1: Try to open in new tab with noopener
+                      const newWindow = window.open(playlistUrl, '_blank', 'noopener,noreferrer');
                       
-                      // If popup was blocked, try direct navigation
+                      // Strategy 2: If blocked, try with different parameters
                       if (!newWindow || newWindow.closed) {
-                        console.log('📱 Popup blocked, trying direct navigation...');
-                        window.location.href = playlistUrl;
+                        console.log('📱 First popup attempt blocked, trying alternative...');
+                        const altWindow = window.open(playlistUrl, '_blank', 'width=800,height=600');
+                        
+                        if (!altWindow || altWindow.closed) {
+                          console.log('📱 Second popup attempt blocked, using direct navigation...');
+                          // Last resort: navigate current tab
+                          window.location.href = playlistUrl;
+                        } else {
+                          // Close the alt window and show success message
+                          altWindow.close();
+                          setTimeout(() => {
+                            alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created! Check your new tab for Spotify.`);
+                          }, 500);
+                          return; // Don't show the other success message
+                        }
+                      } else {
+                        // Successfully opened in new tab
+                        setTimeout(() => {
+                          alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created and opened in a new tab!`);
+                        }, 500);
+                        return; // Don't show the other success message
                       }
                       
-                      // Show success message
+                      // Show success message for direct navigation
                       setTimeout(() => {
                         alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created and opened in Spotify!`);
                       }, 1000);
