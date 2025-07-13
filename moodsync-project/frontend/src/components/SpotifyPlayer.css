@@ -1,421 +1,266 @@
-/* Spotify Player Styles */
-.spotify-player {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
-  border-radius: 15px;
-  padding: 1.5rem;
-  margin: 1rem 0;
+.spotify-player-container {
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: 0 8px 32px rgba(29, 185, 84, 0.3);
   color: white;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.spotify-player.empty {
-  text-align: center;
-  padding: 2rem;
-}
-
-.spotify-player.empty .player-content h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
-  color: #fff;
-}
-
-.spotify-player.empty .player-content p {
-  margin: 0;
-  opacity: 0.8;
-  font-size: 1rem;
-}
-
-/* Player Header */
 .player-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .player-header h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
-  color: #fff;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.track-counter {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
   font-weight: 600;
 }
 
-.player-header p {
-  margin: 0;
-  opacity: 0.8;
-  font-size: 0.9rem;
+.spotify-embed-container {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Loading State */
-.loading {
-  text-align: center;
-  padding: 2rem;
+.spotify-embed-container iframe {
+  border-radius: 12px;
+  background: #282828;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid #1DB954;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading p {
-  margin: 0;
-  opacity: 0.8;
-}
-
-/* Error State */
-.error {
-  text-align: center;
-  padding: 1rem;
-  background: rgba(255, 107, 107, 0.2);
-  border-radius: 8px;
-  margin: 1rem 0;
-}
-
-.error p {
-  margin: 0 0 1rem 0;
-  color: #ff6b6b;
-}
-
-.error button {
-  background: #ff6b6b;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.error button:hover {
-  background: #ff5252;
-}
-
-/* Now Playing Section */
-.now-playing {
+.track-navigation {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
 }
 
-.track-artwork {
-  flex-shrink: 0;
-}
-
-.track-artwork img {
-  width: 60px;
-  height: 60px;
+.nav-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 12px 20px;
   border-radius: 8px;
-  object-fit: cover;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.nav-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .track-info {
+  text-align: center;
   flex: 1;
-  min-width: 0;
+  margin: 0 16px;
 }
 
-.track-info .track-name {
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.track-info .track-artist {
-  opacity: 0.8;
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
-}
-
-.track-info .track-album {
-  opacity: 0.6;
-  font-size: 0.8rem;
-}
-
-/* Progress Bar */
-.progress-container {
-  width: 100%;
-  margin-top: 0.5rem;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #1DB954;
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-.time-display {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-/* Player Controls */
-.player-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin: 1rem 0;
-}
-
-.control-btn {
-  background: none;
-  border: none;
+.track-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
   color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: background 0.2s;
 }
 
-.control-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+.track-artist {
+  font-size: 14px;
+  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.play-pause-btn {
-  background: #1DB954;
-  border: none;
-  color: white;
-  font-size: 2rem;
-  cursor: pointer;
-  padding: 1rem;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.play-pause-btn:hover {
-  background: #1ed760;
-  transform: scale(1.05);
-}
-
-/* Volume Control */
-.volume-control {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  justify-content: center;
-}
-
-.volume-slider {
-  width: 100px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #1DB954;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.volume-slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: #1DB954;
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-}
-
-/* Track List */
 .track-list {
+  margin-top: 24px;
+}
+
+.track-list h4 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.tracks-container {
   max-height: 300px;
   overflow-y: auto;
-  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px;
 }
 
 .track-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem;
+  padding: 12px 16px;
+  margin: 4px 0;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
-  margin-bottom: 0.25rem;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .track-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(4px);
 }
 
 .track-item.active {
-  background: rgba(29, 185, 84, 0.2);
-  border: 1px solid rgba(29, 185, 84, 0.3);
-}
-
-.track-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-  min-width: 0;
+  background: rgba(255, 255, 255, 0.25);
+  border-left: 4px solid white;
 }
 
 .track-number {
-  width: 20px;
-  text-align: center;
-  opacity: 0.6;
-  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 16px;
   flex-shrink: 0;
 }
 
 .track-details {
   flex: 1;
-  min-width: 0;
 }
 
-.track-name {
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.track-artist {
-  opacity: 0.7;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Track Controls (Preview Mode) */
-.track-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.track-controls .play-pause-btn {
-  width: 32px;
-  height: 32px;
-  font-size: 1rem;
-  padding: 0;
-}
-
-.track-controls .progress-bar {
-  width: 60px;
-  height: 3px;
-}
-
-/* Preview Button */
-.preview-btn {
-  background: none;
-  border: none;
+.track-details .track-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 2px;
   color: white;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 4px;
-  transition: background 0.2s;
 }
 
-.preview-btn:hover {
+.track-details .track-artist {
+  font-size: 14px;
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.connection-prompt {
+  margin-top: 24px;
+  padding: 20px;
   background: rgba(255, 255, 255, 0.1);
-}
-
-/* Player Footer */
-.player-footer {
+  border-radius: 12px;
   text-align: center;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.player-footer p {
+.connection-prompt p {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: white;
+}
+
+.connect-button {
+  background: white;
+  color: #1db954;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.connect-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.no-tracks-message {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.no-tracks-message h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: white;
+}
+
+.no-tracks-message p {
   margin: 0;
-  opacity: 0.7;
-  font-size: 0.9rem;
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .spotify-player {
-    padding: 1rem;
-  }
-  
-  .now-playing {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .track-artwork img {
-    width: 80px;
-    height: 80px;
-  }
-  
-  .player-controls {
-    gap: 0.5rem;
-  }
-  
-  .play-pause-btn {
-    width: 50px;
-    height: 50px;
-    font-size: 1.5rem;
-  }
-  
-  .track-list {
-    max-height: 250px;
-  }
-}
-
-/* Scrollbar Styling */
-.track-list::-webkit-scrollbar {
+/* Scrollbar styling */
+.tracks-container::-webkit-scrollbar {
   width: 6px;
 }
 
-.track-list::-webkit-scrollbar-track {
+.tracks-container::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
 
-.track-list::-webkit-scrollbar-thumb {
+.tracks-container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 3px;
 }
 
-.track-list::-webkit-scrollbar-thumb:hover {
+.tracks-container::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .spotify-player-container {
+    padding: 16px;
+    margin: 16px 0;
+  }
+  
+  .player-header {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+  
+  .track-navigation {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .nav-button {
+    width: 100%;
+  }
+  
+  .track-info {
+    margin: 0;
+  }
+  
+  .tracks-container {
+    max-height: 250px;
+  }
 } 

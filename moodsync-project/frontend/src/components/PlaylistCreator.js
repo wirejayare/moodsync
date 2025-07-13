@@ -148,11 +148,10 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
             <div className="pc-player-section">
               <SpotifyPlayer
                 tracks={createdPlaylist.tracks || []}
-                isPreview={true}
-                spotifyToken={null}
-                playlistName={createdPlaylist.name}
-                onTrackSelect={(track) => {
-                  console.log('Selected preview track:', track);
+                isConnected={false}
+                onConnectClick={() => {
+                  // This would typically trigger Spotify OAuth
+                  alert('Please connect your Spotify account to save playlists and get personalized recommendations!');
                 }}
               />
             </div>
@@ -266,11 +265,10 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           <div className="pc-player-section">
             <SpotifyPlayer
               tracks={createdPlaylist.tracks || []}
-              isPreview={createdPlaylist.isPreview}
-              spotifyToken={spotifyToken}
-              playlistName={createdPlaylist.name}
-              onTrackSelect={(track) => {
-                console.log('Selected track:', track);
+              isConnected={true}
+              onConnectClick={() => {
+                // Already connected, but could trigger reconnection if needed
+                console.log('Spotify already connected');
               }}
             />
           </div>
