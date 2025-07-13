@@ -1722,34 +1722,53 @@ async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms
     
     const tracks = [];
     
-    // Search for each genre
+    // Enhanced search strategy - try multiple approaches for each genre
     for (const genre of genres) {
       if (tracks.length >= limit) break;
       
-      try {
-        console.log(`🔍 Searching for genre: "${genre}"`);
+      const searchStrategies = [
+        // Strategy 1: Direct genre search
+        `genre:${genre}`,
+        // Strategy 2: Genre as keyword
+        genre,
+        // Strategy 3: Genre with "music" or "songs"
+        `${genre} music`,
+        `${genre} songs`,
+        // Strategy 4: Common artists in the genre
+        getGenreArtists(genre)
+      ].filter(Boolean); // Remove empty strategies
+      
+      console.log(`🔍 Trying ${searchStrategies.length} search strategies for genre: "${genre}"`);
+      
+      for (const searchQuery of searchStrategies) {
+        if (tracks.length >= limit) break;
         
-        const response = await axios.get('https://api.spotify.com/v1/search', {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-          params: {
-            q: `genre:${genre}`,
-            type: 'track',
-            limit: Math.min(limit, limit - tracks.length),
-            market: 'US'
+        try {
+          console.log(`🔍 Searching: "${searchQuery}"`);
+          
+          const response = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            params: {
+              q: searchQuery,
+              type: 'track',
+              limit: Math.min(5, limit - tracks.length), // Get fewer tracks per search
+              market: 'US'
+            }
+          });
+          
+          if (response.data.tracks && response.data.tracks.items && response.data.tracks.items.length > 0) {
+            console.log(`✅ Found ${response.data.tracks.items.length} tracks for: "${searchQuery}"`);
+            tracks.push(...response.data.tracks.items);
           }
-        });
-        
-        if (response.data.tracks && response.data.tracks.items && response.data.tracks.items.length > 0) {
-          console.log(`✅ Found ${response.data.tracks.items.length} tracks for genre: "${genre}"`);
-          tracks.push(...response.data.tracks.items);
+        } catch (error) {
+          console.error(`❌ Search failed for "${searchQuery}":`, error.message);
         }
-      } catch (error) {
-        console.error(`❌ Search failed for genre "${genre}":`, error.message);
       }
     }
     
-    // If no results from genre search, try search terms
+    // If still no results, try search terms
     if (tracks.length === 0 && searchTerms.length > 0) {
+      console.log('🔄 No genre results, trying search terms...');
       for (const term of searchTerms) {
         if (tracks.length >= limit) break;
         
@@ -1794,6 +1813,33 @@ async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms
     console.error('❌ Client credentials track search error:', error);
     return [];
   }
+}
+
+// Helper function to get representative artists for genres
+function getGenreArtists(genre) {
+  const genreArtists = {
+    'Dream Pop': 'Cocteau Twins, Mazzy Star, Beach House',
+    'Shoegaze': 'My Bloody Valentine, Slowdive, Ride',
+    'Indie Rock': 'Modest Mouse, The Strokes, Arctic Monkeys',
+    'Indie Pop': 'The Postal Service, Bon Iver, Vampire Weekend',
+    'Alternative': 'Radiohead, The Killers, Arcade Fire',
+    'Electronic': 'Daft Punk, The Chemical Brothers, Aphex Twin',
+    'Ambient': 'Brian Eno, Tycho, Marconi Union',
+    'Downtempo': 'Massive Attack, Portishead, Tricky',
+    'Trip Hop': 'Massive Attack, Portishead, Morcheeba',
+    'Chillwave': 'Washed Out, Toro y Moi, Neon Indian',
+    'Lo-Fi': 'Nujabes, J Dilla, Madlib',
+    'Chill': 'Tycho, Bonobo, Emancipator',
+    'Disco': 'Bee Gees, Chic, Donna Summer',
+    'Funk': 'James Brown, Parliament, Rick James',
+    'Dance-Punk': 'Franz Ferdinand, The Rapture, LCD Soundsystem',
+    'Pop': 'Taylor Swift, The Weeknd, Dua Lipa',
+    'Rock': 'Led Zeppelin, Queen, The Rolling Stones',
+    'Jazz': 'Miles Davis, John Coltrane, Dave Brubeck',
+    'Classical': 'Beethoven, Mozart, Bach'
+  };
+  
+  return genreArtists[genre] || null;
 }
 
 // ===== SPOTIFY FUNCTIONS =====
