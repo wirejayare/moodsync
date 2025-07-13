@@ -20,23 +20,31 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
         }
 
         if (code) {
+          console.log('🎵 Processing Spotify OAuth callback...');
           const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/spotify/callback`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code })
           });
 
+          console.log('📡 Spotify callback response status:', response.status);
           const data = await response.json();
+          console.log('📡 Spotify callback response data:', data);
           
           if (data.success) {
+            console.log('✅ Spotify OAuth successful');
             onSpotifyAuth(data.access_token, data.user);
             
             // Check if there's pending analysis to create a playlist
             const pendingAnalysis = localStorage.getItem('moodsync_pending_analysis');
             const pendingPlaylistName = localStorage.getItem('moodsync_pending_playlist_name');
             
+            console.log('🔍 Pending analysis:', !!pendingAnalysis);
+            console.log('🔍 Pending playlist name:', pendingPlaylistName);
+            
             if (pendingAnalysis && pendingPlaylistName) {
               try {
+                console.log('🎵 Creating playlist after OAuth...');
                 // Create the actual playlist in Spotify
                 const createResponse = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/create-playlist`, {
                   method: 'POST',
@@ -48,9 +56,12 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
                   })
                 });
 
+                console.log('📡 Create playlist response status:', createResponse.status);
                 const createData = await createResponse.json();
+                console.log('📡 Create playlist response data:', createData);
                 
                 if (createData.success) {
+                  console.log('✅ Playlist created successfully');
                   // Clear the pending data
                   localStorage.removeItem('moodsync_pending_analysis');
                   localStorage.removeItem('moodsync_pending_playlist_name');
@@ -61,24 +72,31 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
                   
                   // Launch Spotify player with the created playlist
                   const playlistUrl = createData.playlist.external_urls?.spotify || createData.playlist.spotify_url;
+                  console.log('🎵 Playlist URL:', playlistUrl);
+                  
                   if (playlistUrl) {
+                    console.log('🚀 Launching Spotify player...');
                     // Try to open in native app first, fallback to web
                     window.location.href = playlistUrl;
                   } else {
+                    console.log('⚠️ No playlist URL available, showing success message');
                     // Fallback: navigate back to home with success message
                     alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created in Spotify!`);
                   }
                 } else {
+                  console.error('❌ Playlist creation failed:', createData);
                   alert('Spotify connected! However, there was an issue creating your playlist. You can try creating it again from the home page.');
                 }
               } catch (error) {
-                console.error('Error creating playlist after OAuth:', error);
+                console.error('❌ Error creating playlist after OAuth:', error);
                 alert('Spotify connected! However, there was an issue creating your playlist. You can try creating it again from the home page.');
               }
             } else {
+              console.log('ℹ️ No pending analysis, just connecting Spotify');
               alert(`Welcome ${data.user.display_name}! Spotify connected successfully.`);
             }
           } else {
+            console.error('❌ Spotify OAuth failed:', data);
             // Only show error if it's actually a failure
             alert('Failed to connect: ' + data.message);
           }
