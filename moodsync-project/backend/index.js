@@ -1722,20 +1722,34 @@ async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms
     
     const tracks = [];
     
-    // Enhanced search strategy - try multiple approaches for each genre
+    // Enhanced search strategy with much more variety
     for (const genre of genres) {
       if (tracks.length >= limit) break;
       
+      // Generate multiple search strategies with randomization
       const searchStrategies = [
-        // Strategy 1: Direct genre search
+        // Strategy 1: Direct genre search with different offsets
         `genre:${genre}`,
         // Strategy 2: Genre as keyword
         genre,
-        // Strategy 3: Genre with "music" or "songs"
-        `${genre} music`,
-        `${genre} songs`,
-        // Strategy 4: Common artists in the genre
-        getGenreArtists(genre)
+        // Strategy 3: Genre with mood keywords
+        `${genre} ${getRandomMood()}`,
+        `${genre} ${getRandomMood()}`,
+        // Strategy 4: Genre with year ranges
+        `${genre} year:${getRandomYearRange()}`,
+        `${genre} year:${getRandomYearRange()}`,
+        // Strategy 5: Genre with popularity filters
+        `${genre} popularity:${getRandomPopularityRange()}`,
+        // Strategy 6: Genre with tempo filters
+        `${genre} tempo:${getRandomTempoRange()}`,
+        // Strategy 7: Genre with energy levels
+        `${genre} ${getRandomEnergyLevel()}`,
+        // Strategy 8: Common artists in the genre
+        getGenreArtists(genre),
+        // Strategy 9: Genre with acousticness
+        `${genre} acousticness:${getRandomAcousticness()}`,
+        // Strategy 10: Genre with danceability
+        `${genre} danceability:${getRandomDanceability()}`
       ].filter(Boolean); // Remove empty strategies
       
       console.log(`🔍 Trying ${searchStrategies.length} search strategies for genre: "${genre}"`);
@@ -1751,8 +1765,9 @@ async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms
             params: {
               q: searchQuery,
               type: 'track',
-              limit: Math.min(5, limit - tracks.length), // Get fewer tracks per search
-              market: 'US'
+              limit: Math.min(3, limit - tracks.length), // Get fewer tracks per search for more variety
+              market: 'US',
+              offset: Math.floor(Math.random() * 50) // Random offset for variety
             }
           });
           
@@ -1806,13 +1821,57 @@ async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms
       }
     }
     
-    console.log(`🎵 Found ${uniqueTracks.length} unique tracks with client credentials`);
-    return uniqueTracks.slice(0, limit);
+    // Shuffle the tracks for more variety
+    const shuffledTracks = shuffleArray([...uniqueTracks]);
+    
+    console.log(`🎵 Found ${shuffledTracks.length} unique tracks with client credentials`);
+    return shuffledTracks.slice(0, limit);
     
   } catch (error) {
     console.error('❌ Client credentials track search error:', error);
     return [];
   }
+}
+
+// Helper functions for generating random search parameters
+function getRandomMood() {
+  const moods = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic', 'happy', 'calm', 'peaceful', 'dreamy', 'romantic', 'nostalgic', 'uplifting', 'melancholic', 'passionate', 'serene', 'lively', 'tranquil'];
+  return moods[Math.floor(Math.random() * moods.length)];
+}
+
+function getRandomYearRange() {
+  const startYear = Math.floor(Math.random() * 30) + 1970;
+  const endYear = startYear + Math.floor(Math.random() * 20) + 10;
+  return `${startYear}-${Math.min(endYear, 2024)}`;
+}
+
+function getRandomPopularityRange() {
+  const min = Math.floor(Math.random() * 40);
+  const max = min + Math.floor(Math.random() * 40) + 20;
+  return `${min}-${Math.min(max, 100)}`;
+}
+
+function getRandomTempoRange() {
+  const min = Math.floor(Math.random() * 80) + 60;
+  const max = min + Math.floor(Math.random() * 60) + 40;
+  return `${min}-${Math.min(max, 200)}`;
+}
+
+function getRandomEnergyLevel() {
+  const levels = ['low', 'medium', 'high', 'energetic', 'calm', 'relaxed', 'upbeat', 'mellow'];
+  return levels[Math.floor(Math.random() * levels.length)];
+}
+
+function getRandomAcousticness() {
+  const min = Math.floor(Math.random() * 50);
+  const max = min + Math.floor(Math.random() * 50) + 20;
+  return `${min}-${Math.min(max, 100)}`;
+}
+
+function getRandomDanceability() {
+  const min = Math.floor(Math.random() * 50);
+  const max = min + Math.floor(Math.random() * 50) + 20;
+  return `${min}-${Math.min(max, 100)}`;
 }
 
 // Helper function to get representative artists for genres
