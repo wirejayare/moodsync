@@ -55,6 +55,10 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
                   localStorage.removeItem('moodsync_pending_analysis');
                   localStorage.removeItem('moodsync_pending_playlist_name');
                   
+                  // Store the created playlist data to show on return
+                  localStorage.setItem('moodsync_created_playlist', JSON.stringify(createData.playlist));
+                  localStorage.setItem('moodsync_analysis', pendingAnalysis);
+                  
                   // Navigate back to home with success message
                   alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created in Spotify!`);
                 } else {
@@ -68,10 +72,12 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
               alert(`Welcome ${data.user.display_name}! Spotify connected successfully.`);
             }
           } else {
+            // Only show error if it's actually a failure
             alert('Failed to connect: ' + data.message);
           }
         }
       } catch (error) {
+        console.error('OAuth callback error:', error);
         alert('Error: ' + error.message);
       } finally {
         setIsProcessing(false);

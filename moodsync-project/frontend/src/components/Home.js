@@ -19,6 +19,7 @@ const Home = ({
   const [pinterestError, setPinterestError] = useState(null);
   const [boardUrl, setBoardUrl] = useState(''); // New state for board URL
   const [mode, setMode] = useState('picker'); // 'picker' or 'url'
+  const [createdPlaylist, setCreatedPlaylist] = useState(null); // New state for created playlist
 
   useEffect(() => {
     // Test backend connection
@@ -158,6 +159,36 @@ const Home = ({
       console.error('❌ Auto-preview generation error:', error);
     }
   };
+
+  // Check for restored analysis and playlist after OAuth
+  React.useEffect(() => {
+    const restoredAnalysis = localStorage.getItem('moodsync_analysis');
+    const createdPlaylist = localStorage.getItem('moodsync_created_playlist');
+    
+    if (restoredAnalysis && createdPlaylist && !analysis) {
+      console.log('🔄 Restoring analysis and playlist after OAuth');
+      try {
+        const analysisData = JSON.parse(restoredAnalysis);
+        const playlistData = JSON.parse(createdPlaylist);
+        
+        // Set the analysis with the created playlist
+        setAnalysis({
+          ...analysisData,
+          autoPreview: playlistData
+        });
+        
+        // Clear the stored data
+        localStorage.removeItem('moodsync_analysis');
+        localStorage.removeItem('moodsync_created_playlist');
+        
+        console.log('✅ Successfully restored analysis and playlist');
+      } catch (error) {
+        console.error('Error restoring analysis:', error);
+        localStorage.removeItem('moodsync_analysis');
+        localStorage.removeItem('moodsync_created_playlist');
+      }
+    }
+  }, [analysis]);
 
   const handleSpotifyAuth = async () => {
     try {
