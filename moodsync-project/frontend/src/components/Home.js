@@ -490,17 +490,12 @@ const Home = ({
         
         {/* Playlist Creator - Show for both connected and not connected users */}
         {analysis && (
-          <>
-            <h3 className="home-step-title">
-              {spotifyUser ? '🎵 Create Your Playlist' : '🎵 Song Recommendations'}
-            </h3>
-            <PlaylistCreator 
-              spotifyToken={spotifyToken}
-              analysis={analysis}
-              spotifyUser={spotifyUser}
-              onSpotifyAuth={handleSpotifyAuth}
-            />
-          </>
+          <PlaylistCreator 
+            spotifyToken={spotifyToken}
+            analysis={analysis}
+            spotifyUser={spotifyUser}
+            onSpotifyAuth={handleSpotifyAuth}
+          />
         )}
         <p className="home-flow-desc">
           🚀 Pinterest {pinterestUser ? '+ API' : ''} → AI Analysis → Spotify Playlist
