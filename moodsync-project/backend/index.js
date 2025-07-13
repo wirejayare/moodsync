@@ -2237,8 +2237,8 @@ async function expandPinterestShortlink(shortlink) {
   try {
     console.log('🔗 Expanding Pinterest shortlink:', shortlink);
     
-    // Make a HEAD request to get the redirect location
-    const response = await axios.head(shortlink, {
+    // Make a GET request to get the redirect location (HEAD requests might be blocked)
+    const response = await axios.get(shortlink, {
       maxRedirects: 5,
       timeout: 10000,
       validateStatus: function (status) {
@@ -2246,8 +2246,21 @@ async function expandPinterestShortlink(shortlink) {
       }
     });
     
-    const expandedUrl = response.request.res.responseUrl || shortlink;
+    let expandedUrl = response.request.res.responseUrl || response.request.res.responseHeaders?.location || shortlink;
     console.log('✅ Expanded shortlink to:', expandedUrl);
+    console.log('🔍 Response headers:', response.request.res.responseHeaders);
+    console.log('🔍 Response URL:', response.request.res.responseUrl);
+    
+    // If the URL didn't change, try a different approach
+    if (expandedUrl === shortlink) {
+      console.log('⚠️ URL didn\'t expand, trying alternative method...');
+      // Try to extract the redirect from response headers
+      const locationHeader = response.headers?.location || response.request.res.responseHeaders?.location;
+      if (locationHeader) {
+        expandedUrl = locationHeader;
+        console.log('✅ Found redirect in headers:', expandedUrl);
+      }
+    }
     
     // Check if the expanded URL is a board URL or pin URL
     if (expandedUrl.includes('/pin/')) {
