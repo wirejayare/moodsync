@@ -1686,6 +1686,12 @@ async function getClientCredentialsToken() {
 
     console.log('🔑 Getting new client credentials token...');
     
+    // Check if credentials are available
+    if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+      console.log('⚠️ Spotify credentials not configured');
+      throw new Error('Spotify credentials not configured');
+    }
+    
     const response = await axios.post('https://accounts.spotify.com/api/token', 
       new URLSearchParams({
         grant_type: 'client_credentials',
@@ -1717,6 +1723,12 @@ async function getClientCredentialsToken() {
 // Search tracks using client credentials (for previews)
 async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms = []) {
   try {
+    // Check if Spotify credentials are available
+    if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+      console.log('⚠️ Spotify credentials not configured, skipping client credentials search');
+      return [];
+    }
+    
     const accessToken = await getClientCredentialsToken();
     console.log('🎵 Searching tracks with client credentials for genres:', genres);
     
@@ -3424,6 +3436,12 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
     let realTracks = [];
     
     try {
+      // Check if Spotify credentials are available
+      if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+        console.log('⚠️ Spotify credentials not configured, skipping real track search');
+        throw new Error('Spotify credentials not configured');
+      }
+      
       realTracks = await searchTracksWithClientCredentials(genres, 15, searchTerms);
       console.log(`✅ Found ${realTracks.length} real Spotify tracks for preview`);
     } catch (error) {
@@ -3470,7 +3488,19 @@ async function generateVirtualPlaylistPreview(analysis, playlistName) {
     
   } catch (error) {
     console.error('❌ Virtual playlist preview error:', error);
-    throw error;
+    // Return a basic fallback instead of throwing
+    return {
+      name: playlistName || 'Mood Vibes',
+      description: 'AI-generated playlist based on your Pinterest board',
+      trackCount: 5,
+      tracks: generateRepresentativeTracks(['pop', 'indie'], 'chill', 'medium'),
+      genres: ['pop', 'indie'],
+      mood: 'chill',
+      energyLevel: 'medium',
+      isPreview: true,
+      message: 'Connect Spotify to create this actual playlist!',
+      hasRealTracks: false
+    };
   }
 }
 
