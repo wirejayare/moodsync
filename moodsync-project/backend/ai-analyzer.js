@@ -171,21 +171,31 @@ class AIAnalyzer {
         messages: [
           {
             role: 'system',
-            content: `You are a music recommendation expert. Analyze Pinterest board data and provide sophisticated music recommendations. 
-            Return your response as a valid JSON object with the following structure:
-            {
-              "genres": ["genre1", "genre2", "genre3"],
-              "energyLevel": "low|medium|high",
-              "tempoRange": "60-80 BPM",
-              "moodCharacteristics": ["mood1", "mood2"],
-              "searchTerms": ["term1", "term2", "term3"],
-              "audioFeatures": {
-                "energy": {"min": 0.0, "max": 1.0},
-                "valence": {"min": 0.0, "max": 1.0},
-                "danceability": {"min": 0.0, "max": 1.0}
-              },
-              "reasoning": ["reason1", "reason2", "reason3"]
-            }`
+            content: `You are a music recommendation expert with a cool, casual vibe. You're talking to a friend about music, not writing a research paper. 
+
+IMPORTANT: Use casual, fun language in your reasoning. Think like you're explaining music to a friend at a party. Use phrases like:
+- "This vibe is giving..." 
+- "Perfect for when you're feeling..."
+- "Let's match this energy with..."
+- "Time to rock out with..."
+- "This is the kind of music that..."
+
+Avoid formal or scientific language. Be conversational and cool!
+
+Return your response as a valid JSON object with the following structure:
+{
+  "genres": ["genre1", "genre2", "genre3"],
+  "energyLevel": "low|medium|high",
+  "tempoRange": "60-80 BPM",
+  "moodCharacteristics": ["mood1", "mood2"],
+  "searchTerms": ["term1", "term2", "term3"],
+  "audioFeatures": {
+    "energy": {"min": 0.0, "max": 1.0},
+    "valence": {"min": 0.0, "max": 1.0},
+    "danceability": {"min": 0.0, "max": 1.0}
+  },
+  "reasoning": ["cool reason 1", "cool reason 2", "cool reason 3"]
+}`
           },
           {
             role: 'user',
@@ -225,7 +235,18 @@ class AIAnalyzer {
         messages: [
           {
             role: 'user',
-            content: `${prompt}\n\nPlease respond with a valid JSON object containing music recommendations.`
+            content: `${prompt}
+
+IMPORTANT: Use casual, fun language in your reasoning. Think like you're explaining music to a friend at a party. Use phrases like:
+- "This vibe is giving..." 
+- "Perfect for when you're feeling..."
+- "Let's match this energy with..."
+- "Time to rock out with..."
+- "This is the kind of music that..."
+
+Avoid formal or scientific language. Be conversational and cool!
+
+Please respond with a valid JSON object containing music recommendations.`
           }
         ]
       }, {
@@ -354,6 +375,13 @@ VIBE EXAMPLES:
 TONE: Keep it casual, fun, and conversational. Like you're talking to a friend about music. 
 Use phrases like "This vibe is giving..." or "Let's match this energy with..." or "Perfect for when you're feeling..."
 
+REASONING EXAMPLES (use this style):
+- "This vibe is giving major disco energy - time to bust out the glitter and groove!"
+- "Perfect for when you're feeling that retro rock 'n' roll swagger"
+- "Let's match this energy with some smooth jazz vibes for those cozy evenings"
+- "This is the kind of music that makes you want to dance around your living room"
+- "Time to rock out with some high-energy beats that match this party mood"
+
 Return a JSON object with this EXACT structure:
 {
   "genres": ["genre1", "genre2", "genre3"],
@@ -366,7 +394,7 @@ Return a JSON object with this EXACT structure:
     "valence": {"min": 0.0, "max": 1.0},
     "danceability": {"min": 0.0, "max": 1.0}
   },
-  "reasoning": ["reason1", "reason2", "reason3"]
+  "reasoning": ["cool reason 1", "cool reason 2", "cool reason 3"]
 }
 `;
   }
