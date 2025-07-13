@@ -11,45 +11,36 @@ function App() {
   const [pinterestUser, setPinterestUser] = useState(null);
   const [pinterestToken, setPinterestToken] = useState(null);
 
-  // Load saved authentication state on app start
+  // Clear all sessions on every page refresh for clean, predictable experience
   useEffect(() => {
-    const savedSpotifyUser = localStorage.getItem('moodsync_spotify_user');
-    const savedSpotifyToken = localStorage.getItem('moodsync_spotify_token');
-    const savedPinterestUser = localStorage.getItem('moodsync_pinterest_user');
-    const savedPinterestToken = localStorage.getItem('moodsync_pinterest_token');
-
-    if (savedSpotifyUser && savedSpotifyToken) {
-      try {
-        setSpotifyUser(JSON.parse(savedSpotifyUser));
-        setSpotifyToken(savedSpotifyToken);
-        console.log('Restored Spotify session');
-      } catch (error) {
-        console.error('Error restoring Spotify session:', error);
-        // Clear corrupted data
-        localStorage.removeItem('moodsync_spotify_user');
-        localStorage.removeItem('moodsync_spotify_token');
-      }
-    }
-
-    if (savedPinterestUser && savedPinterestToken) {
-      try {
-        setPinterestUser(JSON.parse(savedPinterestUser));
-        setPinterestToken(savedPinterestToken);
-        console.log('Restored Pinterest session');
-      } catch (error) {
-        console.error('Error restoring Pinterest session:', error);
-        // Clear corrupted data
-        localStorage.removeItem('moodsync_pinterest_user');
-        localStorage.removeItem('moodsync_pinterest_token');
-      }
-    }
+    console.log('🔄 Clearing all sessions on page refresh for clean experience');
+    
+    // Clear localStorage
+    localStorage.removeItem('moodsync_spotify_user');
+    localStorage.removeItem('moodsync_spotify_token');
+    localStorage.removeItem('moodsync_pinterest_user');
+    localStorage.removeItem('moodsync_pinterest_token');
+    
+    // Clear sessionStorage
+    sessionStorage.removeItem('moodsync_spotify_user');
+    sessionStorage.removeItem('moodsync_spotify_token');
+    sessionStorage.removeItem('moodsync_pinterest_user');
+    sessionStorage.removeItem('moodsync_pinterest_token');
+    
+    // Reset state to null
+    setSpotifyUser(null);
+    setSpotifyToken(null);
+    setPinterestUser(null);
+    setPinterestToken(null);
+    
+    console.log('✅ All sessions cleared - users must reconnect for fresh experience');
   }, []);
 
   const handleSpotifyAuth = (token, user) => {
     setSpotifyToken(token);
     setSpotifyUser(user);
     
-    // Persist to localStorage
+    // Persist to localStorage for current session only
     localStorage.setItem('moodsync_spotify_token', token);
     localStorage.setItem('moodsync_spotify_user', JSON.stringify(user));
     
@@ -60,7 +51,7 @@ function App() {
     setPinterestToken(token);
     setPinterestUser(user);
     
-    // Persist to localStorage
+    // Persist to localStorage for current session only
     localStorage.setItem('moodsync_pinterest_token', token);
     localStorage.setItem('moodsync_pinterest_user', JSON.stringify(user));
     
