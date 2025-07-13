@@ -152,7 +152,7 @@ class AIAnalyzer {
     // 🎯 BOARD NAME ANALYSIS (HIGHEST PRIORITY)
     if (boardInfo.boardName) {
       const boardNameAnalysis = this.analyzeBoardNameForMusic(boardInfo.boardName);
-      recommendations.reasoning.push(`Board vibe: ${boardNameAnalysis.reasoning}`);
+      recommendations.reasoning.push(`🎯 ${boardNameAnalysis.reasoning}`);
       recommendations.genres.push(...boardNameAnalysis.genres);
       recommendations.moodCharacteristics.push(...boardNameAnalysis.moods);
       recommendations.searchTerms.push(...boardNameAnalysis.searchTerms);
@@ -162,7 +162,7 @@ class AIAnalyzer {
     // Analyze colors for mood (secondary to board name)
     if (visualAnalysis.dominantColors) {
       const colorAnalysis = this.analyzeColorsForMood(visualAnalysis.dominantColors);
-      recommendations.reasoning.push(`Color energy: ${colorAnalysis.reasoning}`);
+      recommendations.reasoning.push(`🎨 ${colorAnalysis.reasoning}`);
       recommendations.genres.push(...colorAnalysis.genres);
       recommendations.moodCharacteristics.push(...colorAnalysis.moods);
     }
@@ -170,7 +170,7 @@ class AIAnalyzer {
     // Analyze activities
     if (visualAnalysis.activities && visualAnalysis.activities.length > 0) {
       const activityAnalysis = this.analyzeActivitiesForMusic(visualAnalysis.activities);
-      recommendations.reasoning.push(`Activity analysis: ${activityAnalysis.reasoning}`);
+      recommendations.reasoning.push(`🏃‍♀️ ${activityAnalysis.reasoning}`);
       recommendations.genres.push(...activityAnalysis.genres);
       recommendations.energyLevel = activityAnalysis.energyLevel;
       recommendations.searchTerms.push(...activityAnalysis.searchTerms);
@@ -179,7 +179,7 @@ class AIAnalyzer {
     // Analyze settings
     if (visualAnalysis.settings && visualAnalysis.settings.length > 0) {
       const settingAnalysis = this.analyzeSettingsForMusic(visualAnalysis.settings);
-      recommendations.reasoning.push(`Setting analysis: ${settingAnalysis.reasoning}`);
+      recommendations.reasoning.push(`🌍 ${settingAnalysis.reasoning}`);
       recommendations.genres.push(...settingAnalysis.genres);
       recommendations.searchTerms.push(...settingAnalysis.searchTerms);
     }
@@ -305,17 +305,17 @@ Return a JSON object with this EXACT structure:
     if (warmColors.length > coolColors.length) {
       result.genres.push('soul', 'R&B', 'romantic', 'acoustic');
       result.moods.push('warm', 'passionate', 'cozy');
-      result.reasoning = 'Warm color palette detected';
+      result.reasoning = 'These warm, cozy colors are giving major soul vibes - perfect for those intimate, feel-good moments';
     } else if (coolColors.length > warmColors.length) {
       result.genres.push('ambient', 'chill', 'lo-fi', 'indie');
       result.moods.push('calm', 'peaceful', 'serene');
-      result.reasoning = 'Cool color palette detected';
+      result.reasoning = 'These cool, calming colors are perfect for those chill, laid-back vibes';
     }
 
     if (brightColors.length > 2) {
       result.genres.push('pop', 'dance', 'electronic');
       result.moods.push('energetic', 'joyful');
-      result.reasoning += ' - Bright colors suggest high energy';
+      result.reasoning += ' - Plus those bright pops of color are screaming high energy and good times!';
     }
 
     return result;
@@ -343,7 +343,8 @@ Return a JSON object with this EXACT structure:
       }
     }
 
-    result.reasoning = `Activities detected: ${activities.map(a => a.name).join(', ')}`;
+    const activityNames = activities.map(a => a.name).join(', ');
+    result.reasoning = `I'm seeing some ${activityNames} vibes here - this is totally shaping the music mood!`;
     return result;
   }
 
@@ -482,7 +483,8 @@ Return a JSON object with this EXACT structure:
       }
     }
 
-    result.reasoning = `Settings detected: ${settings.map(s => s.name).join(', ')}`;
+    const settingNames = settings.map(s => s.name).join(', ');
+    result.reasoning = `The ${settingNames} atmosphere is totally setting the scene for the perfect soundtrack!`;
     return result;
   }
 

@@ -2886,7 +2886,7 @@ async function generateSophisticatedRecommendations(visualAnalysis, boardInfo) {
   // Analyze colors for mood
   if (visualAnalysis.dominantColors) {
     const colorAnalysis = analyzeColorsForMood(visualAnalysis.dominantColors);
-    recommendations.reasoning.push(`Color analysis: ${colorAnalysis.reasoning}`);
+    recommendations.reasoning.push(`🎨 ${colorAnalysis.reasoning}`);
     recommendations.genres.push(...colorAnalysis.genres);
     recommendations.moodCharacteristics.push(...colorAnalysis.moods);
   }
@@ -2894,7 +2894,7 @@ async function generateSophisticatedRecommendations(visualAnalysis, boardInfo) {
   // Analyze activities
   if (visualAnalysis.activities && visualAnalysis.activities.length > 0) {
     const activityAnalysis = analyzeActivitiesForMusic(visualAnalysis.activities);
-    recommendations.reasoning.push(`Activity analysis: ${activityAnalysis.reasoning}`);
+    recommendations.reasoning.push(`🏃‍♀️ ${activityAnalysis.reasoning}`);
     recommendations.genres.push(...activityAnalysis.genres);
     recommendations.energyLevel = activityAnalysis.energyLevel;
     recommendations.searchTerms.push(...activityAnalysis.searchTerms);
@@ -2903,7 +2903,7 @@ async function generateSophisticatedRecommendations(visualAnalysis, boardInfo) {
   // Analyze settings
   if (visualAnalysis.settings && visualAnalysis.settings.length > 0) {
     const settingAnalysis = analyzeSettingsForMusic(visualAnalysis.settings);
-    recommendations.reasoning.push(`Setting analysis: ${settingAnalysis.reasoning}`);
+    recommendations.reasoning.push(`🌍 ${settingAnalysis.reasoning}`);
     recommendations.genres.push(...settingAnalysis.genres);
     recommendations.searchTerms.push(...settingAnalysis.searchTerms);
   }
@@ -2911,7 +2911,7 @@ async function generateSophisticatedRecommendations(visualAnalysis, boardInfo) {
   // Analyze objects
   if (visualAnalysis.objects && visualAnalysis.objects.length > 0) {
     const objectAnalysis = analyzeObjectsForMusic(visualAnalysis.objects);
-    recommendations.reasoning.push(`Object analysis: ${objectAnalysis.reasoning}`);
+    recommendations.reasoning.push(`🎯 ${objectAnalysis.reasoning}`);
     recommendations.genres.push(...objectAnalysis.genres);
     recommendations.moodCharacteristics.push(...objectAnalysis.moods);
   }
@@ -2942,17 +2942,17 @@ function analyzeColorsForMood(colors) {
   if (warmColors.length > coolColors.length) {
     result.genres.push('soul', 'R&B', 'romantic', 'acoustic');
     result.moods.push('warm', 'passionate', 'cozy');
-    result.reasoning = 'Warm color palette detected';
+    result.reasoning = 'These warm, cozy colors are giving major soul vibes - perfect for those intimate, feel-good moments';
   } else if (coolColors.length > warmColors.length) {
     result.genres.push('ambient', 'chill', 'lo-fi', 'indie');
     result.moods.push('calm', 'peaceful', 'serene');
-    result.reasoning = 'Cool color palette detected';
+    result.reasoning = 'These cool, calming colors are perfect for those chill, laid-back vibes';
   }
 
   if (brightColors.length > 2) {
     result.genres.push('pop', 'dance', 'electronic');
     result.moods.push('energetic', 'joyful');
-    result.reasoning += ' - Bright colors suggest high energy';
+    result.reasoning += ' - Plus those bright pops of color are screaming high energy and good times!';
   }
 
   return result;
@@ -2981,7 +2981,8 @@ function analyzeActivitiesForMusic(activities) {
     }
   }
 
-  result.reasoning = `Activities detected: ${activities.map(a => a.name).join(', ')}`;
+  const activityNames = activities.map(a => a.name).join(', ');
+  result.reasoning = `I'm seeing some ${activityNames} vibes here - this is totally shaping the music mood!`;
   return result;
 }
 
@@ -3006,7 +3007,8 @@ function analyzeSettingsForMusic(settings) {
     }
   }
 
-  result.reasoning = `Settings detected: ${settings.map(s => s.name).join(', ')}`;
+  const settingNames = settings.map(s => s.name).join(', ');
+  result.reasoning = `The ${settingNames} atmosphere is totally setting the scene for the perfect soundtrack!`;
   return result;
 }
 
@@ -3033,7 +3035,8 @@ function analyzeObjectsForMusic(objects) {
     }
   }
 
-  result.reasoning = `Objects detected: ${objects.map(o => o.name).join(', ')}`;
+  const objectNames = objects.map(o => o.name).join(', ');
+  result.reasoning = `These ${objectNames} are totally telling the story of what music you need right now!`;
   return result;
 }
 

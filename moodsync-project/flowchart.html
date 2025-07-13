@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoodSync Workflow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .flowchart {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stage {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .stage:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stage-number {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        .stage-content {
+            flex: 1;
+        }
+
+        .stage-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .stage-description {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .arrow {
+            text-align: center;
+            font-size: 2em;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .sub-steps {
+            margin-left: 70px;
+            margin-top: 15px;
+        }
+
+        .sub-step {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 8px 0;
+            border-left: 4px solid #667eea;
+            font-size: 0.9em;
+        }
+
+        .api-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #2196f3;
+        }
+
+        .ai-section {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border: 2px solid #9c27b0;
+        }
+
+        .spotify-section {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            border: 2px solid #4caf50;
+        }
+
+        .user-section {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%);
+            border: 2px solid #ff9800;
+        }
+
+        .icon {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+
+        .tech-stack {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+        }
+
+        .tech-stack h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .tech-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+
+        .tech-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .tech-item span {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .stage {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .sub-steps {
+                margin-left: 0;
+            }
+            
+            .tech-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨→🎵 MoodSync Workflow</h1>
+        
+        <div class="flowchart">
+            <!-- Stage 1: User Input -->
+            <div class="stage user-section">
+                <div class="stage-number">1</div>
+                <div class="stage-content">
+                    <div class="stage-title">👤 User Input & URL Processing</div>
+                    <div class="stage-description">
+                        User enters Pinterest board URL → Frontend validates URL → Backend receives request
+                    </div>
+                    <div class="sub-steps">
+                        <div class="sub-step">📝 URL validation and sanitization</div>
+                        <div class="sub-step">🔗 Pinterest board URL extraction</div>
+                        <div class="sub-step">⚡ Rate limiting check (3 req/min per user)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow">⬇️</div>
+
+            <!-- Stage 2: Image Extraction -->
+            <div class="stage api-section">
+                <div class="stage-number">2</div>
+                <div class="stage-content">
+                    <div class="stage-title">📸 Image Extraction & Vision API Analysis</div>
+                    <div class="stage-description">
+                        Backend scrapes Pinterest board → Extracts 5 images → Google Vision API analyzes each image
+                    </div>
+                    <div class="sub-steps">
+                        <div class="sub-step">🕷️ Web scraping of Pinterest board</div>
+                        <div class="sub-step">🖼️ Image URL extraction (5 images max)</div>
+                        <div class="sub-step">🎨 Google Vision API analysis per image</div>
+                        <div class="sub-step">🏷️ Object detection with confidence scores</div>
+                        <div class="sub-step">👥 Face detection and expression analysis</div>
+                        <div class="sub-step">🌈 Color palette extraction</div>
+                        <div class="sub-step">📝 Text recognition (OCR)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow">⬇️</div>
+
+            <!-- Stage 3: Mood Detection -->
+            <div class="stage ai-section">
+                <div class="stage-number">3</div>
+                <div class="stage-content">
+                    <div class="stage-title">🧠 Mood Detection & Aggregation</div>
+                    <div class="stage-description">
+                        For each image: Color analysis → Mood mapping → Object analysis → Face analysis → Text analysis
+                    </div>
+                    <div class="sub-steps">
+                        <div class="sub-step">🎨 Color temperature analysis (warm/cool/bright)</div>
+                        <div class="sub-step">😊 Mood mapping (passionate/calm/energetic/melancholic)</div>
+                        <div class="sub-step">🏃 Activity detection (workout/relaxation/social)</div>
+                        <div class="sub-step">🏠 Setting analysis (indoor/outdoor/urban/rural)</div>
+                        <div class="sub-step">📊 Confidence scoring for each mood</div>
+                        <div class="sub-step">🔄 Aggregation across all 5 images</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow">⬇️</div>
+
+            <!-- Stage 4: AI Recommendations -->
+            <div class="stage ai-section">
+                <div class="stage-number">4</div>
+                <div class="stage-content">
+                    <div class="stage-title">🤖 AI-Powered Music Recommendations</div>
+                    <div class="stage-description">
+                        Claude AI receives visual analysis → Generates sophisticated music recommendations
+                    </div>
+                    <div class="sub-steps">
+                        <div class="sub-step">📋 Claude AI prompt creation with analysis data</div>
+                        <div class="sub-step">🎵 Genre recommendations (3-5 specific genres)</div>
+                        <div class="sub-step">⚡ Energy level determination (low/medium/high)</div>
+                        <div class="sub-step">🎼 Tempo range specification (BPM)</div>
+                        <div class="sub-step">😊 Mood characteristics mapping</div>
+                        <div class="sub-step">🔍 Spotify search terms generation</div>
+                        <div class="sub-step">🎛️ Audio features targeting</div>
+                        <div class="sub-step">🔄 Fallback to rule-based system if AI fails</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow">⬇️</div>
+
+            <!-- Stage 5: Spotify Integration -->
+            <div class="stage spotify-section">
+                <div class="stage-number">5</div>
+                <div class="stage-content">
+                    <div class="stage-title">🎵 Spotify Integration & Playlist Creation</div>
+                    <div class="stage-description">
+                        Backend uses AI recommendations → Searches Spotify API → Creates personalized playlist
+                    </div>
+                    <div class="sub-steps">
+                        <div class="sub-step">🔍 Spotify API search with AI-generated terms</div>
+                        <div class="sub-step">🎛️ Audio feature filtering</div>
+                        <div class="sub-step">🎲 Track randomization and selection (20 tracks)</div>
+                        <div class="sub-step">📝 Playlist creation with mood-appropriate name</div>
+                        <div class="sub-step">➕ Adding tracks to user's Spotify account</div>
+                        <div class="sub-step">🔗 Playlist URL generation</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow">⬇️</div>
+
+            <!-- Stage 6: Frontend Display -->
+            <div class="stage user-section">
+                <div class="stage-number">6</div>
+                <div class="stage-content">
+                    <div class="stage-title">🖥️ Frontend Display & User Experience</div>
+                    <div class="stage-description">
+                        Frontend receives results → Displays animated analysis → Shows playlist with Spotify player
+                    </div>
+                    <div class="sub-steps">
+                        <div class="sub-step">📊 Animated analysis visualization</div>
+                        <div class="sub-step">😊 Mood breakdown with confidence scores</div>
+                        <div class="sub-step">🤖 AI-generated recommendations display</div>
+                        <div class="sub-step">🎵 Generated playlist with Spotify player</div>
+                        <div class="sub-step">🔄 Option to create new playlists</div>
+                        <div class="sub-step">📱 Responsive design for all devices</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tech-stack">
+            <h3>🛠️ Technology Stack</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <strong>Frontend</strong>
+                    <span>React.js, CSS3, HTML5</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Backend</strong>
+                    <span>Node.js, Express.js</span>
+                </div>
+                <div class="tech-item">
+                    <strong>AI/ML</strong>
+                    <span>Claude AI, Google Vision API</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Music</strong>
+                    <span>Spotify Web API</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Social</strong>
+                    <span>Pinterest API</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Deployment</strong>
+                    <span>Netlify (Frontend), Render (Backend)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
