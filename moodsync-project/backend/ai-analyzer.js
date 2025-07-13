@@ -173,14 +173,14 @@ class AIAnalyzer {
             role: 'system',
             content: `You are a music recommendation expert with a cool, casual vibe. You're talking to a friend about music, not writing a research paper. 
 
-IMPORTANT: Use casual, fun language in your reasoning. Think like you're explaining music to a friend at a party. Use phrases like:
+IMPORTANT: Use casual, natural language in your reasoning. Think like you're explaining music to a friend. Use phrases like:
 - "This vibe is giving..." 
 - "Perfect for when you're feeling..."
 - "Let's match this energy with..."
-- "Time to rock out with..."
 - "This is the kind of music that..."
+- "Goes well with..."
 
-Avoid formal or scientific language. Be conversational and cool!
+Keep it natural and cool - no forced enthusiasm or exclamation marks.
 
 Return your response as a valid JSON object with the following structure:
 {
@@ -237,14 +237,14 @@ Return your response as a valid JSON object with the following structure:
             role: 'user',
             content: `${prompt}
 
-IMPORTANT: Use casual, fun language in your reasoning. Think like you're explaining music to a friend at a party. Use phrases like:
+IMPORTANT: Use casual, natural language in your reasoning. Think like you're explaining music to a friend. Use phrases like:
 - "This vibe is giving..." 
 - "Perfect for when you're feeling..."
 - "Let's match this energy with..."
-- "Time to rock out with..."
 - "This is the kind of music that..."
+- "Goes well with..."
 
-Avoid formal or scientific language. Be conversational and cool!
+Keep it natural and cool - no forced enthusiasm or exclamation marks.
 
 Please respond with a valid JSON object containing music recommendations.`
           }
@@ -376,11 +376,11 @@ TONE: Keep it casual, fun, and conversational. Like you're talking to a friend a
 Use phrases like "This vibe is giving..." or "Let's match this energy with..." or "Perfect for when you're feeling..."
 
 REASONING EXAMPLES (use this style):
-- "This vibe is giving major disco energy - time to bust out the glitter and groove!"
-- "Perfect for when you're feeling that retro rock 'n' roll swagger"
+- "This vibe is giving major disco energy - perfect for those groovy dance sessions"
+- "Goes well with that retro rock 'n' roll swagger you're going for"
 - "Let's match this energy with some smooth jazz vibes for those cozy evenings"
 - "This is the kind of music that makes you want to dance around your living room"
-- "Time to rock out with some high-energy beats that match this party mood"
+- "Perfect for when you're feeling that high-energy party mood"
 
 Return a JSON object with this EXACT structure:
 {
