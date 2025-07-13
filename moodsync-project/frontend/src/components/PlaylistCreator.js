@@ -130,6 +130,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         <p className="pc-desc">AI-generated music recommendations based on your Pinterest board</p>
         
         {/* Show preview if available */}
+        {console.log('🎵 PlaylistCreator - Full createdPlaylist:', createdPlaylist)}
         {createdPlaylist ? (
           <div className="pc-created">
             <h4 className="pc-created-title">
@@ -146,6 +147,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
             
             {/* Spotify Player for Preview */}
             <div className="pc-player-section">
+              {console.log('🎵 PlaylistCreator - Tracks data:', createdPlaylist.tracks)}
               <SpotifyPlayer
                 tracks={createdPlaylist.tracks || []}
                 isConnected={false}
@@ -220,6 +222,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         <p><strong>Genres:</strong> {genres.slice(0, 3).join(', ')}</p>
         <p><strong>For:</strong> {spotifyUser?.display_name || 'You'}</p>
       </div>
+      {console.log('🎵 PlaylistCreator - Connected full createdPlaylist:', createdPlaylist)}
       {createdPlaylist && (
         <div className="pc-created">
           <h4 className="pc-created-title">
@@ -263,6 +266,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           
           {/* Spotify Player */}
           <div className="pc-player-section">
+            {console.log('🎵 PlaylistCreator - Connected tracks data:', createdPlaylist.tracks)}
             <SpotifyPlayer
               tracks={createdPlaylist.tracks || []}
               isConnected={true}
