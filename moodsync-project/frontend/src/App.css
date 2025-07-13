@@ -988,6 +988,18 @@ textarea:focus {
   margin-bottom: var(--space-lg);
 }
 
+.pc-create-section {
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.pc-create-desc {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  font-style: italic;
+}
+
 /* Apple-inspired Pinterest Callback Styles */
 .pcb-callback-bg {
   min-height: 100vh;

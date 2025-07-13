@@ -1,4 +1,4 @@
-// src/components/PlaylistCreator.js - Cleaned up version
+// src/components/PlaylistCreator.js - Fixed version with board name always used
 import React, { useState } from 'react';
 import SpotifyPlayer from './SpotifyPlayer';
 
@@ -29,10 +29,11 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
   const handleCreatePlaylist = async () => {
     setIsCreating(true);
     try {
+      const boardName = getBoardName(analysis);
       console.log('🎵 Creating playlist with data:', {
         accessToken: spotifyToken ? 'present' : 'missing',
         analysis: analysis,
-        playlistName: getBoardName(analysis)
+        playlistName: boardName
       });
 
       const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/create-playlist`, {
@@ -41,7 +42,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         body: JSON.stringify({
           accessToken: spotifyToken,
           analysis: analysis,
-          playlistName: getBoardName(analysis)
+          playlistName: boardName
         })
       });
 
@@ -68,7 +69,8 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
         if (data.isPreview) {
           console.log('👀 Playlist preview generated!');
         } else {
-          alert(`🎉 Playlist "${data.playlist.name}" created successfully!`);
+          console.log(`🎉 Playlist "${data.playlist.name}" created successfully!`);
+          // Don't show alert for logged-in users, let the embedded player show the success
         }
       } else {
         console.error('❌ Playlist creation failed:', data);
@@ -178,35 +180,26 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
 
   const genres = getGenres(analysis);
   const mood = getMood(analysis);
+  const boardName = getBoardName(analysis);
 
   return (
     <section className="apple-glass playlist-creator" aria-label="Create Spotify Playlist">
       <h3 className="pc-title">🎵 Create Spotify Playlist</h3>
-      <form className="pc-form" onSubmit={e => { e.preventDefault(); handleCreatePlaylist(); }}>
-        <input
-          type="text"
-          className="pc-input"
-          placeholder={`${mood} Vibes`}
-          defaultValue={`${mood} Vibes`}
-          aria-label="Playlist name"
-          disabled={isCreating}
-        />
-        <button
-          type="submit"
-          className="pc-create-btn"
-          onClick={handleCreatePlaylist}
-          disabled={isCreating}
-          aria-busy={isCreating}
-        >
-          {isCreating ? '🎵 Creating...' : '🎵 Create Playlist'}
-        </button>
-      </form>
-      <div className="pc-summary">
-        <p><strong>Based on:</strong> {mood}</p>
-        <p><strong>Genres:</strong> {genres.slice(0, 3).join(', ')}</p>
-        <p><strong>For:</strong> {spotifyUser?.display_name || 'You'}</p>
-      </div>
-      {createdPlaylist && (
+      
+      {/* Show create button if no playlist created yet */}
+      {!createdPlaylist ? (
+        <div className="pc-create-section">
+          <p className="pc-create-desc">Create a playlist named "{boardName}" based on your Pinterest board</p>
+          <button
+            className="pc-create-btn"
+            onClick={handleCreatePlaylist}
+            disabled={isCreating}
+            aria-busy={isCreating}
+          >
+            {isCreating ? '🎵 Creating...' : '🎵 Create Playlist'}
+          </button>
+        </div>
+      ) : (
         <div className="pc-created">
           <h4 className="pc-created-title">
             {createdPlaylist.isPreview ? '👀 Playlist Preview Generated!' : '🎉 Playlist Created!'}
@@ -217,7 +210,7 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
             <SpotifyPlayer
               tracks={createdPlaylist.tracks || []}
               isConnected={true}
-              title={getBoardName(analysis)}
+              title={boardName}
               onConnectClick={() => {
                 // Already connected, but could trigger reconnection if needed
                 console.log('Spotify already connected');
@@ -226,6 +219,13 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser }) => {
           </div>
         </div>
       )}
+      
+      <div className="pc-summary">
+        <p><strong>Based on:</strong> {mood}</p>
+        <p><strong>Genres:</strong> {genres.slice(0, 3).join(', ')}</p>
+        <p><strong>For:</strong> {spotifyUser?.display_name || 'You'}</p>
+        <p><strong>Playlist:</strong> {boardName}</p>
+      </div>
     </section>
   );
 };
