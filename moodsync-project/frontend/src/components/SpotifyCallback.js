@@ -30,7 +30,43 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
           
           if (data.success) {
             onSpotifyAuth(data.access_token, data.user);
-            alert(`Welcome ${data.user.display_name}! Spotify connected.`);
+            
+            // Check if there's pending analysis to create a playlist
+            const pendingAnalysis = localStorage.getItem('moodsync_pending_analysis');
+            const pendingPlaylistName = localStorage.getItem('moodsync_pending_playlist_name');
+            
+            if (pendingAnalysis && pendingPlaylistName) {
+              try {
+                // Create the actual playlist in Spotify
+                const createResponse = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/create-playlist`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    accessToken: data.access_token,
+                    analysis: JSON.parse(pendingAnalysis),
+                    playlistName: pendingPlaylistName
+                  })
+                });
+
+                const createData = await createResponse.json();
+                
+                if (createData.success) {
+                  // Clear the pending data
+                  localStorage.removeItem('moodsync_pending_analysis');
+                  localStorage.removeItem('moodsync_pending_playlist_name');
+                  
+                  // Navigate back to home with success message
+                  alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created in Spotify!`);
+                } else {
+                  alert('Spotify connected! However, there was an issue creating your playlist. You can try creating it again from the home page.');
+                }
+              } catch (error) {
+                console.error('Error creating playlist after OAuth:', error);
+                alert('Spotify connected! However, there was an issue creating your playlist. You can try creating it again from the home page.');
+              }
+            } else {
+              alert(`Welcome ${data.user.display_name}! Spotify connected successfully.`);
+            }
           } else {
             alert('Failed to connect: ' + data.message);
           }
@@ -119,7 +155,7 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
             marginBottom: 'var(--space-xl)',
             color: 'var(--text-secondary)'
           }}>
-            Please wait while we connect your account.
+            Please wait while we connect your account and create your playlist.
           </p>
           
           <div style={{

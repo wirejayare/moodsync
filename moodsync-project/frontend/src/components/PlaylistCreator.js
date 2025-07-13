@@ -87,6 +87,10 @@ const PlaylistCreator = ({ spotifyToken, analysis, spotifyUser, onSpotifyAuth })
   // Handle Spotify OAuth
   const handleSpotifyAuth = async () => {
     try {
+      // Store the current analysis in localStorage before OAuth
+      localStorage.setItem('moodsync_pending_analysis', JSON.stringify(analysis));
+      localStorage.setItem('moodsync_pending_playlist_name', getBoardName(analysis));
+      
       const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/spotify/auth-url`);
       const { authUrl } = await response.json();
       window.location.href = authUrl;
