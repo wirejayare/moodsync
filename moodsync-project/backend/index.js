@@ -2572,9 +2572,14 @@ app.post('/api/analyze-pinterest', async (req, res) => {
 
   } catch (error) {
     console.error('Pinterest analysis error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      url: pinterestUrl
+    });
     res.status(500).json({
       success: false,
-      message: 'Analysis failed. Please try again.',
+      message: error.message || 'Analysis failed. Please try again.',
       error: error.message
     });
   }
@@ -2614,9 +2619,14 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
 
   } catch (error) {
     console.error('Enhanced analysis error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      url: url
+    });
     res.status(500).json({
       success: false,
-      message: 'Enhanced analysis failed. Please try again.',
+      message: error.message || 'Enhanced analysis failed. Please try again.',
       error: error.message
     });
   }
@@ -3055,7 +3065,7 @@ async function extractImagesFromBoardUrl(boardUrl) {
 async function generateEnhancedAnalysisWithVision(url) {
   console.log('🔍 Starting enhanced analysis with Vision API for:', url);
   
-  const boardInfo = extractBoardInfo(url);
+  const boardInfo = await extractBoardInfo(url);
   const analysisText = [
     boardInfo.boardName,
     boardInfo.username,
