@@ -72,14 +72,17 @@ const Home = ({
     let analysisData = null;
     
     try {
-      if (typeof boardOrUrl === 'string' && boardOrUrl.includes('pinterest.com')) {
+      if (typeof boardOrUrl === 'string' && (boardOrUrl.includes('pinterest.com') || boardOrUrl.includes('pin.it/'))) {
         // Board URL mode
+        console.log('🔍 Sending URL analysis request:', boardOrUrl);
         const response = await fetch('https://moodsync-backend-sdbe.onrender.com/api/analyze-pinterest-enhanced', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: boardOrUrl })
         });
+        console.log('📡 Response status:', response.status);
         const data = await response.json();
+        console.log('📡 Response data:', data);
         if (data.success) {
           analysisData = data.analysis;
         } else {
@@ -109,6 +112,12 @@ const Home = ({
       await handleAutoGeneratePreview(analysisData);
       
     } catch (error) {
+      console.error('❌ Analysis error:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        boardOrUrl: boardOrUrl
+      });
       alert('Failed to analyze board: ' + error.message);
     }
   };
