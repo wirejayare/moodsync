@@ -5,6 +5,13 @@ import SpotifyCallback from './components/SpotifyCallback';
 import PinterestCallback from './components/PinterestCallback';
 import './App.css';
 
+// Liquid morphing debug layers (same as in Home.js)
+const liquidLayersDebug = [
+  { gradient: 'linear-gradient(135deg, #39ff14 0%, #330000 50%, #1a1a1a 100%)', opacity: 1, transform: 'scale(1) rotate(0deg)' },
+  { gradient: 'linear-gradient(45deg, #2d0000 0%, #4d0000 50%, #2d2d2d 100%)', opacity: 0.7, transform: 'scale(1.1) rotate(5deg)' },
+  { gradient: 'linear-gradient(225deg, #000000 0%, #1a0000 50%, #404040 100%)', opacity: 0.5, transform: 'scale(1.2) rotate(-3deg)' }
+];
+
 function App() {
   const [spotifyUser, setSpotifyUser] = useState(null);
   const [spotifyToken, setSpotifyToken] = useState(null);
@@ -75,6 +82,23 @@ function App() {
   return (
     <Router>
       <div className="App">
+        {/* DEBUG: Liquid morphing background at top level */}
+        <div className="liquid-bg-container" style={{ zIndex: 9999, opacity: 0.7, background: 'magenta', pointerEvents: 'none' }}>
+          {liquidLayersDebug.map((layer, index) => (
+            <div
+              key={index}
+              className="liquid-bg-layer"
+              style={{
+                background: layer.gradient,
+                opacity: layer.opacity,
+                transform: layer.transform,
+                filter: `blur(${index * 2}px)`,
+                border: '2px solid red',
+                transition: `all 2s cubic-bezier(0.4, 0, 0.2, 1)`
+              }}
+            />
+          ))}
+        </div>
         <Routes>
           <Route 
             path="/" 
