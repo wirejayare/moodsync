@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 
 const COLORS = [
+  '#ff0000', '#00ff00', '#0000ff', '#ffff00', // Bright debug colors
   '#1a0000', '#330000', '#2d0000', '#4d0000',
   '#000000', '#1a1a1a', '#2d2d2d', '#404040'
 ];
@@ -23,8 +24,10 @@ function ParticleBackground() {
     canvas.width = width;
     canvas.height = height;
 
+    console.log('ParticleBackground: Canvas initialized', { width, height });
+
     function createParticle() {
-      const size = randomBetween(18, 60);
+      const size = randomBetween(30, 80); // Larger particles for debug
       return {
         x: randomBetween(0, width),
         y: randomBetween(0, height),
@@ -32,12 +35,13 @@ function ParticleBackground() {
         vy: randomBetween(-0.04, 0.04),
         size,
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        opacity: randomBetween(0.08, 0.22),
-        blur: randomBetween(8, 24),
+        opacity: randomBetween(0.3, 0.8), // Higher opacity for debug
+        blur: randomBetween(2, 8), // Less blur for debug
       };
     }
 
     particles.current = Array.from({ length: NUM_PARTICLES }, createParticle);
+    console.log('ParticleBackground: Created', particles.current.length, 'particles');
 
     function animate() {
       ctx.clearRect(0, 0, width, height);
@@ -84,8 +88,9 @@ function ParticleBackground() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        zIndex: -1,
+        zIndex: 1, // Higher z-index for debug
         pointerEvents: 'none',
+        border: '2px solid yellow', // Debug border
       }}
     />
   );
