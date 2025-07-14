@@ -244,13 +244,6 @@ const Home = ({
             marginBottom: '2rem',
             color: 'white'
           }}>
-            <h4 style={{ 
-              marginBottom: '1rem',
-              color: 'white',
-              textAlign: 'center'
-            }}>
-              📌 Pinterest Board Analysis
-            </h4>
             
             {/* Mode Selection */}
             <div style={{ 
@@ -362,9 +355,6 @@ const Home = ({
               </div>
             ) : (
               <div>
-                <div style={{ marginBottom: '8px', fontSize: '14px', color: 'white', opacity: 0.8 }}>
-                  💡 <strong>Quick Analysis:</strong> Enter any Pinterest board URL to analyze without connecting your account
-                </div>
                 <input
                   type="url"
                   placeholder="https://www.pinterest.com/username/board-name/ or https://pin.it/abc123"
