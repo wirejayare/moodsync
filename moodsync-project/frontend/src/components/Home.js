@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PlaylistCreator from './PlaylistCreator';
 import PinterestConnector from './PinterestConnector';
+import LiquidText from './LiquidText';
 
 const Home = ({ 
   spotifyUser, 
@@ -270,7 +271,11 @@ const Home = ({
             />
           ))}
         </div>
-        <h1 className="home-title">🎨 MoodSync</h1>
+        
+        <LiquidText className="home-title">
+          🎨 MoodSync
+        </LiquidText>
+        
         <p className="home-subtitle">
           Transform Pinterest moodboards into Spotify playlists
         </p>
