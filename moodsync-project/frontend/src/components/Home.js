@@ -272,10 +272,10 @@ const Home = ({
           ))}
         </div>
         
-        <LiquidText className="home-title">
+        <h1 className="home-title">
           MOODBOARD<br />
           MIXTAPE
-        </LiquidText>
+        </h1>
         
         <p className="home-subtitle">
           Transform Pinterest moodboards into Spotify playlists
