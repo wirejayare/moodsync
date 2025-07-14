@@ -1515,3 +1515,10 @@ textarea:focus {
     transform: scale(1.3) rotate(8deg);
   }
 }
+
+/* Make main UI modules more opaque for readability */
+.apple-glass, .home-analyzer-section, .home-step-card, .playlist-creator-container {
+  background: rgba(30, 30, 30, 0.88) !important;
+  box-shadow: 0 4px 32px 0 rgba(0,0,0,0.18);
+  backdrop-filter: blur(8px);
+}
