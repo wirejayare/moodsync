@@ -22,7 +22,7 @@ const Home = ({
   const [createdPlaylist, setCreatedPlaylist] = useState(null); // New state for created playlist
   const [bgGradient, setBgGradient] = useState('linear-gradient(135deg, #222 0%, #333 100%)');
   const [liquidLayers, setLiquidLayers] = useState([
-    { gradient: 'linear-gradient(135deg, #1a0000 0%, #330000 50%, #1a1a1a 100%)', opacity: 1, transform: 'scale(1) rotate(0deg)' },
+    { gradient: 'linear-gradient(135deg, #39ff14 0%, #330000 50%, #1a1a1a 100%)', opacity: 1, transform: 'scale(1) rotate(0deg)' },
     { gradient: 'linear-gradient(45deg, #2d0000 0%, #4d0000 50%, #2d2d2d 100%)', opacity: 0.7, transform: 'scale(1.1) rotate(5deg)' },
     { gradient: 'linear-gradient(225deg, #000000 0%, #1a0000 50%, #404040 100%)', opacity: 0.5, transform: 'scale(1.2) rotate(-3deg)' }
   ]);

@@ -1109,10 +1109,9 @@ textarea:focus {
   padding: 32px 0;
 }
 .home-container {
-  max-width: 700px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 16px;
+  min-height: 100vh;
+  position: relative;
+  background: transparent !important;
 }
 .home-title {
   font-family: var(--font-display);
@@ -1499,6 +1498,7 @@ textarea:focus {
   border-radius: 50%;
   background-size: 200% 200%;
   animation: liquidFlow 12s ease-in-out infinite;
+  border: 2px solid red; /* DEBUG: show layer borders */
 }
 
 @keyframes liquidFlow {
