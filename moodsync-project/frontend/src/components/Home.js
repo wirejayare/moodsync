@@ -21,6 +21,11 @@ const Home = ({
   const [mode, setMode] = useState('picker'); // 'picker' or 'url'
   const [createdPlaylist, setCreatedPlaylist] = useState(null); // New state for created playlist
   const [bgGradient, setBgGradient] = useState('linear-gradient(135deg, #222 0%, #333 100%)');
+  const [liquidLayers, setLiquidLayers] = useState([
+    { gradient: 'linear-gradient(135deg, #222 0%, #333 100%)', opacity: 1, transform: 'scale(1) rotate(0deg)' },
+    { gradient: 'linear-gradient(135deg, #222 0%, #333 100%)', opacity: 0.7, transform: 'scale(1.1) rotate(5deg)' },
+    { gradient: 'linear-gradient(135deg, #222 0%, #333 100%)', opacity: 0.5, transform: 'scale(1.2) rotate(-3deg)' }
+  ]);
 
   useEffect(() => {
     // Test backend connection
@@ -200,18 +205,32 @@ const Home = ({
     }
   }, [analysis]);
 
-  // Animate background gradient when analysis changes
+  // Liquid morphing animation when analysis changes
   useEffect(() => {
     if (analysis && analysis.visual && analysis.visual.color_palette && analysis.visual.color_palette.length > 0) {
-      // Use up to 4 colors for the gradient
+      // Extract colors and create liquid morphing effect
       const colors = analysis.visual.color_palette.slice(0, 4).map(c => c.hex);
-      // Evenly space color stops
-      const stops = colors.map((color, i) => `${color} ${(i/(colors.length-1))*100}%`);
-      const gradient = `linear-gradient(135deg, ${stops.join(', ')})`;
-      setBgGradient(gradient);
-    } else {
-      // Fallback to default
-      setBgGradient('linear-gradient(135deg, #222 0%, #333 100%)');
+      
+      // Create multiple gradient layers with different rotations and scales
+      const newLayers = [
+        {
+          gradient: `linear-gradient(${45 + Math.random() * 30}deg, ${colors.join(', ')})`,
+          opacity: 1,
+          transform: `scale(${1 + Math.random() * 0.2}) rotate(${Math.random() * 10 - 5}deg)`
+        },
+        {
+          gradient: `linear-gradient(${135 + Math.random() * 30}deg, ${colors.reverse().join(', ')})`,
+          opacity: 0.7,
+          transform: `scale(${1.1 + Math.random() * 0.2}) rotate(${Math.random() * 10 - 5}deg)`
+        },
+        {
+          gradient: `linear-gradient(${225 + Math.random() * 30}deg, ${colors.slice().reverse().join(', ')})`,
+          opacity: 0.5,
+          transform: `scale(${1.2 + Math.random() * 0.2}) rotate(${Math.random() * 10 - 5}deg)`
+        }
+      ];
+      
+      setLiquidLayers(newLayers);
     }
   }, [analysis]);
 
@@ -235,6 +254,22 @@ const Home = ({
       transition: 'background 1.5s cubic-bezier(0.4,0,0.2,1)'
     }}>
       <div className="home-container">
+        {/* Liquid morphing background layers */}
+        <div className="liquid-bg-container">
+          {liquidLayers.map((layer, index) => (
+            <div
+              key={index}
+              className="liquid-bg-layer"
+              style={{
+                background: layer.gradient,
+                opacity: layer.opacity,
+                transform: layer.transform,
+                filter: `blur(${index * 2}px)`,
+                transition: `all 2s cubic-bezier(0.4, 0, 0.2, 1)`
+              }}
+            />
+          ))}
+        </div>
         <h1 className="home-title">🎨 MoodSync</h1>
         <p className="home-subtitle">
           Transform Pinterest moodboards into Spotify playlists
