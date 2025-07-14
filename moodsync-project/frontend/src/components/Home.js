@@ -20,6 +20,7 @@ const Home = ({
   const [boardUrl, setBoardUrl] = useState(''); // New state for board URL
   const [mode, setMode] = useState('picker'); // 'picker' or 'url'
   const [createdPlaylist, setCreatedPlaylist] = useState(null); // New state for created playlist
+  const [bgGradient, setBgGradient] = useState('linear-gradient(135deg, #222 0%, #333 100%)');
 
   useEffect(() => {
     // Test backend connection
@@ -199,6 +200,21 @@ const Home = ({
     }
   }, [analysis]);
 
+  // Animate background gradient when analysis changes
+  useEffect(() => {
+    if (analysis && analysis.visual && analysis.visual.color_palette && analysis.visual.color_palette.length > 0) {
+      // Use up to 4 colors for the gradient
+      const colors = analysis.visual.color_palette.slice(0, 4).map(c => c.hex);
+      // Evenly space color stops
+      const stops = colors.map((color, i) => `${color} ${(i/(colors.length-1))*100}%`);
+      const gradient = `linear-gradient(135deg, ${stops.join(', ')})`;
+      setBgGradient(gradient);
+    } else {
+      // Fallback to default
+      setBgGradient('linear-gradient(135deg, #222 0%, #333 100%)');
+    }
+  }, [analysis]);
+
   const handleSpotifyAuth = async () => {
     try {
       const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/spotify/auth-url`);
@@ -214,7 +230,10 @@ const Home = ({
   };
 
   return (
-    <main className="home-bg" aria-label="MoodSync Home">
+    <main className="home-bg" aria-label="MoodSync Home" style={{
+      background: bgGradient,
+      transition: 'background 1.5s cubic-bezier(0.4,0,0.2,1)'
+    }}>
       <div className="home-container">
         <h1 className="home-title">🎨 MoodSync</h1>
         <p className="home-subtitle">
