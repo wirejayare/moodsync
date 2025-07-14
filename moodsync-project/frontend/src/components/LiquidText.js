@@ -23,24 +23,43 @@ const LiquidText = ({ children, className = '', trigger = 'load' }) => {
     };
   }, [trigger]);
 
+  // Split text into individual characters and apply specific animations
+  const renderLiquidText = (text) => {
+    return text.split('').map((char, index) => {
+      let animationClass = '';
+      
+      if (char === 'O' || char === 'o') {
+        animationClass = 'liquid-o';
+      } else if (char === 'X' || char === 'x') {
+        animationClass = 'liquid-x';
+      } else if (char === '\n') {
+        return <br key={index} />;
+      }
+      
+      return (
+        <span 
+          key={index} 
+          className={animationClass}
+          style={{
+            display: 'inline-block',
+            background: 'linear-gradient(45deg, #fff, #f0f0f0, #fff, #e0e0e0, #fff)',
+            backgroundSize: '200% 200%',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))'
+          }}
+        >
+          {char}
+        </span>
+      );
+    });
+  };
+
   return (
     <div className={`liquid-text ${className}`}>
-      <span 
-        ref={textRef}
-        className="liquid-text-inner"
-        style={{
-          background: 'linear-gradient(45deg, #fff, #f0f0f0, #fff, #e0e0e0, #fff)',
-          backgroundSize: '200% 200%',
-          animation: 'liquidGradient 3s ease-in-out infinite',
-          display: 'inline-block',
-          position: 'relative',
-          WebkitBackgroundClip: 'text',
-          backgroundClip: 'text',
-          color: 'transparent',
-          filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))'
-        }}
-      >
-        {children}
+      <span ref={textRef} className="liquid-text-inner">
+        {renderLiquidText(children)}
       </span>
     </div>
   );

@@ -273,7 +273,8 @@ const Home = ({
         </div>
         
         <LiquidText className="home-title">
-          🎨 MoodSync
+          MOODBOARD<br />
+          MIXTAPE
         </LiquidText>
         
         <p className="home-subtitle">

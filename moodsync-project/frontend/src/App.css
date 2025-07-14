@@ -1537,6 +1537,37 @@ textarea:focus {
   }
 }
 
+/* Specific animations for O's and X's */
+@keyframes liquidO {
+  0%, 100% {
+    transform: scale(1, 1);
+  }
+  25% {
+    transform: scale(1.3, 0.8);
+  }
+  50% {
+    transform: scale(0.8, 1.3);
+  }
+  75% {
+    transform: scale(1.2, 0.9);
+  }
+}
+
+@keyframes liquidX {
+  0%, 100% {
+    transform: scale(1, 1) rotate(0deg);
+  }
+  25% {
+    transform: scale(0.7, 1.4) rotate(2deg);
+  }
+  50% {
+    transform: scale(1.4, 0.7) rotate(-2deg);
+  }
+  75% {
+    transform: scale(0.9, 1.2) rotate(1deg);
+  }
+}
+
 .liquid-text {
   position: relative;
   display: inline-block;
@@ -1552,11 +1583,30 @@ textarea:focus {
   font-weight: 700;
   font-size: 3.5rem;
   text-align: center;
+  line-height: 1.2;
+}
+
+.liquid-o {
+  animation: liquidO 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+.liquid-x {
+  animation: liquidX 3s ease-in-out infinite;
+  display: inline-block;
 }
 
 .liquid-text:hover .liquid-text-inner {
   animation-duration: 2s, 1.5s;
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
+}
+
+.liquid-text:hover .liquid-o {
+  animation-duration: 1.5s;
+}
+
+.liquid-text:hover .liquid-x {
+  animation-duration: 1.5s;
 }
 
 /* Enhanced wave effect */
@@ -1569,6 +1619,10 @@ textarea:focus {
   .liquid-text-inner {
     animation-duration: 6s, 4s;
     font-size: 2.5rem;
+  }
+  
+  .liquid-o, .liquid-x {
+    animation-duration: 4s;
   }
 }
 
