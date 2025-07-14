@@ -47,7 +47,8 @@ const LiquidText = ({ children, className = '', trigger = 'load' }) => {
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
-            filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))'
+            filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))',
+            animation: animationClass ? `${animationClass} 3s ease-in-out infinite` : 'liquidGradient 3s ease-in-out infinite'
           }}
         >
           {char}

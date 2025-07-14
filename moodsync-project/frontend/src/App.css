@@ -1578,7 +1578,6 @@ textarea:focus {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  animation: liquidWave 4s ease-in-out infinite, liquidGradient 3s ease-in-out infinite;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
   font-weight: 700;
   font-size: 3.5rem;
@@ -1597,7 +1596,6 @@ textarea:focus {
 }
 
 .liquid-text:hover .liquid-text-inner {
-  animation-duration: 2s, 1.5s;
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
 }
 
@@ -1609,15 +1607,9 @@ textarea:focus {
   animation-duration: 1.5s;
 }
 
-/* Enhanced wave effect */
-.liquid-mask path {
-  transition: d 0.1s ease-out;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .liquid-text-inner {
-    animation-duration: 6s, 4s;
     font-size: 2.5rem;
   }
   
