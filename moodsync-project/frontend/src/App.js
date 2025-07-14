@@ -82,7 +82,7 @@ function App() {
 
   return (
     <>
-      <ParticleBackground />
+      {/* <ParticleBackground /> */}
       <Home />
     </>
   );
