@@ -33,22 +33,6 @@ const PinterestConnector = ({ onPinterestAuth, pinterestUser }) => {
   return (
     <section className="apple-glass pinterest-connector" aria-label="Connect Pinterest">
       <div className="pc-content">
-        <h4 className="pc-heading">🚀 Get 10x Better Analysis</h4>
-        <p className="pc-desc">
-          Connect Pinterest to analyze your actual board content, descriptions, and pin details for much more accurate mood detection.
-        </p>
-        <div className="pc-comparison">
-          <div className="pc-comparison-card no-pinterest">
-            <strong>Without Pinterest:</strong><br/>
-            URL analysis only<br/>
-            ~70% accuracy
-          </div>
-          <div className="pc-comparison-card with-pinterest">
-            <strong>With Pinterest:</strong><br/>
-            Full content analysis<br/>
-            ~90% accuracy
-          </div>
-        </div>
         <button
           className="pc-connect-btn"
           onClick={handlePinterestAuth}
@@ -57,9 +41,6 @@ const PinterestConnector = ({ onPinterestAuth, pinterestUser }) => {
         >
           {isConnecting ? '📌 Connecting...' : '📌 Connect Pinterest'}
         </button>
-        <div className="pc-note">
-          We only read your public boards • No posting or modifications
-        </div>
       </div>
     </section>
   );
