@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import SpotifyCallback from './components/SpotifyCallback';
 import PinterestCallback from './components/PinterestCallback';
+import ParticleBackground from './components/ParticleBackground';
 import './App.css';
 
 // Liquid morphing debug layers (same as in Home.js)
@@ -80,59 +81,10 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="App">
-        {/* DEBUG: Liquid morphing background at top level */}
-        <div className="liquid-bg-container" style={{ zIndex: 9999, opacity: 0.7, background: 'magenta', pointerEvents: 'none' }}>
-          {liquidLayersDebug.map((layer, index) => (
-            <div
-              key={index}
-              className="liquid-bg-layer"
-              style={{
-                background: layer.gradient,
-                opacity: layer.opacity,
-                transform: layer.transform,
-                filter: `blur(${index * 2}px)`,
-                border: '2px solid red',
-                transition: `all 2s cubic-bezier(0.4, 0, 0.2, 1)`
-              }}
-            />
-          ))}
-        </div>
-        <Routes>
-          <Route 
-            path="/" 
-            element={
-              <Home
-                spotifyUser={spotifyUser}
-                spotifyToken={spotifyToken}
-                onSpotifyAuth={handleSpotifyAuth}
-                pinterestUser={pinterestUser}
-                pinterestToken={pinterestToken}
-                onPinterestAuth={handlePinterestAuth}
-                onLogout={handleLogout}
-              />
-            } 
-          />
-          <Route 
-            path="/callback" 
-            element={
-              <SpotifyCallback 
-                onSpotifyAuth={handleSpotifyAuth}
-              />
-            } 
-          />
-          <Route 
-            path="/pinterest-callback" 
-            element={
-              <PinterestCallback 
-                onPinterestAuth={handlePinterestAuth}
-              />
-            } 
-          />
-        </Routes>
-      </div>
-    </Router>
+    <>
+      <ParticleBackground />
+      <Home />
+    </>
   );
 }
 
