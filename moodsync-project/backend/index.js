@@ -1167,7 +1167,12 @@ app.post('/api/spotify/callback', async (req, res) => {
 
 app.get('/api/pinterest/auth-url', (req, res) => {
   try {
+    console.log('🔍 Pinterest auth URL request received');
+    console.log('🔍 Request headers:', req.headers);
+    console.log('🔍 Origin:', req.headers.origin);
+    
     if (!process.env.PINTEREST_CLIENT_ID) {
+      console.error('❌ Pinterest client ID not configured');
       return res.status(500).json({ 
         success: false, 
         message: 'Pinterest client ID not configured' 
@@ -1180,10 +1185,14 @@ app.get('/api/pinterest/auth-url', (req, res) => {
       `response_type=code&` +
       `scope=boards:read,pins:read,user_accounts:read`;
     
-    console.log('Generated Pinterest auth URL');
+    console.log('✅ Generated Pinterest auth URL');
+    console.log('🔗 Auth URL:', authUrl);
+    console.log('🔧 Client ID present:', !!process.env.PINTEREST_CLIENT_ID);
+    console.log('🔧 Redirect URI:', process.env.PINTEREST_REDIRECT_URI);
+    
     res.json({ authUrl });
   } catch (error) {
-    console.error('Pinterest auth URL error:', error);
+    console.error('❌ Pinterest auth URL error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to generate Pinterest auth URL' 
