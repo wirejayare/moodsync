@@ -3115,6 +3115,21 @@ async function generateEnhancedAnalysisWithVision(url) {
       console.log('🎯 AI genres:', aiRecommendations.genres);
       console.log('🎯 AI reasoning:', aiRecommendations.reasoning);
     }
+  } else {
+    // Fallback: generate a simple reasoning based on theme and board info
+    aiRecommendations = {
+      genres: theme.genres,
+      energyLevel: finalMood === 'Energetic' ? 'high' : 'medium',
+      tempoRange: finalMood === 'Energetic' ? '120-140 BPM' : '80-110 BPM',
+      moodCharacteristics: [finalMood],
+      searchTerms: [boardInfo.boardName],
+      audioFeatures: {},
+      reasoning: [
+        `No images were available for AI analysis, so recommendations are based on the board's title and detected theme (${themeAnalysis.primaryTheme}).`,
+        `Genres: ${theme.genres.join(', ')}`,
+        `Mood: ${finalMood}`
+      ]
+    };
   }
   
   // Combine text-based and visual analysis
