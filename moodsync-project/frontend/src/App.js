@@ -81,10 +81,31 @@ function App() {
   };
 
   return (
-    <>
+    <Router>
       {/* <ParticleBackground /> */}
-      <Home />
-    </>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Home
+              spotifyUser={spotifyUser}
+              spotifyToken={spotifyToken}
+              pinterestUser={pinterestUser}
+              pinterestToken={pinterestToken}
+              onLogout={handleLogout}
+            />
+          }
+        />
+        <Route
+          path="/spotify-callback"
+          element={<SpotifyCallback onSpotifyAuth={handleSpotifyAuth} />}
+        />
+        <Route
+          path="/pinterest-callback"
+          element={<PinterestCallback onPinterestAuth={handlePinterestAuth} />}
+        />
+      </Routes>
+    </Router>
   );
 }
 
