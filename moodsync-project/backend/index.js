@@ -1082,6 +1082,7 @@ app.get('/api/pinterest/diagnostic', (req, res) => {
 
 // ===== SPOTIFY ENDPOINTS =====
 
+// NOTE: SPOTIFY_REDIRECT_URI must match the frontend route /spotify-callback
 app.get('/api/spotify/auth-url', (req, res) => {
   try {
     if (!process.env.SPOTIFY_CLIENT_ID) {
