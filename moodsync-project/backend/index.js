@@ -2389,169 +2389,37 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
     if (!checkRateLimit(boardId)) {
       return res.status(429).json({
         success: false,
-        message: 'Rate limit exceeded. Please wait a minute before trying again.',
-        retryAfter: 60
+        message: 'Rate limit exceeded. Please try again later.'
       });
     }
 
-    console.log('Starting API-enhanced analysis with Vision API for board:', boardId);
-    
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
     // Fetch board data from Pinterest API
-    const boardData = await getBoardById(boardId, pinterestToken);
-    
-    // Extract image URLs from pins for vision analysis (reduced from 10 to 5 for cost efficiency)
-    const imageUrls = boardData.pins
-      .map(pin => pin.image_url)
-      .filter(url => url && url.startsWith('http'))
-      .slice(0, 5); // Limit to 5 images for cost efficiency
-    
-    console.log(`Found ${imageUrls.length} images to analyze with Vision API`);
-    
-    // Analyze images with Vision API
-    let visualAnalysis = null;
-    if (imageUrls.length > 0) {
-      try {
-        visualAnalysis = await visionAnalyzer.analyzeMultipleImages(imageUrls, 8);
-        console.log('Vision API analysis completed:', visualAnalysis ? 'Success' : 'Failed');
-      } catch (visionError) {
-        console.error('Vision API error:', visionError.message);
-        // Continue without vision analysis if it fails
-      }
+    const boardData = await fetchPinterestBoardData(boardId, pinterestToken);
+    if (!boardData || !boardData.url) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pinterest board not found or missing URL.'
+      });
     }
-    
-    // Create rich analysis text from API data
-    const analysisText = [
-      boardData.name,
-      boardData.description,
-      ...boardData.pins.map(pin => pin.title).filter(title => title),
-      ...boardData.pins.map(pin => pin.description).filter(desc => desc)
-    ].join(' ').toLowerCase();
-    
-    // Use enhanced analysis with richer data
-    const themeAnalysis = detectThemes(analysisText);
-    const theme = themeAnalysis.themeData;
-    
-    // Combine text-based and visual analysis
-    let finalMood = theme.mood;
-    let finalConfidence = themeAnalysis.confidence;
-    let visualMood = null;
-    
-    if (visualAnalysis) {
-      visualMood = visualAnalysis.primaryMood;
-      const visualConfidence = visualAnalysis.confidence;
-      
-      // If visual analysis has higher confidence, use it
-      if (visualConfidence > finalConfidence) {
-        finalMood = visualMood;
-        finalConfidence = visualConfidence;
-      } else {
-        // Blend the moods if confidence is similar
-        if (Math.abs(visualConfidence - finalConfidence) < 0.2) {
-          finalMood = visualMood; // Prefer visual mood for similar confidence
-          finalConfidence = Math.max(visualConfidence, finalConfidence);
-        }
-      }
+
+    // Use the enhanced analysis function to get full analysis (with ai_reasoning)
+    const analysis = await generateEnhancedAnalysisWithVision(boardData.url);
+    if (!analysis) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to generate analysis.'
+      });
     }
-    
-    // Calculate enhanced confidence based on data richness
-    const dataRichness = Math.min(
-      (boardData.pin_count / 50) * 0.2 +
-      (boardData.pins.length / 10) * 0.3 +
-      (analysisText.length / 500) * 0.2 +
-      (visualAnalysis ? 0.3 : 0), // Bonus for visual analysis
-      0.4
-    );
-    
-    const enhancedConfidence = Math.min(finalConfidence + dataRichness, 0.95);
-    
-    const analysis = {
-      mood: {
-        primary: finalMood,
-        confidence: enhancedConfidence,
-        secondary: visualAnalysis ? [visualMood, 'Modern'] : ['Modern', 'Fresh'],
-        emotional_spectrum: [
-          { name: finalMood, confidence: enhancedConfidence },
-          { name: 'Modern', confidence: 0.7 },
-          { name: 'Fresh', confidence: 0.6 }
-        ]
-      },
-      visual: {
-        color_palette: visualAnalysis ? 
-          visualAnalysis.dominantColors.map((hex, i) => ({
-            hex,
-            mood: i === 0 ? 'primary' : 'secondary',
-            name: `Color ${i + 1}`
-          })) :
-          theme.colors.map((hex, i) => ({
-            hex,
-            mood: i === 0 ? 'primary' : 'secondary',
-            name: `Color ${i + 1}`
-          })),
-        dominant_colors: visualAnalysis ? 
-          { hex: visualAnalysis.dominantColors[0], name: 'Primary' } :
-          { hex: theme.colors[0], name: 'Primary' },
-        aesthetic_style: themeAnalysis.primaryTheme,
-        visual_complexity: boardData.pins.length > 20 ? 'high' : 'medium',
-        visual_analysis: visualAnalysis ? {
-          images_analyzed: visualAnalysis.imagesAnalyzed,
-          total_faces: visualAnalysis.visualElements.totalFaces,
-          average_brightness: visualAnalysis.visualElements.averageBrightness,
-          color_diversity: visualAnalysis.visualElements.colorDiversity,
-          common_labels: visualAnalysis.commonLabels.slice(0, 5)
-        } : null
-      },
-      content: {
-        sentiment: { score: 0.8, label: 'positive' },
-        keywords: [
-          { word: boardData.name.split(' ')[0], count: 1 },
-          ...boardData.pins.slice(0, 3).map(pin => ({ 
-            word: pin.title.split(' ')[0] || 'pin', 
-            count: 1 
-          }))
-        ].filter(k => k.word),
-        topics: ['Lifestyle', 'Design', 'Mood', 'Pinterest']
-      },
-      music: {
-        primary_genres: theme.genres,
-        energy_level: finalMood === 'Energetic' ? 'high' : 'medium',
-        tempo_range: finalMood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'
-      },
-      board: {
-        id: boardData.id,
-        name: boardData.name,
-        description: boardData.description,
-        url: boardData.url,
-        username: boardData.owner.username,
-        pin_count: boardData.pin_count,
-        follower_count: boardData.follower_count,
-        detected_theme: themeAnalysis.primaryTheme,
-        theme_confidence: enhancedConfidence,
-        pins_analyzed: boardData.pins.length,
-        images_analyzed: visualAnalysis ? visualAnalysis.imagesAnalyzed : 0
-      },
-      confidence: enhancedConfidence,
-      analysis_method: visualAnalysis ? 'pinterest_api_vision_enhanced' : 'pinterest_api_enhanced',
-      data_source: 'pinterest_api' + (visualAnalysis ? '+vision_api' : ''),
-      timestamp: new Date().toISOString()
-    };
 
     res.json({
       success: true,
-      analysis,
-      board_data: boardData,
-      method: visualAnalysis ? 'api_vision_enhanced_analysis' : 'api_enhanced_analysis',
-      timestamp: new Date().toISOString()
+      analysis
     });
-
   } catch (error) {
-    console.error('API-enhanced analysis error:', error);
+    console.error('Error in /api/analyze-pinterest-with-api:', error);
     res.status(500).json({
       success: false,
-      message: 'API-enhanced analysis failed. Please try again.',
-      error: error.message
+      message: 'Internal server error.'
     });
   }
 });
