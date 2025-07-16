@@ -2394,7 +2394,7 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
     }
 
     // Fetch board data from Pinterest API
-    const boardData = await fetchPinterestBoardData(boardId, pinterestToken);
+    const boardData = await getBoardById(boardId, pinterestToken);
     if (!boardData || !boardData.url) {
       return res.status(404).json({
         success: false,
