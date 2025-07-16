@@ -2417,9 +2417,20 @@ app.post('/api/analyze-pinterest-with-api', async (req, res) => {
     });
   } catch (error) {
     console.error('Error in /api/analyze-pinterest-with-api:', error);
+    if (error && error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
+    if (typeof boardId !== 'undefined') {
+      console.error('boardId:', boardId);
+    }
+    if (typeof boardData !== 'undefined') {
+      console.error('boardData:', boardData);
+    }
     res.status(500).json({
       success: false,
-      message: 'Internal server error.'
+      message: 'Internal server error.',
+      error: error.message || error.toString(),
+      boardOrUrl: boardId || (boardData && boardData.url)
     });
   }
 });
