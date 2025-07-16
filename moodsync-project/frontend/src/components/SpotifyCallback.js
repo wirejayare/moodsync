@@ -85,48 +85,26 @@ const SpotifyCallback = ({ onSpotifyAuth }) => {
                   
                   if (playlistUrl) {
                     console.log('🚀 Launching Spotify player...');
-                    // Force open in new tab with multiple fallback strategies
-                    try {
-                      // Strategy 1: Try to open in new tab with noopener
-                      const newWindow = window.open(playlistUrl, '_blank', 'noopener,noreferrer');
-                      
-                      // Strategy 2: If blocked, try with different parameters
-                      if (!newWindow || newWindow.closed) {
-                        console.log('📱 First popup attempt blocked, trying alternative...');
-                        const altWindow = window.open(playlistUrl, '_blank', 'width=800,height=600');
-                        
-                        if (!altWindow || altWindow.closed) {
-                          console.log('📱 Second popup attempt blocked, using direct navigation...');
-                          // Last resort: navigate current tab
-                          window.location.href = playlistUrl;
-                        } else {
-                          // Close the alt window and show success message
-                          altWindow.close();
-                          setTimeout(() => {
-                            alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created! Check your new tab for Spotify.`);
-                          }, 500);
-                          return; // Don't show the other success message
-                        }
-                      } else {
-                        // Successfully opened in new tab
-                        setTimeout(() => {
-                          alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created and opened in a new tab!`);
-                        }, 500);
-                        return; // Don't show the other success message
-                      }
-                      
-                      // Show success message for direct navigation
+                    // Always open in a new tab and never navigate current tab
+                    const newWindow = window.open(playlistUrl, '_blank', 'noopener,noreferrer');
+                    if (!newWindow || newWindow.closed) {
+                      // If popup blocked, show a message
+                      alert(`Your playlist was created! If a new tab didn't open, you can find it in your Spotify app or at: ${playlistUrl}`);
+                    } else {
                       setTimeout(() => {
-                        alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created and opened in Spotify!`);
-                      }, 1000);
-                    } catch (error) {
-                      console.log('❌ Error opening Spotify, showing success message');
-                      alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created in Spotify! You can find it at: ${playlistUrl}`);
+                        alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created and opened in a new tab!`);
+                      }, 500);
                     }
+                    // After opening, redirect home
+                    setTimeout(() => {
+                      navigate('/');
+                    }, 1000);
                   } else {
-                    console.log('⚠️ No playlist URL available, showing success message');
-                    // Fallback: navigate back to home with success message
-                    alert(`🎉 Welcome ${data.user.display_name}! Your playlist "${createData.playlist.name}" has been created in Spotify!`);
+                    console.log('⚠️ No playlist URL available, showing fallback message');
+                    alert(`Your playlist was created, but we couldn't get a web link. Please check your Spotify app.`);
+                    setTimeout(() => {
+                      navigate('/');
+                    }, 1000);
                   }
                 } else {
                   console.error('❌ Playlist creation failed:', createData);
