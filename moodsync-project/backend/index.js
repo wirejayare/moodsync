@@ -1661,9 +1661,10 @@ async function generateEnhancedAnalysisWithVision(url) {
   let visualAnalysis = null;
   if (imageUrls.length > 0) {
     try {
-      console.log(`🎨 Analyzing ${imageUrls.length} images with Vision API...`);
+      console.log(`🎨 Analyzing ${imageUrls.length} images with Claude Vision...`);
       visualAnalysis = await visionAnalyzer.analyzeMultipleImages(imageUrls, 5);
-      console.log('Vision API analysis completed:', visualAnalysis ? 'Success' : 'Failed');
+      console.log('Claude Vision analysis completed:', visualAnalysis ? 'Success' : 'Failed');
+      console.log(🔍 visualAnalysis object:', visualAnalysis ?exists : 'null/undefined');
     } catch (visionError) {
       console.error('Vision API error:', visionError.message);
       // Continue without vision analysis if it fails
