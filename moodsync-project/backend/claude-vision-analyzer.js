@@ -130,31 +130,38 @@ async function analyzeImage(imageUrl) {
 
     const prompt = `Analyze this image for a music recommendation system. Focus on:
 
-1. **Visual Elements**: Describe the main objects, colors, textures, and visual style
-2. **Color Analysis**: Identify dominant colors and their hex codes, color temperature (warm/cool), brightness level
-3. **Mood & Atmosphere**: What emotional vibe does this image convey? (e.g., calm, energetic, melancholic, romantic, etc.)
-4. **Aesthetic Style**: What artistic or design style is present? (minimalist, vintage, modern, bohemian, etc.)
-5. **Context & Setting**: Where might this be? What activity or lifestyle does it represent?6*Cultural/Artistic References**: Any specific cultural, artistic, or design influences?
+1. Visual Elements: Describe the main objects, colors, textures, and visual style
+2. Color Analysis: Identify dominant colors and their hex codes, color temperature (warm/cool), brightness level
+3. Mood & Atmosphere: What emotional vibe does this image convey? (e.g., calm, energetic, melancholic, romantic, etc.)
+4. Aesthetic Style: What artistic or design style is present? (minimalist, vintage, modern, bohemian, etc.)
+5. Context & Setting: Where might this be? What activity or lifestyle does it represent?
+6. Cultural/Artistic References: Any specific cultural, artistic, or design influences?
 
 Return your analysis as a JSON object with this structure:
 {
- visualElements": {objects": [object1,object2],
-    colors": [{hex:#color", "name: ame",temperature": "warm/cool, ightness":bright/dark}],
-    textures": ["texture1", texture2],stylestyle_description"
-  },mood": {
-    "primary": "primary_mood",
-  secondary: ["mood1, ],
-   confidence": 0.8
-   atmosphere": "atmosphere_description"
+  "visualElements": {
+    "objects": ["object1", "object2"],
+    "colors": [
+      { "hex": "#FF5733", "name": "Vivid Orange", "temperature": "warm", "brightness": "bright" }
+    ],
+    "textures": ["smooth", "matte"],
+    "style_description": "minimalist"
   },
-  aesthetic": {
- style":style_name,
-    influences": ["influence1,influence2"],
- complexity: simple/complex"
+  "mood": {
+    "primary": "calm",
+    "secondary": ["peaceful", "serene"],
+    "confidence": 0.85,
+    "atmosphere": "relaxed and inviting"
   },
-  context": {
-    "setting": "setting_description,activity": "activity_description",
- lifestyle": "lifestyle_description"
+  "aesthetic": {
+    "style": "modern",
+    "influences": ["Scandinavian", "mid-century"],
+    "complexity": "simple"
+  },
+  "context": {
+    "setting": "living room",
+    "activity": "reading",
+    "lifestyle": "cozy night in"
   }
 }
 
