@@ -2335,3 +2335,31 @@ app.listen(PORT, () => {
   console.log(`🎵 Spotify configured: ${!!(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET)}`);
   console.log(`📌 Pinterest configured: ${!!(process.env.PINTEREST_CLIENT_ID && process.env.PINTEREST_CLIENT_SECRET)}`);
 });
+
+// Enhanced analysis with Vision API for URL-based analysis
+app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url || (!url.includes('pinterest.com') && !url.includes('pin.it/'))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid Pinterest board URL or shortlink'
+      });
+    }
+    console.log('📡 Received analyze-pinterest-enhanced request:', { url });
+    const analysis = await generateEnhancedAnalysisWithVision(url);
+    res.json({
+      success: true,
+      analysis,
+      method: analysis.analysis_method,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Enhanced analysis error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Enhanced analysis failed. Please try again.',
+      error: error.message
+    });
+  }
+});
