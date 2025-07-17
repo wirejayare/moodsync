@@ -2363,3 +2363,8 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
     });
   }
 });
+
+// Utility: Detect if URL is a Pinterest shortlink
+function isPinterestShortlink(url) {
+  return url.includes('pin.it/') || url.includes('pinterest.com/pin/');
+}
