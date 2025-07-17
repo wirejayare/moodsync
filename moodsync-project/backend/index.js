@@ -2368,3 +2368,25 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
 function isPinterestShortlink(url) {
   return url.includes('pin.it/') || url.includes('pinterest.com/pin/');
 }
+
+// Utility: Extract up to 5 unique image URLs from a Pinterest board URL
+async function extractImagesFromBoardUrl(boardUrl) {
+  try {
+    console.log('🔍 Extracting images from board URL:', boardUrl);
+    const response = await axios.get(boardUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      },
+      timeout: 10000
+    });
+    const html = response.data;
+    const imageRegex = /https:\/\/i\.pinimg\.com\/[^"'\s]+\.(jpg|jpeg|png|webp)/gi;
+    const matches = html.match(imageRegex) || [];
+    const uniqueImages = [...new Set(matches)].slice(0, 5);
+    console.log(`📸 Found ${uniqueImages.length} images from board URL`);
+    return uniqueImages;
+  } catch (error) {
+    console.error('❌ Error extracting images from board URL:', error.message);
+    return [];
+  }
+}
