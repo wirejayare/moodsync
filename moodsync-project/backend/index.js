@@ -1728,20 +1728,20 @@ async function generateEnhancedAnalysisWithVision(url) {
       ]
     },
     visual: {
-      color_palette: visualAnalysis ? 
-        visualAnalysis.dominantColors.map((hex, i) => ({
-          hex,
-          mood: i === 0 ? 'primary' : 'secondary',
-          name: `Color ${i + 1}`
-        })) :
-        theme.colors.map((hex, i) => ({
-          hex,
-          mood: i === 0 ? 'primary' : 'secondary',
-          name: `Color ${i + 1}`
-        })),
-      dominant_colors: visualAnalysis ? 
-        { hex: visualAnalysis.dominantColors[0], name: 'Primary' } :
-        { hex: theme.colors[0], name: 'Primary' },
+      color_palette: visualAnalysis && Array.isArray(visualAnalysis.dominantColors) && visualAnalysis.dominantColors.length > 0
+        ? visualAnalysis.dominantColors.map((hex, i) => ({
+            hex,
+            mood: i === 0 ? 'primary' : 'secondary',
+            name: `Color ${i + 1}`
+          }))
+        : theme.colors.map((hex, i) => ({
+            hex,
+            mood: i === 0 ? 'primary' : 'secondary',
+            name: `Color ${i + 1}`
+          })),
+      dominant_colors: visualAnalysis && Array.isArray(visualAnalysis.dominantColors) && visualAnalysis.dominantColors.length > 0
+        ? { hex: visualAnalysis.dominantColors[0], name: 'Primary' }
+        : { hex: theme.colors[0], name: 'Primary' },
       aesthetic_style: themeAnalysis.primaryTheme,
       visual_complexity: 'medium',
       visual_analysis: visualAnalysis ? {

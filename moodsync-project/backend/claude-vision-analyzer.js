@@ -211,15 +211,23 @@ Be specific and detailed in your analysis.`;
 // Process Claude Vision analysis results
 function processClaudeVisionAnalysis(analysisText, imageUrl) {
   try {
-    // Extract JSON from Claude's response
-    const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.log('❌ No JSON found in Claude Vision response');
+    let claudeAnalysis;
+    if (typeof analysisText === 'string') {
+      // Extract JSON from Claude's response string
+      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.log('❌ No JSON found in Claude Vision response');
+        return createFallbackAnalysis(imageUrl);
+      }
+      claudeAnalysis = JSON.parse(jsonMatch[0]);
+    } else if (typeof analysisText === 'object' && analysisText !== null) {
+      // Already parsed JSON
+      claudeAnalysis = analysisText;
+    } else {
+      console.log('❌ Claude Vision response is neither string nor object');
       return createFallbackAnalysis(imageUrl);
     }
 
-    const claudeAnalysis = JSON.parse(jsonMatch[0]);
-    
     const result = {
       labels: [],
       colors: [],
