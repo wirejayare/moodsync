@@ -202,6 +202,9 @@ Be specific and detailed in your analysis.`;
     }
 
     const analysisText = response.data.content[0];
+    console.log('🔍 Raw Claude Vision response:', analysisText);
+    console.log('🔍 Response type:', typeof analysisText);
+    console.log('🔍 Response length:', analysisText?.text?.length || 'N/A');
     const processedAnalysis = processClaudeVisionAnalysis(analysisText, imageUrl);
     
     // Log detailed results
