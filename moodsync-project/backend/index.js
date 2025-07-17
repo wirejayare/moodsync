@@ -1664,7 +1664,7 @@ async function generateEnhancedAnalysisWithVision(url) {
       console.log(`🎨 Analyzing ${imageUrls.length} images with Claude Vision...`);
       visualAnalysis = await visionAnalyzer.analyzeMultipleImages(imageUrls, 5);
       console.log('Claude Vision analysis completed:', visualAnalysis ? 'Success' : 'Failed');
-      console.log(🔍 visualAnalysis object:', visualAnalysis ?exists : 'null/undefined');
+      console.log('🔍 visualAnalysis object:', visualAnalysis ? 'exists' : 'null/undefined');
     } catch (visionError) {
       console.error('Vision API error:', visionError.message);
       // Continue without vision analysis if it fails
@@ -2391,3 +2391,34 @@ async function extractImagesFromBoardUrl(boardUrl) {
     return [];
   }
 }
+
+// Create playlist preview endpoint
+app.post('/api/create-playlist', async (req, res) => {
+  try {
+    const { analysis, playlistName, accessToken } = req.body;
+    if (!analysis) {
+      return res.status(400).json({
+        success: false,
+        message: 'Analysis data is required'
+      });
+    }
+    console.log('🎵 Creating playlist preview...');
+    console.log('📊 Analysis data:', analysis);
+    console.log('📝 Playlist name:', playlistName);
+    console.log('🔑 Access token present:', !!accessToken);
+    // Generate virtual playlist preview
+    const preview = await generateVirtualPlaylistPreview(analysis, playlistName);
+    res.json({
+      success: true,
+      playlist: preview,
+      message: preview.message || 'Playlist preview generated successfully'
+    });
+  } catch (error) {
+    console.error('❌ Playlist creation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create playlist preview',
+      error: error.message
+    });
+  }
+});
