@@ -2327,3 +2327,11 @@ app.get('/api/ai/cache-stats', (req, res) => {
     });
   }
 });
+
+// Start server for Render
+app.listen(PORT, () => {
+  console.log(`🚀 MoodSync Backend Server running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🎵 Spotify configured: ${!!(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET)}`);
+  console.log(`📌 Pinterest configured: ${!!(process.env.PINTEREST_CLIENT_ID && process.env.PINTEREST_CLIENT_SECRET)}`);
+});
