@@ -1,5 +1,5 @@
 // ENHANCED MOOD DETECTION SYSTEM WITH NLP AND VISION ANALYSIS
-const visionAnalyzer = require('./vision-analyzer');
+const visionAnalyzer = require('./claude-vision-analyzer');
 const AIAnalyzer = require('./ai-analyzer');
 
 // Initialize AI analyzer
