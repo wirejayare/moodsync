@@ -2997,15 +2997,12 @@ async function generateEnhancedAnalysisWithVision(url) {
     }
   } else {
     // Fallback: generate a simple reasoning based on theme and board info
+    console.log(`⚠️ Fallback AI reasoning used: No images or vision analysis available for this board. Board: ${boardInfo?.url || boardInfo?.id || 'unknown'}`);
     aiRecommendations = {
       genres: theme.genres,
-      energyLevel: finalMood === 'Energetic' ? 'high' : 'medium',
-      tempoRange: finalMood === 'Energetic' ? '120-140 BPM' : '80-110 BPM',
-      moodCharacteristics: [finalMood],
-      searchTerms: [boardInfo.boardName],
-      audioFeatures: {},
+      energyLevel: finalMood,
       reasoning: [
-        `No images were available for AI analysis, so recommendations are based on the board's title and detected theme (${themeAnalysis.primaryTheme}).`,
+        `No images were available for AI analysis, so recommendations are based on the board's title and detected theme (${theme.primaryTheme || 'unknown'}).`,
         `Genres: ${theme.genres.join(', ')}`,
         `Mood: ${finalMood}`
       ]
