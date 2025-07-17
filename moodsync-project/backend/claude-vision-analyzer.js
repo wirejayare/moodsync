@@ -222,8 +222,18 @@ Be specific and detailed in your analysis.`;
 function processClaudeVisionAnalysis(analysisText, imageUrl) {
   try {
     let claudeAnalysis;
-    if (typeof analysisText === 'string') {
-      // Extract JSON from Claude's response string
+
+    // Handle Claude's { type: 'text', text: '...' } format
+    if (typeof analysisText === 'object' && analysisText !== null && analysisText.text) {
+      // Extract JSON from the text property
+      const jsonMatch = analysisText.text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.log('❌ No JSON found in Claude Vision response.text');
+        return createFallbackAnalysis(imageUrl);
+      }
+      claudeAnalysis = JSON.parse(jsonMatch[0]);
+    } else if (typeof analysisText === 'string') {
+      // Existing logic for string
       const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         console.log('❌ No JSON found in Claude Vision response');
