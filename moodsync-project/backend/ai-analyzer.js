@@ -230,7 +230,7 @@ Return your response as a valid JSON object with the following structure:
     
     try {
       const response = await axios.post('https://api.anthropic.com/v1/messages', {
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-sonnet-20240620',
         max_tokens: 1000,
         messages: [
           {
