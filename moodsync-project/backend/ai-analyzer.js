@@ -237,16 +237,7 @@ Return your response as a valid JSON object with the following structure:
             role: 'user',
             content: `${prompt}
 
-IMPORTANT: Use casual, natural language in your reasoning. Think like you're explaining music to a friend. Use phrases like:
-- "This vibe is giving..." 
-- "Perfect for when you're feeling..."
-- "Let's match this energy with..."
-- "This is the kind of music that..."
-- "Goes well with..."
-
-Keep it natural and cool - no forced enthusiasm or exclamation marks.
-
-Please respond with a valid JSON object containing music recommendations.`
+IMPORTANT: The reasoning array should contain 3-5 cool, conversational lines explaining the vibe and music choices, not just one. Each line should be a separate string in the array. Return a JSON object with a 'reasoning' array as described above.`
           }
         ]
       }, {
@@ -417,7 +408,11 @@ Return a JSON object with this EXACT structure:
     const moodCharacteristics = musicRecs.moodCharacteristics || musicRecs.moods || musicRecs.mood || [];
     const searchTerms = musicRecs.searchTerms || musicRecs.search || [];
     const audioFeatures = musicRecs.audioFeatures || {};
-    const reasoning = musicRecs.reasoning || [];
+    let reasoning = musicRecs.reasoning || [];
+    // If reasoning is a string, convert to array
+    if (typeof reasoning === 'string') {
+      reasoning = [reasoning];
+    }
     
     // Ensure required fields exist
     const validated = {
