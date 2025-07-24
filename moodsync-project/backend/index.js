@@ -1305,126 +1305,42 @@ app.post('/api/pinterest/callback', async (req, res) => {
 async function getUserBoards(accessToken) {
   try {
     console.log('Fetching user boards from Pinterest API...');
-    
     let allBoards = [];
     let bookmark = null;
     let hasMore = true;
-    
     // Fetch all boards with pagination
     while (hasMore) {
-      const params = {
-        page_size: 25
-      };
-      
-      if (bookmark) {
-        params.bookmark = bookmark;
-      }
-      
+      const params = { page_size: 25 };
+      if (bookmark) params.bookmark = bookmark;
       const response = await axios.get('https://api.pinterest.com/v5/boards', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        },
+        headers: { 'Authorization': `Bearer ${accessToken}` },
         params: params
       });
-      
       const boards = response.data.items || [];
       allBoards.push(...boards);
-      
       bookmark = response.data.bookmark;
       hasMore = !!bookmark;
-      
       console.log(`Fetched ${boards.length} boards (total: ${allBoards.length})`);
-      
-      // Safety limit to prevent infinite loops
-      if (allBoards.length > 500) {
-        console.log('Reached board limit of 500, stopping...');
-        break;
-      }
+      if (allBoards.length > 500) break;
     }
-    
     console.log(`Total boards found: ${allBoards.length}`);
-    
-    // Process boards and get thumbnails for each
-    const boardsWithThumbnails = await Promise.all(
-      allBoards.map(async (board) => {
-        let thumbnails = [];
-        
-        try {
-          // Get first few pins for thumbnails
-          const pinsResponse = await axios.get(`https://api.pinterest.com/v5/boards/${board.id}/pins`, {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            },
-            params: {
-              page_size: 6
-            }
-          });
-          
-          console.log(`Board "${board.name}" - Found ${pinsResponse.data.items?.length || 0} pins for thumbnails`);
-          
-          thumbnails = pinsResponse.data.items?.map(pin => {
-            // Try different image sizes in order of preference
-            let imageUrl = null;
-            
-            if (pin.media?.images) {
-              // Try these sizes in order
-              const imageSizes = ['300x300', '300x', '600x', 'orig', 'original'];
-              
-              for (const size of imageSizes) {
-                if (pin.media.images[size]?.url) {
-                  imageUrl = pin.media.images[size].url;
-                  break;
-                }
-              }
-              
-              // If no standard sizes, try to get any available image
-              if (!imageUrl) {
-                const availableSizes = Object.keys(pin.media.images);
-                console.log(`Available image sizes for pin:`, availableSizes);
-                if (availableSizes.length > 0) {
-                  imageUrl = pin.media.images[availableSizes[0]]?.url;
-                }
-              }
-            }
-            
-            console.log(`Pin "${pin.title || 'Untitled'}" - Image URL: ${imageUrl ? 'Found' : 'None'}`);
-            
-            return {
-              id: pin.id,
-              image_url: imageUrl,
-              title: pin.title || '',
-              description: pin.description || ''
-            };
-          }).filter(thumb => thumb.image_url) || [];
-          
-          console.log(`Board "${board.name}" - Final thumbnails: ${thumbnails.length}`);
-          
-        } catch (pinError) {
-          console.log(`Could not fetch pins for board ${board.name}:`, pinError.response?.status, pinError.message);
-        }
-        
-        return {
-          id: board.id,
-          name: board.name,
-          description: board.description || '',
-          pin_count: board.pin_count || 0,
-          follower_count: board.follower_count || 0,
-          url: `https://pinterest.com/${board.owner?.username || 'user'}/${board.name?.replace(/\s+/g, '-').toLowerCase() || board.id}/`,
-          image_thumbnail_url: board.media?.image_cover_url,
-          thumbnails: thumbnails,
-          privacy: board.privacy || 'public',
-          created_at: board.created_at,
-          owner: {
-            username: board.owner?.username || 'unknown',
-            first_name: board.owner?.first_name || '',
-            last_name: board.owner?.last_name || ''
-          }
-        };
-      })
-    );
-    
-    return boardsWithThumbnails;
-    
+    // Only return board metadata, no pins/thumbnails
+    return allBoards.map(board => ({
+      id: board.id,
+      name: board.name,
+      description: board.description || '',
+      pin_count: board.pin_count || 0,
+      follower_count: board.follower_count || 0,
+      url: `https://pinterest.com/${board.owner?.username || 'user'}/${board.name?.replace(/\s+/g, '-').toLowerCase() || board.id}/`,
+      image_thumbnail_url: board.media?.image_cover_url,
+      privacy: board.privacy || 'public',
+      created_at: board.created_at,
+      owner: {
+        username: board.owner?.username || 'unknown',
+        first_name: board.owner?.first_name || '',
+        last_name: board.owner?.last_name || ''
+      }
+    }));
   } catch (error) {
     console.error('Error fetching user boards:', error.response?.data || error.message);
     throw new Error(`Failed to fetch boards: ${error.response?.data?.message || error.message}`);
@@ -3739,5 +3655,53 @@ app.get('/api/ai/cache-stats', (req, res) => {
       success: false,
       message: 'Failed to get cache statistics'
     });
+  }
+});
+
+// ===== LAZY-LOAD PINS FOR A BOARD =====
+app.get('/api/pinterest/boards/:boardId/pins', async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, message: 'Missing or invalid Authorization header' });
+    }
+    const accessToken = authHeader.replace('Bearer ', '').trim();
+    if (!accessToken) {
+      return res.status(401).json({ success: false, message: 'Missing Pinterest access token' });
+    }
+    // Fetch up to 6 pins for the board
+    const pinsResponse = await axios.get(`https://api.pinterest.com/v5/boards/${boardId}/pins`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      params: { page_size: 6 }
+    });
+    const pins = (pinsResponse.data.items || []).map(pin => {
+      let imageUrl = null;
+      if (pin.media?.images) {
+        const imageSizes = ['300x300', '300x', '600x', 'orig', 'original'];
+        for (const size of imageSizes) {
+          if (pin.media.images[size]?.url) {
+            imageUrl = pin.media.images[size].url;
+            break;
+          }
+        }
+        if (!imageUrl) {
+          const availableSizes = Object.keys(pin.media.images);
+          if (availableSizes.length > 0) {
+            imageUrl = pin.media.images[availableSizes[0]]?.url;
+          }
+        }
+      }
+      return {
+        id: pin.id,
+        image_url: imageUrl,
+        title: pin.title || '',
+        description: pin.description || ''
+      };
+    }).filter(thumb => thumb.image_url);
+    res.json({ success: true, pins });
+  } catch (error) {
+    console.error('Error fetching pins for board:', error.response?.data || error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch pins', error: error.response?.data || error.message });
   }
 });
