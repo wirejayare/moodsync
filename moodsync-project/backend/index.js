@@ -54,6 +54,7 @@ app.get('/health', (req, res) => {
 
 // --- Analyze Pinterest Enhanced Endpoint ---
 app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
+  console.log('🟡 [DEBUG] Incoming analyze-pinterest-enhanced req.body:', req.body);
   try {
     const { boardUrl } = req.body;
     if (!boardUrl) {
