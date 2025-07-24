@@ -14,6 +14,9 @@ const PinterestBoardSelector = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const [thumbnails, setThumbnails] = useState([]);
+  const [loadingThumbnails, setLoadingThumbnails] = useState(false);
+  const [previewBoard, setPreviewBoard] = useState(null);
 
   useEffect(() => {
     if (pinterestToken && pinterestUser) {
@@ -69,28 +72,32 @@ const PinterestBoardSelector = ({
   };
 
   const handleBoardClick = async (board) => {
+    setPreviewBoard(board);
+    setThumbnails([]);
+    setLoadingThumbnails(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/pinterest/boards/${board.id}`, {
+      const response = await fetch(`https://moodsync-backend-sdbe.onrender.com/api/pinterest/boards/${board.id}/pins`, {
         headers: {
           'Authorization': `Bearer ${pinterestToken}`,
           'Content-Type': 'application/json'
         }
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      if (data.success) {
-        onBoardSelect(data.board);
-        setIsExpanded(false);
-      } else {
-        throw new Error(data.message || 'Failed to fetch board details');
-      }
+      setThumbnails(data.pins.slice(0, 3));
     } catch (error) {
       setError(error.message);
     } finally {
-      setIsLoading(false);
+      setLoadingThumbnails(false);
+    }
+  };
+
+  const handleConfirmBoard = () => {
+    if (previewBoard) {
+      onBoardSelect({ ...previewBoard, thumbnails });
+      setPreviewBoard(null);
+      setThumbnails([]);
     }
   };
 
@@ -176,23 +183,6 @@ const PinterestBoardSelector = ({
                     aria-pressed={selectedBoard?.id === board.id}
                     aria-label={`Select board ${board.name}`}
                   >
-                    {/* Board Thumbnails */}
-                    {board.thumbnails && board.thumbnails.length > 0 ? (
-                      <div className="pbs-thumbnails">
-                        {board.thumbnails.slice(0, 6).map((thumb, index) => (
-                          <div
-                            key={thumb.id || index}
-                            className="pbs-thumb"
-                            style={{ backgroundImage: `url(${thumb.image_url})` }}
-                            title={thumb.title}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="pbs-thumb-empty">
-                        <span>📌</span>
-                      </div>
-                    )}
                     {/* Board Info */}
                     <div className="pbs-board-info">
                       <div className="pbs-board-name">{board.name}</div>
@@ -217,6 +207,36 @@ const PinterestBoardSelector = ({
               </div>
             )}
           </div>
+          {/* Board Preview and Confirm */}
+          {previewBoard && (
+            <div className="pbs-preview-modal">
+              <div className="pbs-preview-header">Preview: {previewBoard.name}</div>
+              {loadingThumbnails ? (
+                <div className="pbs-thumbnails-loading">Loading thumbnails...</div>
+              ) : (
+                <div className="pbs-thumbnails">
+                  {thumbnails.length > 0 ? (
+                    thumbnails.map((thumb, idx) => (
+                      <div
+                        key={thumb.id || idx}
+                        className="pbs-thumb"
+                        style={{ backgroundImage: `url(${thumb.image_url})` }}
+                        title={thumb.title}
+                      />
+                    ))
+                  ) : (
+                    <div className="pbs-thumb-empty">No thumbnails found</div>
+                  )}
+                </div>
+              )}
+              <button className="pbs-confirm-btn" onClick={handleConfirmBoard} disabled={loadingThumbnails}>
+                {loadingThumbnails ? 'Loading...' : 'Create Playlist'}
+              </button>
+              <button className="pbs-cancel-btn" onClick={() => { setPreviewBoard(null); setThumbnails([]); }}>
+                Cancel
+              </button>
+            </div>
+          )}
           {/* Stats Footer */}
           {filteredBoards.length > 0 && (
             <div className="pbs-footer">
