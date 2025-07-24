@@ -1623,9 +1623,796 @@ async function analyzePinterestBoard(url) {
 
 // ===== SPOTIFY CLIENT CREDENTIALS =====
 
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
+
+
+// Search tracks using client credentials (for previews)
+async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms = []) {
+  try {
+    // Check if Spotify credentials are available
+    if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+      console.log('⚠️ Spotify credentials not configured, skipping client credentials search');
+      return [];
+    }
+    
+    const accessToken = await getClientCredentialsToken();
+    console.log('🎵 Searching tracks with client credentials for genres:', genres);
+    
+    const tracks = [];
+    
+    // Enhanced search strategy with much more variety
+    for (const genre of genres) {
+      if (tracks.length >= limit) break;
+      
+      // Generate multiple search strategies with randomization
+      const searchStrategies = [
+        // Strategy 1: Direct genre search with different offsets
+        `genre:${genre}`,
+        // Strategy 2: Genre as keyword
+        genre,
+        // Strategy 3: Genre with mood keywords
+        `${genre} ${getRandomMood()}`,
+        `${genre} ${getRandomMood()}`,
+        // Strategy 4: Genre with year ranges
+        `${genre} year:${getRandomYearRange()}`,
+        `${genre} year:${getRandomYearRange()}`,
+        // Strategy 5: Genre with popularity filters
+        `${genre} popularity:${getRandomPopularityRange()}`,
+        // Strategy 6: Genre with tempo filters
+        `${genre} tempo:${getRandomTempoRange()}`,
+        // Strategy 7: Genre with energy levels
+        `${genre} ${getRandomEnergyLevel()}`,
+        // Strategy 8: Common artists in the genre
+        getGenreArtists(genre),
+        // Strategy 9: Genre with acousticness
+        `${genre} acousticness:${getRandomAcousticness()}`,
+        // Strategy 10: Genre with danceability
+        `${genre} danceability:${getRandomDanceability()}`
+      ].filter(Boolean); // Remove empty strategies
+      
+      console.log(`🔍 Trying ${searchStrategies.length} search strategies for genre: "${genre}"`);
+      
+      for (const searchQuery of searchStrategies) {
+        if (tracks.length >= limit) break;
+        
+        try {
+          console.log(`🔍 Searching: "${searchQuery}"`);
+          
+          const response = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            params: {
+              q: searchQuery,
+              type: 'track',
+              limit: Math.min(3, limit - tracks.length), // Get fewer tracks per search for more variety
+              market: 'US',
+              offset: Math.floor(Math.random() * 50) // Random offset for variety
+            }
+          });
+          
+          if (response.data.tracks && response.data.tracks.items && response.data.tracks.items.length > 0) {
+            console.log(`✅ Found ${response.data.tracks.items.length} tracks for: "${searchQuery}"`);
+            tracks.push(...response.data.tracks.items);
+          }
+        } catch (error) {
+          console.error(`❌ Search failed for "${searchQuery}":`, error.message);
+        }
+      }
+    }
+    
+    // If still no results, try search terms
+    if (tracks.length === 0 && searchTerms.length > 0) {
+      console.log('🔄 No genre results, trying search terms...');
+      for (const term of searchTerms) {
+        if (tracks.length >= limit) break;
+        
+        try {
+          console.log(`🔍 Searching for term: "${term}"`);
+          
+          const response = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            params: {
+              q: term,
+              type: 'track',
+              limit: Math.min(limit, limit - tracks.length),
+              market: 'US'
+            }
+          });
+          
+          if (response.data.tracks && response.data.tracks.items && response.data.tracks.items.length > 0) {
+            console.log(`✅ Found ${response.data.tracks.items.length} tracks for term: "${term}"`);
+            tracks.push(...response.data.tracks.items);
+          }
+        } catch (error) {
+          console.error(`❌ Search failed for term "${term}":`, error.message);
+        }
+      }
+    }
+    
+    // Remove duplicates
+    const uniqueTracks = [];
+    const seenTrackIds = new Set();
+    
+    for (const track of tracks) {
+      if (!seenTrackIds.has(track.id)) {
+        uniqueTracks.push(track);
+        seenTrackIds.add(track.id);
+      }
+    }
+    
+    // Shuffle the tracks for more variety
+    const shuffledTracks = shuffleArray([...uniqueTracks]);
+    
+    console.log(`🎵 Found ${shuffledTracks.length} unique tracks with client credentials`);
+    return shuffledTracks.slice(0, limit);
+    
+  } catch (error) {
+    console.error('❌ Client credentials track search error:', error);
+    return [];
+  }
+}
+
+// Helper functions for generating random search parameters
+function getRandomMood() {
+  const moods = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic', 'happy', 'calm', 'peaceful', 'dreamy', 'romantic', 'nostalgic', 'uplifting', 'melancholic', 'passionate', 'serene', 'lively', 'tranquil'];
+  return moods[Math.floor(Math.random() * moods.length)];
+}
+
+function getRandomYearRange() {
+  const startYear = Math.floor(Math.random() * 30) + 1970;
+  const endYear = startYear + Math.floor(Math.random() * 20) + 10;
+  return `${startYear}-${Math.min(endYear, 2024)}`;
+}
+
+function getRandomPopularityRange() {
+  const min = Math.floor(Math.random() * 40);
+  const max = min + Math.floor(Math.random() * 40) + 20;
+  return `${min}-${Math.min(max, 100)}`;
+}
+
+function getRandomTempoRange() {
+  const min = Math.floor(Math.random() * 80) + 60;
+  const max = min + Math.floor(Math.random() * 60) + 40;
+  return `${min}-${Math.min(max, 200)}`;
+}
+
+function getRandomEnergyLevel() {
+  const levels = ['low', 'medium', 'high', 'energetic', 'calm', 'relaxed', 'upbeat', 'mellow'];
+  return levels[Math.floor(Math.random() * levels.length)];
+}
+
+function getRandomAcousticness() {
+  const min = Math.floor(Math.random() * 50);
+  const max = min + Math.floor(Math.random() * 50) + 20;
+  return `${min}-${Math.min(max, 100)}`;
+}
+
+function getRandomDanceability() {
+  const min = Math.floor(Math.random() * 50);
+  const max = min + Math.floor(Math.random() * 50) + 20;
+  return `${min}-${Math.min(max, 100)}`;
+}
+
+// Helper function to get representative artists for genres
+function getGenreArtists(genre) {
+  const genreArtists = {
+    'Dream Pop': 'Cocteau Twins, Mazzy Star, Beach House',
+    'Shoegaze': 'My Bloody Valentine, Slowdive, Ride',
+    'Indie Rock': 'Modest Mouse, The Strokes, Arctic Monkeys',
+    'Indie Pop': 'The Postal Service, Bon Iver, Vampire Weekend',
+    'Alternative': 'Radiohead, The Killers, Arcade Fire',
+    'Electronic': 'Daft Punk, The Chemical Brothers, Aphex Twin',
+    'Ambient': 'Brian Eno, Tycho, Marconi Union',
+    'Downtempo': 'Massive Attack, Portishead, Tricky',
+    'Trip Hop': 'Massive Attack, Portishead, Morcheeba',
+    'Chillwave': 'Washed Out, Toro y Moi, Neon Indian',
+    'Lo-Fi': 'Nujabes, J Dilla, Madlib',
+    'Chill': 'Tycho, Bonobo, Emancipator',
+    'Disco': 'Bee Gees, Chic, Donna Summer',
+    'Funk': 'James Brown, Parliament, Rick James',
+    'Dance-Punk': 'Franz Ferdinand, The Rapture, LCD Soundsystem',
+    'Pop': 'Taylor Swift, The Weeknd, Dua Lipa',
+    'Rock': 'Led Zeppelin, Queen, The Rolling Stones',
+    'Jazz': 'Miles Davis, John Coltrane, Dave Brubeck',
+    'Classical': 'Beethoven, Mozart, Bach'
+  };
+  
+  return genreArtists[genre] || null;
+}
+
+// ===== SPOTIFY FUNCTIONS =====
+
+async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms = []) {
+  const tracks = [];
+  
+  try {
+    console.log('🎵 Starting enhanced track search with genres:', genres);
+    console.log('🎯 Board title keywords (search terms):', searchTerms);
+    
+    // Ensure genres is an array and has valid values
+    if (!Array.isArray(genres) || genres.length === 0) {
+      console.log('⚠️ No valid genres provided, using fallback genres');
+      genres = ['pop', 'indie'];
+    }
+    
+    // Clean and validate genres
+    const validGenres = genres
+      .filter(genre => genre && typeof genre === 'string' && genre.trim().length > 0)
+      .map(genre => genre.trim().toLowerCase())
+      .slice(0, 5); // Limit to 5 genres max
+    
+    if (validGenres.length === 0) {
+      console.log('⚠️ No valid genres after filtering, using fallback');
+      validGenres.push('pop', 'indie');
+    }
+    
+    // Clean and validate search terms (board title keywords)
+    const validSearchTerms = searchTerms
+      .filter(term => term && typeof term === 'string' && term.trim().length > 0)
+      .map(term => term.trim().toLowerCase())
+      .slice(0, 3); // Limit to 3 primary keywords
+    
+    console.log('🎵 Using valid genres:', validGenres);
+    console.log('🎯 Using board title keywords:', validSearchTerms);
+    
+    // 🎯 PRIORITY 1: Search with board title keywords first (but limit results)
+    const maxKeywordTracks = Math.floor(limit * 0.4); // Only 40% from keywords
+    if (validSearchTerms.length > 0) {
+      for (const keyword of validSearchTerms) {
+        if (tracks.length >= maxKeywordTracks) break; // Stop keyword search early
+        
+        try {
+          console.log(`🎯 Searching with board title keyword: "${keyword}"`);
+          
+          const keywordStrategies = [
+            // Strategy 1: Keyword + random mood
+            `${keyword} ${getRandomMood()}`,
+            // Strategy 2: Keyword with genre context
+            `${keyword} ${validGenres[0] || 'music'}`,
+            // Strategy 3: Keyword with year range
+            `${keyword} year:${getRandomYearRange()}`,
+            // Strategy 4: Keyword with popularity filter
+            `${keyword} popularity:${getRandomPopularityRange()}`,
+            // Strategy 5: Keyword with tempo filter
+            `${keyword} tempo:${getRandomTempoRange()}`,
+            // Strategy 6: Keyword with energy level
+            `${keyword} ${getRandomEnergyLevel()}`
+          ];
+          
+          for (const strategy of keywordStrategies) {
+            if (tracks.length >= maxKeywordTracks) break;
+            
+            try {
+              console.log(`🎯 Trying keyword strategy: "${strategy}"`);
+              
+              const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                params: {
+                  q: strategy,
+                  type: 'track',
+                  limit: Math.min(3, maxKeywordTracks - tracks.length), // Smaller batches for variety
+                  market: 'US',
+                  offset: Math.floor(Math.random() * 50) // Random offset for variety
+                }
+              });
+              
+              if (searchResponse.data.tracks && searchResponse.data.tracks.items && searchResponse.data.tracks.items.length > 0) {
+                console.log(`✅ Found ${searchResponse.data.tracks.items.length} tracks for keyword strategy: "${strategy}"`);
+                tracks.push(...searchResponse.data.tracks.items);
+              } else {
+                console.log(`❌ No tracks found for keyword strategy: "${strategy}"`);
+              }
+            } catch (strategyError) {
+              console.error(`❌ Keyword search strategy failed: "${strategy}"`, strategyError.message);
+            }
+          }
+        } catch (keywordError) {
+          console.error(`❌ Search failed for keyword ${keyword}:`, keywordError.message);
+        }
+      }
+    }
+    
+    // 🎵 PRIORITY 2: Search with genres using enhanced variety
+    for (const genre of validGenres) {
+      if (tracks.length >= limit) break;
+      
+      try {
+        console.log(`🎵 Searching for genre: ${genre}`);
+        
+        // Use the same enhanced search strategies as client credentials
+        const searchStrategies = [
+          // Strategy 1: Direct genre search with different offsets
+          `genre:${genre}`,
+          // Strategy 2: Genre as keyword
+          genre,
+          // Strategy 3: Genre with mood keywords
+          `${genre} ${getRandomMood()}`,
+          `${genre} ${getRandomMood()}`,
+          // Strategy 4: Genre with year ranges
+          `${genre} year:${getRandomYearRange()}`,
+          `${genre} year:${getRandomYearRange()}`,
+          // Strategy 5: Genre with popularity filters
+          `${genre} popularity:${getRandomPopularityRange()}`,
+          // Strategy 6: Genre with tempo filters
+          `${genre} tempo:${getRandomTempoRange()}`,
+          // Strategy 7: Genre with energy levels
+          `${genre} ${getRandomEnergyLevel()}`,
+          // Strategy 8: Common artists in the genre
+          getGenreArtists(genre),
+          // Strategy 9: Genre with acousticness
+          `${genre} acousticness:${getRandomAcousticness()}`,
+          // Strategy 10: Genre with danceability
+          `${genre} danceability:${getRandomDanceability()}`
+        ].filter(Boolean); // Remove empty strategies
+        
+        for (const searchQuery of searchStrategies) {
+          if (tracks.length >= limit) break;
+          
+          try {
+            console.log(`🎵 Trying search strategy: "${searchQuery}"`);
+            
+            const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
+              headers: { 'Authorization': `Bearer ${accessToken}` },
+              params: {
+                q: searchQuery,
+                type: 'track',
+                limit: Math.min(3, limit - tracks.length), // Smaller batches for variety
+                market: 'US',
+                offset: Math.floor(Math.random() * 50) // Random offset for variety
+              }
+            });
+            
+            if (searchResponse.data.tracks && searchResponse.data.tracks.items && searchResponse.data.tracks.items.length > 0) {
+              console.log(`✅ Found ${searchResponse.data.tracks.items.length} tracks for strategy: "${searchQuery}"`);
+              tracks.push(...searchResponse.data.tracks.items);
+            } else {
+              console.log(`❌ No tracks found for strategy: "${searchQuery}"`);
+            }
+          } catch (strategyError) {
+            console.error(`❌ Search strategy failed: "${strategy}"`, strategyError.message);
+          }
+        }
+      } catch (genreError) {
+        console.error(`❌ Search failed for genre ${genre}:`, genreError.message);
+      }
+    }
+    
+    // Enhanced fallback searches if no results
+    if (tracks.length === 0) {
+      console.log('🔄 No tracks found, trying enhanced fallback searches...');
+      
+      const fallbackStrategies = [
+        // Enhanced fallback with variety
+        `${getRandomMood()} music`,
+        `popularity:${getRandomPopularityRange()}`,
+        `year:${getRandomYearRange()}`,
+        `tempo:${getRandomTempoRange()}`,
+        `${getRandomEnergyLevel()} music`,
+        'chill',
+        'relaxing',
+        'upbeat',
+        'indie',
+        'pop'
+      ];
+      
+      for (const fallback of fallbackStrategies) {
+        if (tracks.length >= limit) break;
+        
+        try {
+          console.log(`🔄 Trying enhanced fallback search: "${fallback}"`);
+          
+          const fallbackResponse = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            params: {
+              q: fallback,
+              type: 'track',
+              limit: Math.min(3, limit - tracks.length), // Smaller batches for variety
+              market: 'US',
+              offset: Math.floor(Math.random() * 50) // Random offset for variety
+            }
+          });
+          
+          if (fallbackResponse.data.tracks && fallbackResponse.data.tracks.items && fallbackResponse.data.tracks.items.length > 0) {
+            console.log(`✅ Found ${fallbackResponse.data.tracks.items.length} tracks with enhanced fallback: "${fallback}"`);
+            tracks.push(...fallbackResponse.data.tracks.items);
+          }
+        } catch (fallbackError) {
+          console.error(`❌ Enhanced fallback search failed: "${fallback}"`, fallbackError.message);
+        }
+      }
+    }
+    
+    console.log(`🎵 Total tracks found: ${tracks.length}`);
+    
+    // Remove duplicates and shuffle for variety
+    const uniqueTracks = [];
+    const seenTrackIds = new Set();
+    
+    for (const track of tracks) {
+      if (!seenTrackIds.has(track.id)) {
+        uniqueTracks.push(track);
+        seenTrackIds.add(track.id);
+      }
+    }
+    
+    // Shuffle the tracks for more variety
+    const shuffledTracks = shuffleArray([...uniqueTracks]);
+    
+    console.log(`🎵 Unique tracks after deduplication: ${shuffledTracks.length}`);
+    
+    return shuffledTracks.slice(0, limit);
+    
+  } catch (error) {
+    console.error('❌ Track search error:', error);
+    return [];
+  }
+}
+
+async function createSpotifyPlaylist(accessToken, userId, name, description, trackUris) {
+  try {
+    // Create playlist
+    const playlistResponse = await axios.post(
+      `https://api.spotify.com/v1/users/${userId}/playlists`,
+      {
+        name: name,
+        description: description,
+        public: false
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    const playlist = playlistResponse.data;
+    
+    // Add tracks
+    if (trackUris.length > 0) {
+      await axios.post(
+        `https://api.spotify.com/v1/playlists/${playlist.id}/tracks`,
+        { uris: trackUris },
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+    
+    return playlist;
+    
+  } catch (error) {
+    console.error('Playlist creation error:', error);
+    throw new Error('Failed to create playlist: ' + (error.response?.data?.error?.message || error.message));
+  }
+}
+
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// ===== PINTEREST SHORTLINK EXPANSION =====
+
+// Detect if URL is a Pinterest shortlink
+function isPinterestShortlink(url) {
+  return url.includes('pin.it/') || url.includes('pinterest.com/pin/');
+}
+
+// Expand Pinterest shortlink to full URL
+async function expandPinterestShortlink(shortlink) {
+  try {
+    console.log('🔗 Expanding Pinterest shortlink:', shortlink);
+    
+    // Make a GET request to get the redirect location (HEAD requests might be blocked)
+    const response = await axios.get(shortlink, {
+      maxRedirects: 5,
+      timeout: 10000,
+      validateStatus: function (status) {
+        return status >= 200 && status < 400; // Accept redirects
+      }
+    });
+    
+    let expandedUrl = response.request.res.responseUrl || response.request.res.responseHeaders?.location || shortlink;
+    console.log('✅ Expanded shortlink to:', expandedUrl);
+    console.log('🔍 Response headers:', response.request.res.responseHeaders);
+    console.log('🔍 Response URL:', response.request.res.responseUrl);
+    
+    // If the URL didn't change, try a different approach
+    if (expandedUrl === shortlink) {
+      console.log('⚠️ URL didn\'t expand, trying alternative method...');
+      // Try to extract the redirect from response headers
+      const locationHeader = response.headers?.location || response.request.res.responseHeaders?.location;
+      if (locationHeader) {
+        expandedUrl = locationHeader;
+        console.log('✅ Found redirect in headers:', expandedUrl);
+      }
+    }
+    
+    // Check if the expanded URL is a board URL or pin URL
+    if (expandedUrl.includes('/pin/')) {
+      console.log('⚠️ Shortlink expanded to a pin URL, not a board URL');
+      throw new Error('This shortlink points to a Pinterest pin, not a board. Please use a board shortlink instead.');
+    }
+    
+    return expandedUrl;
+  } catch (error) {
+    console.error('❌ Failed to expand shortlink:', error.message);
+    if (error.message.includes('pin URL')) {
+      throw error; // Re-throw pin URL errors
+    }
+    return shortlink; // Return original if expansion fails
+  }
+}
+
+// ===== PINTEREST BOARD ENDPOINTS =====
+
+app.get('/api/pinterest/boards', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Pinterest access token required'
+      });
+    }
+    
+    const accessToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    console.log('Fetching Pinterest boards for user...');
+    
+    const boards = await getUserBoards(accessToken);
+    
+    res.json({
+      success: true,
+      boards: boards,
+      total: boards.length,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Get boards error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch boards',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/pinterest/boards/:boardId', async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Pinterest access token required'
+      });
+    }
+    
+    const accessToken = authHeader.substring(7);
+    
+    if (!boardId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Board ID is required'
+      });
+    }
+    
+    console.log('Fetching board details for ID:', boardId);
+    
+    const board = await getBoardById(boardId, accessToken);
+    
+    res.json({
+      success: true,
+      board: board,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Get board details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch board details',
+      error: error.message
+    });
+  }
+});
+
+// ===== ANALYSIS FUNCTIONS =====
+
+async function extractBoardInfo(url) {
+  console.log('🔍 extractBoardInfo called with URL:', url);
+  
+  // Check if this is a shortlink and expand it
+  let processedUrl = url;
+  if (isPinterestShortlink(url)) {
+    console.log('🔗 Detected Pinterest shortlink, expanding...');
+    processedUrl = await expandPinterestShortlink(url);
+    console.log('🔗 Expanded URL:', processedUrl);
+  }
+  
+  const urlParts = processedUrl.split('/').filter(part => part && part.length > 0);
+  let username = 'unknown';
+  let boardName = 'unknown-board';
+  
+  console.log('🔍 URL parts:', urlParts);
+  console.log('🔍 Processing URL:', processedUrl);
+  
+  if (processedUrl.includes('pinterest.com')) {
+    const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
+    console.log('🔍 Pinterest index:', pinterestIndex);
+    
+    if (pinterestIndex >= 0) {
+      // Handle different URL patterns
+      if (urlParts[pinterestIndex + 1] === 'pin') {
+        // This is a pin URL, not a board URL
+        console.log('⚠️ Detected pin URL, not board URL');
+        throw new Error('This appears to be a Pinterest pin URL, not a board URL. Please use a board URL instead.');
+      } else if (urlParts[pinterestIndex + 1] && urlParts[pinterestIndex + 2]) {
+        username = urlParts[pinterestIndex + 1];
+        boardName = urlParts[pinterestIndex + 2];
+        console.log('✅ Extracted board info:', { username, boardName });
+      } else {
+        console.log('⚠️ Could not extract board info from URL parts');
+        throw new Error('Could not extract board information from this Pinterest URL. Please ensure it\'s a board URL, not a pin URL.');
+      }
+    } else {
+      console.log('⚠️ No pinterest.com found in URL parts');
+      throw new Error('Invalid Pinterest URL format. Please use a board URL.');
+    }
+  } else {
+    console.log('⚠️ URL does not contain pinterest.com');
+    throw new Error('Please provide a valid Pinterest board URL.');
+  }
+  
+  const cleanBoardName = String(boardName)
+    .replace(/[-_+%20]/g, ' ')
+    .trim();
+  
+  console.log('🎯 Final board info:', { username, boardName: cleanBoardName });
+  
+  return {
+    username,
+    boardName: cleanBoardName,
+    originalUrl: url,
+    processedUrl: processedUrl,
+    urlParts: urlParts.filter(part => !part.includes('pinterest') && !part.includes('http'))
+  };
+}
+
+function detectThemes(analysisText) {
+  const themeDatabase = {
+    morning: {
+      keywords: ['morning', 'sunrise', 'coffee', 'breakfast', 'early', 'fresh'],
+      mood: 'Energetic',
+      genres: ['indie pop', 'upbeat acoustic', 'folk pop'],
+      colors: ['#FFD700', '#FFA500', '#FFEB3B']
+    },
+    evening: {
+      keywords: ['evening', 'sunset', 'dinner', 'wine', 'romantic', 'soft'],
+      mood: 'Romantic',
+      genres: ['smooth jazz', 'acoustic', 'ambient'],
+      colors: ['#8E4EC6', '#FF6B6B', '#4ECDC4']
+    },
+    minimalist: {
+      keywords: ['minimal', 'simple', 'clean', 'white', 'zen'],
+      mood: 'Peaceful',
+      genres: ['ambient', 'minimal', 'classical'],
+      colors: ['#FFFFFF', '#F8F9FA', '#E9ECEF']
+    },
+    vintage: {
+      keywords: ['vintage', 'retro', 'classic', 'antique', 'nostalgic'],
+      mood: 'Nostalgic',
+      genres: ['jazz', 'soul', 'classic rock'],
+      colors: ['#DEB887', '#D2B48C', '#BC8F8F']
+    },
+    cozy: {
+      keywords: ['cozy', 'warm', 'comfort', 'home', 'blanket'],
+      mood: 'Cozy',
+      genres: ['acoustic', 'folk', 'lo-fi'],
+      colors: ['#D7CCC8', '#BCAAA4', '#8D6E63']
+    },
+    dark: {
+      keywords: ['dark', 'gothic', 'black', 'mysterious', 'dramatic'],
+      mood: 'Mysterious',
+      genres: ['alternative', 'dark electronic', 'post-rock'],
+      colors: ['#2C3E50', '#34495E', '#7F8C8D']
+    }
+  };
+
+  let bestTheme = 'minimalist';
+  let bestScore = 0;
+
+  for (const [themeName, themeData] of Object.entries(themeDatabase)) {
+    let score = 0;
+    themeData.keywords.forEach(keyword => {
+      const matches = (analysisText.match(new RegExp(keyword, 'gi')) || []).length;
+      score += matches;
+    });
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestTheme = themeName;
+    }
+  }
+
+  const confidence = Math.min(bestScore / 3, 0.9);
+  return {
+    primaryTheme: bestTheme,
+    confidence: Math.max(0.3, confidence),
+    themeData: themeDatabase[bestTheme]
+  };
+}
+
+async function generateEnhancedAnalysis(url) {
+  console.log('🔍 Starting enhanced analysis for:', url);
+  
+  const boardInfo = await extractBoardInfo(url);
+  const analysisText = [
+    boardInfo.boardName,
+    boardInfo.username,
+    ...boardInfo.urlParts
+  ].join(' ').toLowerCase();
+  
+  const themeAnalysis = detectThemes(analysisText);
+  const theme = themeAnalysis.themeData;
+  
+  return {
+    mood: {
+      primary: theme.mood,
+      confidence: themeAnalysis.confidence,
+      secondary: ['Modern', 'Fresh'],
+      emotional_spectrum: [
+        { name: theme.mood, confidence: themeAnalysis.confidence },
+        { name: 'Modern', confidence: 0.6 },
+        { name: 'Fresh', confidence: 0.5 }
+      ]
+    },
+    visual: {
+      color_palette: theme.colors.map((hex, i) => ({
+        hex,
+        mood: i === 0 ? 'primary' : 'secondary',
+        name: `Color ${i + 1}`
+      })),
+      dominant_colors: { hex: theme.colors[0], name: 'Primary' },
+      aesthetic_style: themeAnalysis.primaryTheme,
+      visual_complexity: 'medium'
+    },
+    content: {
+      sentiment: { score: 0.7, label: 'positive' },
+      keywords: [{ word: boardInfo.boardName.split(' ')[0], count: 1 }],
+      topics: ['Lifestyle', 'Design', 'Mood']
+    },
+    music: {
+      primary_genres: theme.genres,
+      energy_level: theme.mood === 'Energetic' ? 'high' : 'medium',
+      tempo_range: theme.mood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'
+    },
+    board: {
+      name: boardInfo.boardName,
+      url: url,
+      username: boardInfo.username,
+      detected_theme: themeAnalysis.primaryTheme,
+      theme_confidence: themeAnalysis.confidence
+    },
+    confidence: themeAnalysis.confidence,
+    analysis_method: 'enhanced_v2',
+    timestamp: new Date().toISOString()
+  };
+}
+
+// ===== SPOTIFY CLIENT CREDENTIALS =====
+
+
 
 // Get client credentials token for server-to-server API calls
 async function getClientCredentialsToken() {
@@ -2458,9 +3245,7 @@ async function generateEnhancedAnalysis(url) {
 
 // ===== SPOTIFY CLIENT CREDENTIALS =====
 
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
+
 
 // Get client credentials token for server-to-server API calls
 async function getClientCredentialsToken() {
@@ -3293,9 +4078,6 @@ async function generateEnhancedAnalysis(url) {
 
 // ===== SPOTIFY CLIENT CREDENTIALS =====
 
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
 
 // Get client credentials token for server-to-server API calls
 async function getClientCredentialsToken() {
@@ -4128,9 +4910,6 @@ async function generateEnhancedAnalysis(url) {
 
 // ===== SPOTIFY CLIENT CREDENTIALS =====
 
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
 
 // Get client credentials token for server-to-server API calls
 async function getClientCredentialsToken() {
@@ -4963,9 +5742,6 @@ async function generateEnhancedAnalysis(url) {
 
 // ===== SPOTIFY CLIENT CREDENTIALS =====
 
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
 
 // Get client credentials token for server-to-server API calls
 async function getClientCredentialsToken() {
@@ -5798,9 +6574,6 @@ async function generateEnhancedAnalysis(url) {
 
 // ===== SPOTIFY CLIENT CREDENTIALS =====
 
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
 
 // Get client credentials token for server-to-server API calls
 async function getClientCredentialsToken() {
@@ -6633,9 +7406,6 @@ async function generateEnhancedAnalysis(url) {
 
 // ===== SPOTIFY CLIENT CREDENTIALS =====
 
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
 
 // Get client credentials token for server-to-server API calls
 async function getClientCredentialsToken() {
@@ -7468,844 +8238,6 @@ async function generateEnhancedAnalysis(url) {
 
 // ===== SPOTIFY CLIENT CREDENTIALS =====
 
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
-
-// Get client credentials token for server-to-server API calls
-async function getClientCredentialsToken() {
-  try {
-    // Check if we have a valid cached token
-    if (clientCredentialsToken && Date.now() < tokenExpiry) {
-      return clientCredentialsToken;
-    }
-
-    console.log('🔑 Getting new client credentials token...');
-    
-    // Check if credentials are available
-    if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
-      console.log('⚠️ Spotify credentials not configured');
-      throw new Error('Spotify credentials not configured');
-    }
-    
-    const response = await axios.post('https://accounts.spotify.com/api/token', 
-      new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: process.env.SPOTIFY_CLIENT_ID,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    );
-
-    const { access_token, expires_in } = response.data;
-    
-    // Cache the token with expiry
-    clientCredentialsToken = access_token;
-    tokenExpiry = Date.now() + (expires_in * 1000) - 60000; // Expire 1 minute early
-    
-    console.log('✅ Client credentials token obtained');
-    return access_token;
-    
-  } catch (error) {
-    console.error('❌ Client credentials error:', error.response?.data || error.message);
-    throw new Error('Failed to get client credentials token');
-  }
-}
-
-// Search tracks using client credentials (for previews)
-async function searchTracksWithClientCredentials(genres, limit = 15, searchTerms = []) {
-  try {
-    // Check if Spotify credentials are available
-    if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
-      console.log('⚠️ Spotify credentials not configured, skipping client credentials search');
-      return [];
-    }
-    
-    const accessToken = await getClientCredentialsToken();
-    console.log('🎵 Searching tracks with client credentials for genres:', genres);
-    
-    const tracks = [];
-    
-    // Enhanced search strategy with much more variety
-    for (const genre of genres) {
-      if (tracks.length >= limit) break;
-      
-      // Generate multiple search strategies with randomization
-      const searchStrategies = [
-        // Strategy 1: Direct genre search with different offsets
-        `genre:${genre}`,
-        // Strategy 2: Genre as keyword
-        genre,
-        // Strategy 3: Genre with mood keywords
-        `${genre} ${getRandomMood()}`,
-        `${genre} ${getRandomMood()}`,
-        // Strategy 4: Genre with year ranges
-        `${genre} year:${getRandomYearRange()}`,
-        `${genre} year:${getRandomYearRange()}`,
-        // Strategy 5: Genre with popularity filters
-        `${genre} popularity:${getRandomPopularityRange()}`,
-        // Strategy 6: Genre with tempo filters
-        `${genre} tempo:${getRandomTempoRange()}`,
-        // Strategy 7: Genre with energy levels
-        `${genre} ${getRandomEnergyLevel()}`,
-        // Strategy 8: Common artists in the genre
-        getGenreArtists(genre),
-        // Strategy 9: Genre with acousticness
-        `${genre} acousticness:${getRandomAcousticness()}`,
-        // Strategy 10: Genre with danceability
-        `${genre} danceability:${getRandomDanceability()}`
-      ].filter(Boolean); // Remove empty strategies
-      
-      console.log(`🔍 Trying ${searchStrategies.length} search strategies for genre: "${genre}"`);
-      
-      for (const searchQuery of searchStrategies) {
-        if (tracks.length >= limit) break;
-        
-        try {
-          console.log(`🔍 Searching: "${searchQuery}"`);
-          
-          const response = await axios.get('https://api.spotify.com/v1/search', {
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-            params: {
-              q: searchQuery,
-              type: 'track',
-              limit: Math.min(3, limit - tracks.length), // Get fewer tracks per search for more variety
-              market: 'US',
-              offset: Math.floor(Math.random() * 50) // Random offset for variety
-            }
-          });
-          
-          if (response.data.tracks && response.data.tracks.items && response.data.tracks.items.length > 0) {
-            console.log(`✅ Found ${response.data.tracks.items.length} tracks for: "${searchQuery}"`);
-            tracks.push(...response.data.tracks.items);
-          }
-        } catch (error) {
-          console.error(`❌ Search failed for "${searchQuery}":`, error.message);
-        }
-      }
-    }
-    
-    // If still no results, try search terms
-    if (tracks.length === 0 && searchTerms.length > 0) {
-      console.log('🔄 No genre results, trying search terms...');
-      for (const term of searchTerms) {
-        if (tracks.length >= limit) break;
-        
-        try {
-          console.log(`🔍 Searching for term: "${term}"`);
-          
-          const response = await axios.get('https://api.spotify.com/v1/search', {
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-            params: {
-              q: term,
-              type: 'track',
-              limit: Math.min(limit, limit - tracks.length),
-              market: 'US'
-            }
-          });
-          
-          if (response.data.tracks && response.data.tracks.items && response.data.tracks.items.length > 0) {
-            console.log(`✅ Found ${response.data.tracks.items.length} tracks for term: "${term}"`);
-            tracks.push(...response.data.tracks.items);
-          }
-        } catch (error) {
-          console.error(`❌ Search failed for term "${term}":`, error.message);
-        }
-      }
-    }
-    
-    // Remove duplicates
-    const uniqueTracks = [];
-    const seenTrackIds = new Set();
-    
-    for (const track of tracks) {
-      if (!seenTrackIds.has(track.id)) {
-        uniqueTracks.push(track);
-        seenTrackIds.add(track.id);
-      }
-    }
-    
-    // Shuffle the tracks for more variety
-    const shuffledTracks = shuffleArray([...uniqueTracks]);
-    
-    console.log(`🎵 Found ${shuffledTracks.length} unique tracks with client credentials`);
-    return shuffledTracks.slice(0, limit);
-    
-  } catch (error) {
-    console.error('❌ Client credentials track search error:', error);
-    return [];
-  }
-}
-
-// Helper functions for generating random search parameters
-function getRandomMood() {
-  const moods = ['chill', 'energetic', 'relaxing', 'upbeat', 'mellow', 'vibrant', 'smooth', 'dynamic', 'happy', 'calm', 'peaceful', 'dreamy', 'romantic', 'nostalgic', 'uplifting', 'melancholic', 'passionate', 'serene', 'lively', 'tranquil'];
-  return moods[Math.floor(Math.random() * moods.length)];
-}
-
-function getRandomYearRange() {
-  const startYear = Math.floor(Math.random() * 30) + 1970;
-  const endYear = startYear + Math.floor(Math.random() * 20) + 10;
-  return `${startYear}-${Math.min(endYear, 2024)}`;
-}
-
-function getRandomPopularityRange() {
-  const min = Math.floor(Math.random() * 40);
-  const max = min + Math.floor(Math.random() * 40) + 20;
-  return `${min}-${Math.min(max, 100)}`;
-}
-
-function getRandomTempoRange() {
-  const min = Math.floor(Math.random() * 80) + 60;
-  const max = min + Math.floor(Math.random() * 60) + 40;
-  return `${min}-${Math.min(max, 200)}`;
-}
-
-function getRandomEnergyLevel() {
-  const levels = ['low', 'medium', 'high', 'energetic', 'calm', 'relaxed', 'upbeat', 'mellow'];
-  return levels[Math.floor(Math.random() * levels.length)];
-}
-
-function getRandomAcousticness() {
-  const min = Math.floor(Math.random() * 50);
-  const max = min + Math.floor(Math.random() * 50) + 20;
-  return `${min}-${Math.min(max, 100)}`;
-}
-
-function getRandomDanceability() {
-  const min = Math.floor(Math.random() * 50);
-  const max = min + Math.floor(Math.random() * 50) + 20;
-  return `${min}-${Math.min(max, 100)}`;
-}
-
-// Helper function to get representative artists for genres
-function getGenreArtists(genre) {
-  const genreArtists = {
-    'Dream Pop': 'Cocteau Twins, Mazzy Star, Beach House',
-    'Shoegaze': 'My Bloody Valentine, Slowdive, Ride',
-    'Indie Rock': 'Modest Mouse, The Strokes, Arctic Monkeys',
-    'Indie Pop': 'The Postal Service, Bon Iver, Vampire Weekend',
-    'Alternative': 'Radiohead, The Killers, Arcade Fire',
-    'Electronic': 'Daft Punk, The Chemical Brothers, Aphex Twin',
-    'Ambient': 'Brian Eno, Tycho, Marconi Union',
-    'Downtempo': 'Massive Attack, Portishead, Tricky',
-    'Trip Hop': 'Massive Attack, Portishead, Morcheeba',
-    'Chillwave': 'Washed Out, Toro y Moi, Neon Indian',
-    'Lo-Fi': 'Nujabes, J Dilla, Madlib',
-    'Chill': 'Tycho, Bonobo, Emancipator',
-    'Disco': 'Bee Gees, Chic, Donna Summer',
-    'Funk': 'James Brown, Parliament, Rick James',
-    'Dance-Punk': 'Franz Ferdinand, The Rapture, LCD Soundsystem',
-    'Pop': 'Taylor Swift, The Weeknd, Dua Lipa',
-    'Rock': 'Led Zeppelin, Queen, The Rolling Stones',
-    'Jazz': 'Miles Davis, John Coltrane, Dave Brubeck',
-    'Classical': 'Beethoven, Mozart, Bach'
-  };
-  
-  return genreArtists[genre] || null;
-}
-
-// ===== SPOTIFY FUNCTIONS =====
-
-async function searchTracksForMood(accessToken, genres, limit = 20, searchTerms = []) {
-  const tracks = [];
-  
-  try {
-    console.log('🎵 Starting enhanced track search with genres:', genres);
-    console.log('🎯 Board title keywords (search terms):', searchTerms);
-    
-    // Ensure genres is an array and has valid values
-    if (!Array.isArray(genres) || genres.length === 0) {
-      console.log('⚠️ No valid genres provided, using fallback genres');
-      genres = ['pop', 'indie'];
-    }
-    
-    // Clean and validate genres
-    const validGenres = genres
-      .filter(genre => genre && typeof genre === 'string' && genre.trim().length > 0)
-      .map(genre => genre.trim().toLowerCase())
-      .slice(0, 5); // Limit to 5 genres max
-    
-    if (validGenres.length === 0) {
-      console.log('⚠️ No valid genres after filtering, using fallback');
-      validGenres.push('pop', 'indie');
-    }
-    
-    // Clean and validate search terms (board title keywords)
-    const validSearchTerms = searchTerms
-      .filter(term => term && typeof term === 'string' && term.trim().length > 0)
-      .map(term => term.trim().toLowerCase())
-      .slice(0, 3); // Limit to 3 primary keywords
-    
-    console.log('🎵 Using valid genres:', validGenres);
-    console.log('🎯 Using board title keywords:', validSearchTerms);
-    
-    // 🎯 PRIORITY 1: Search with board title keywords first (but limit results)
-    const maxKeywordTracks = Math.floor(limit * 0.4); // Only 40% from keywords
-    if (validSearchTerms.length > 0) {
-      for (const keyword of validSearchTerms) {
-        if (tracks.length >= maxKeywordTracks) break; // Stop keyword search early
-        
-        try {
-          console.log(`🎯 Searching with board title keyword: "${keyword}"`);
-          
-          const keywordStrategies = [
-            // Strategy 1: Keyword + random mood
-            `${keyword} ${getRandomMood()}`,
-            // Strategy 2: Keyword with genre context
-            `${keyword} ${validGenres[0] || 'music'}`,
-            // Strategy 3: Keyword with year range
-            `${keyword} year:${getRandomYearRange()}`,
-            // Strategy 4: Keyword with popularity filter
-            `${keyword} popularity:${getRandomPopularityRange()}`,
-            // Strategy 5: Keyword with tempo filter
-            `${keyword} tempo:${getRandomTempoRange()}`,
-            // Strategy 6: Keyword with energy level
-            `${keyword} ${getRandomEnergyLevel()}`
-          ];
-          
-          for (const strategy of keywordStrategies) {
-            if (tracks.length >= maxKeywordTracks) break;
-            
-            try {
-              console.log(`🎯 Trying keyword strategy: "${strategy}"`);
-              
-              const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                params: {
-                  q: strategy,
-                  type: 'track',
-                  limit: Math.min(3, maxKeywordTracks - tracks.length), // Smaller batches for variety
-                  market: 'US',
-                  offset: Math.floor(Math.random() * 50) // Random offset for variety
-                }
-              });
-              
-              if (searchResponse.data.tracks && searchResponse.data.tracks.items && searchResponse.data.tracks.items.length > 0) {
-                console.log(`✅ Found ${searchResponse.data.tracks.items.length} tracks for keyword strategy: "${strategy}"`);
-                tracks.push(...searchResponse.data.tracks.items);
-              } else {
-                console.log(`❌ No tracks found for keyword strategy: "${strategy}"`);
-              }
-            } catch (strategyError) {
-              console.error(`❌ Keyword search strategy failed: "${strategy}"`, strategyError.message);
-            }
-          }
-        } catch (keywordError) {
-          console.error(`❌ Search failed for keyword ${keyword}:`, keywordError.message);
-        }
-      }
-    }
-    
-    // 🎵 PRIORITY 2: Search with genres using enhanced variety
-    for (const genre of validGenres) {
-      if (tracks.length >= limit) break;
-      
-      try {
-        console.log(`🎵 Searching for genre: ${genre}`);
-        
-        // Use the same enhanced search strategies as client credentials
-        const searchStrategies = [
-          // Strategy 1: Direct genre search with different offsets
-          `genre:${genre}`,
-          // Strategy 2: Genre as keyword
-          genre,
-          // Strategy 3: Genre with mood keywords
-          `${genre} ${getRandomMood()}`,
-          `${genre} ${getRandomMood()}`,
-          // Strategy 4: Genre with year ranges
-          `${genre} year:${getRandomYearRange()}`,
-          `${genre} year:${getRandomYearRange()}`,
-          // Strategy 5: Genre with popularity filters
-          `${genre} popularity:${getRandomPopularityRange()}`,
-          // Strategy 6: Genre with tempo filters
-          `${genre} tempo:${getRandomTempoRange()}`,
-          // Strategy 7: Genre with energy levels
-          `${genre} ${getRandomEnergyLevel()}`,
-          // Strategy 8: Common artists in the genre
-          getGenreArtists(genre),
-          // Strategy 9: Genre with acousticness
-          `${genre} acousticness:${getRandomAcousticness()}`,
-          // Strategy 10: Genre with danceability
-          `${genre} danceability:${getRandomDanceability()}`
-        ].filter(Boolean); // Remove empty strategies
-        
-        for (const searchQuery of searchStrategies) {
-          if (tracks.length >= limit) break;
-          
-          try {
-            console.log(`🎵 Trying search strategy: "${searchQuery}"`);
-            
-            const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
-              headers: { 'Authorization': `Bearer ${accessToken}` },
-              params: {
-                q: searchQuery,
-                type: 'track',
-                limit: Math.min(3, limit - tracks.length), // Smaller batches for variety
-                market: 'US',
-                offset: Math.floor(Math.random() * 50) // Random offset for variety
-              }
-            });
-            
-            if (searchResponse.data.tracks && searchResponse.data.tracks.items && searchResponse.data.tracks.items.length > 0) {
-              console.log(`✅ Found ${searchResponse.data.tracks.items.length} tracks for strategy: "${searchQuery}"`);
-              tracks.push(...searchResponse.data.tracks.items);
-            } else {
-              console.log(`❌ No tracks found for strategy: "${searchQuery}"`);
-            }
-          } catch (strategyError) {
-            console.error(`❌ Search strategy failed: "${strategy}"`, strategyError.message);
-          }
-        }
-      } catch (genreError) {
-        console.error(`❌ Search failed for genre ${genre}:`, genreError.message);
-      }
-    }
-    
-    // Enhanced fallback searches if no results
-    if (tracks.length === 0) {
-      console.log('🔄 No tracks found, trying enhanced fallback searches...');
-      
-      const fallbackStrategies = [
-        // Enhanced fallback with variety
-        `${getRandomMood()} music`,
-        `popularity:${getRandomPopularityRange()}`,
-        `year:${getRandomYearRange()}`,
-        `tempo:${getRandomTempoRange()}`,
-        `${getRandomEnergyLevel()} music`,
-        'chill',
-        'relaxing',
-        'upbeat',
-        'indie',
-        'pop'
-      ];
-      
-      for (const fallback of fallbackStrategies) {
-        if (tracks.length >= limit) break;
-        
-        try {
-          console.log(`🔄 Trying enhanced fallback search: "${fallback}"`);
-          
-          const fallbackResponse = await axios.get('https://api.spotify.com/v1/search', {
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-            params: {
-              q: fallback,
-              type: 'track',
-              limit: Math.min(3, limit - tracks.length), // Smaller batches for variety
-              market: 'US',
-              offset: Math.floor(Math.random() * 50) // Random offset for variety
-            }
-          });
-          
-          if (fallbackResponse.data.tracks && fallbackResponse.data.tracks.items && fallbackResponse.data.tracks.items.length > 0) {
-            console.log(`✅ Found ${fallbackResponse.data.tracks.items.length} tracks with enhanced fallback: "${fallback}"`);
-            tracks.push(...fallbackResponse.data.tracks.items);
-          }
-        } catch (fallbackError) {
-          console.error(`❌ Enhanced fallback search failed: "${fallback}"`, fallbackError.message);
-        }
-      }
-    }
-    
-    console.log(`🎵 Total tracks found: ${tracks.length}`);
-    
-    // Remove duplicates and shuffle for variety
-    const uniqueTracks = [];
-    const seenTrackIds = new Set();
-    
-    for (const track of tracks) {
-      if (!seenTrackIds.has(track.id)) {
-        uniqueTracks.push(track);
-        seenTrackIds.add(track.id);
-      }
-    }
-    
-    // Shuffle the tracks for more variety
-    const shuffledTracks = shuffleArray([...uniqueTracks]);
-    
-    console.log(`🎵 Unique tracks after deduplication: ${shuffledTracks.length}`);
-    
-    return shuffledTracks.slice(0, limit);
-    
-  } catch (error) {
-    console.error('❌ Track search error:', error);
-    return [];
-  }
-}
-
-async function createSpotifyPlaylist(accessToken, userId, name, description, trackUris) {
-  try {
-    // Create playlist
-    const playlistResponse = await axios.post(
-      `https://api.spotify.com/v1/users/${userId}/playlists`,
-      {
-        name: name,
-        description: description,
-        public: false
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    const playlist = playlistResponse.data;
-    
-    // Add tracks
-    if (trackUris.length > 0) {
-      await axios.post(
-        `https://api.spotify.com/v1/playlists/${playlist.id}/tracks`,
-        { uris: trackUris },
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-    
-    return playlist;
-    
-  } catch (error) {
-    console.error('Playlist creation error:', error);
-    throw new Error('Failed to create playlist: ' + (error.response?.data?.error?.message || error.message));
-  }
-}
-
-function shuffleArray(array) {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-// ===== PINTEREST SHORTLINK EXPANSION =====
-
-// Detect if URL is a Pinterest shortlink
-function isPinterestShortlink(url) {
-  return url.includes('pin.it/') || url.includes('pinterest.com/pin/');
-}
-
-// Expand Pinterest shortlink to full URL
-async function expandPinterestShortlink(shortlink) {
-  try {
-    console.log('🔗 Expanding Pinterest shortlink:', shortlink);
-    
-    // Make a GET request to get the redirect location (HEAD requests might be blocked)
-    const response = await axios.get(shortlink, {
-      maxRedirects: 5,
-      timeout: 10000,
-      validateStatus: function (status) {
-        return status >= 200 && status < 400; // Accept redirects
-      }
-    });
-    
-    let expandedUrl = response.request.res.responseUrl || response.request.res.responseHeaders?.location || shortlink;
-    console.log('✅ Expanded shortlink to:', expandedUrl);
-    console.log('🔍 Response headers:', response.request.res.responseHeaders);
-    console.log('🔍 Response URL:', response.request.res.responseUrl);
-    
-    // If the URL didn't change, try a different approach
-    if (expandedUrl === shortlink) {
-      console.log('⚠️ URL didn\'t expand, trying alternative method...');
-      // Try to extract the redirect from response headers
-      const locationHeader = response.headers?.location || response.request.res.responseHeaders?.location;
-      if (locationHeader) {
-        expandedUrl = locationHeader;
-        console.log('✅ Found redirect in headers:', expandedUrl);
-      }
-    }
-    
-    // Check if the expanded URL is a board URL or pin URL
-    if (expandedUrl.includes('/pin/')) {
-      console.log('⚠️ Shortlink expanded to a pin URL, not a board URL');
-      throw new Error('This shortlink points to a Pinterest pin, not a board. Please use a board shortlink instead.');
-    }
-    
-    return expandedUrl;
-  } catch (error) {
-    console.error('❌ Failed to expand shortlink:', error.message);
-    if (error.message.includes('pin URL')) {
-      throw error; // Re-throw pin URL errors
-    }
-    return shortlink; // Return original if expansion fails
-  }
-}
-
-// ===== PINTEREST BOARD ENDPOINTS =====
-
-app.get('/api/pinterest/boards', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: 'Pinterest access token required'
-      });
-    }
-    
-    const accessToken = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
-    console.log('Fetching Pinterest boards for user...');
-    
-    const boards = await getUserBoards(accessToken);
-    
-    res.json({
-      success: true,
-      boards: boards,
-      total: boards.length,
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    console.error('Get boards error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch boards',
-      error: error.message
-    });
-  }
-});
-
-app.get('/api/pinterest/boards/:boardId', async (req, res) => {
-  try {
-    const { boardId } = req.params;
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: 'Pinterest access token required'
-      });
-    }
-    
-    const accessToken = authHeader.substring(7);
-    
-    if (!boardId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Board ID is required'
-      });
-    }
-    
-    console.log('Fetching board details for ID:', boardId);
-    
-    const board = await getBoardById(boardId, accessToken);
-    
-    res.json({
-      success: true,
-      board: board,
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    console.error('Get board details error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch board details',
-      error: error.message
-    });
-  }
-});
-
-// ===== ANALYSIS FUNCTIONS =====
-
-async function extractBoardInfo(url) {
-  console.log('🔍 extractBoardInfo called with URL:', url);
-  
-  // Check if this is a shortlink and expand it
-  let processedUrl = url;
-  if (isPinterestShortlink(url)) {
-    console.log('🔗 Detected Pinterest shortlink, expanding...');
-    processedUrl = await expandPinterestShortlink(url);
-    console.log('🔗 Expanded URL:', processedUrl);
-  }
-  
-  const urlParts = processedUrl.split('/').filter(part => part && part.length > 0);
-  let username = 'unknown';
-  let boardName = 'unknown-board';
-  
-  console.log('🔍 URL parts:', urlParts);
-  console.log('🔍 Processing URL:', processedUrl);
-  
-  if (processedUrl.includes('pinterest.com')) {
-    const pinterestIndex = urlParts.findIndex(part => part.includes('pinterest.com'));
-    console.log('🔍 Pinterest index:', pinterestIndex);
-    
-    if (pinterestIndex >= 0) {
-      // Handle different URL patterns
-      if (urlParts[pinterestIndex + 1] === 'pin') {
-        // This is a pin URL, not a board URL
-        console.log('⚠️ Detected pin URL, not board URL');
-        throw new Error('This appears to be a Pinterest pin URL, not a board URL. Please use a board URL instead.');
-      } else if (urlParts[pinterestIndex + 1] && urlParts[pinterestIndex + 2]) {
-        username = urlParts[pinterestIndex + 1];
-        boardName = urlParts[pinterestIndex + 2];
-        console.log('✅ Extracted board info:', { username, boardName });
-      } else {
-        console.log('⚠️ Could not extract board info from URL parts');
-        throw new Error('Could not extract board information from this Pinterest URL. Please ensure it\'s a board URL, not a pin URL.');
-      }
-    } else {
-      console.log('⚠️ No pinterest.com found in URL parts');
-      throw new Error('Invalid Pinterest URL format. Please use a board URL.');
-    }
-  } else {
-    console.log('⚠️ URL does not contain pinterest.com');
-    throw new Error('Please provide a valid Pinterest board URL.');
-  }
-  
-  const cleanBoardName = String(boardName)
-    .replace(/[-_+%20]/g, ' ')
-    .trim();
-  
-  console.log('🎯 Final board info:', { username, boardName: cleanBoardName });
-  
-  return {
-    username,
-    boardName: cleanBoardName,
-    originalUrl: url,
-    processedUrl: processedUrl,
-    urlParts: urlParts.filter(part => !part.includes('pinterest') && !part.includes('http'))
-  };
-}
-
-function detectThemes(analysisText) {
-  const themeDatabase = {
-    morning: {
-      keywords: ['morning', 'sunrise', 'coffee', 'breakfast', 'early', 'fresh'],
-      mood: 'Energetic',
-      genres: ['indie pop', 'upbeat acoustic', 'folk pop'],
-      colors: ['#FFD700', '#FFA500', '#FFEB3B']
-    },
-    evening: {
-      keywords: ['evening', 'sunset', 'dinner', 'wine', 'romantic', 'soft'],
-      mood: 'Romantic',
-      genres: ['smooth jazz', 'acoustic', 'ambient'],
-      colors: ['#8E4EC6', '#FF6B6B', '#4ECDC4']
-    },
-    minimalist: {
-      keywords: ['minimal', 'simple', 'clean', 'white', 'zen'],
-      mood: 'Peaceful',
-      genres: ['ambient', 'minimal', 'classical'],
-      colors: ['#FFFFFF', '#F8F9FA', '#E9ECEF']
-    },
-    vintage: {
-      keywords: ['vintage', 'retro', 'classic', 'antique', 'nostalgic'],
-      mood: 'Nostalgic',
-      genres: ['jazz', 'soul', 'classic rock'],
-      colors: ['#DEB887', '#D2B48C', '#BC8F8F']
-    },
-    cozy: {
-      keywords: ['cozy', 'warm', 'comfort', 'home', 'blanket'],
-      mood: 'Cozy',
-      genres: ['acoustic', 'folk', 'lo-fi'],
-      colors: ['#D7CCC8', '#BCAAA4', '#8D6E63']
-    },
-    dark: {
-      keywords: ['dark', 'gothic', 'black', 'mysterious', 'dramatic'],
-      mood: 'Mysterious',
-      genres: ['alternative', 'dark electronic', 'post-rock'],
-      colors: ['#2C3E50', '#34495E', '#7F8C8D']
-    }
-  };
-
-  let bestTheme = 'minimalist';
-  let bestScore = 0;
-
-  for (const [themeName, themeData] of Object.entries(themeDatabase)) {
-    let score = 0;
-    themeData.keywords.forEach(keyword => {
-      const matches = (analysisText.match(new RegExp(keyword, 'gi')) || []).length;
-      score += matches;
-    });
-    
-    if (score > bestScore) {
-      bestScore = score;
-      bestTheme = themeName;
-    }
-  }
-
-  const confidence = Math.min(bestScore / 3, 0.9);
-  return {
-    primaryTheme: bestTheme,
-    confidence: Math.max(0.3, confidence),
-    themeData: themeDatabase[bestTheme]
-  };
-}
-
-async function generateEnhancedAnalysis(url) {
-  console.log('🔍 Starting enhanced analysis for:', url);
-  
-  const boardInfo = await extractBoardInfo(url);
-  const analysisText = [
-    boardInfo.boardName,
-    boardInfo.username,
-    ...boardInfo.urlParts
-  ].join(' ').toLowerCase();
-  
-  const themeAnalysis = detectThemes(analysisText);
-  const theme = themeAnalysis.themeData;
-  
-  return {
-    mood: {
-      primary: theme.mood,
-      confidence: themeAnalysis.confidence,
-      secondary: ['Modern', 'Fresh'],
-      emotional_spectrum: [
-        { name: theme.mood, confidence: themeAnalysis.confidence },
-        { name: 'Modern', confidence: 0.6 },
-        { name: 'Fresh', confidence: 0.5 }
-      ]
-    },
-    visual: {
-      color_palette: theme.colors.map((hex, i) => ({
-        hex,
-        mood: i === 0 ? 'primary' : 'secondary',
-        name: `Color ${i + 1}`
-      })),
-      dominant_colors: { hex: theme.colors[0], name: 'Primary' },
-      aesthetic_style: themeAnalysis.primaryTheme,
-      visual_complexity: 'medium'
-    },
-    content: {
-      sentiment: { score: 0.7, label: 'positive' },
-      keywords: [{ word: boardInfo.boardName.split(' ')[0], count: 1 }],
-      topics: ['Lifestyle', 'Design', 'Mood']
-    },
-    music: {
-      primary_genres: theme.genres,
-      energy_level: theme.mood === 'Energetic' ? 'high' : 'medium',
-      tempo_range: theme.mood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'
-    },
-    board: {
-      name: boardInfo.boardName,
-      url: url,
-      username: boardInfo.username,
-      detected_theme: themeAnalysis.primaryTheme,
-      theme_confidence: themeAnalysis.confidence
-    },
-    confidence: themeAnalysis.confidence,
-    analysis_method: 'enhanced_v2',
-    timestamp: new Date().toISOString()
-  };
-}
-
-// ===== SPOTIFY CLIENT CREDENTIALS =====
-
-// Cache for client credentials token
-let clientCredentialsToken = null;
-let tokenExpiry = 0;
 
 // Get client credentials token for server-to-server API calls
 async function getClientCredentialsToken() {
