@@ -136,8 +136,30 @@ class AIAnalyzer {
         console.log('🤖 Using OpenAI GPT-4...');
         result = await this.generateOpenAIRecommendations(visualAnalysis, boardInfo);
       } else if (this.provider === 'anthropic' && this.anthropicKey) {
-        console.log('🤖 Using Anthropic Claude...');
-        result = await this.generateClaudeRecommendations(visualAnalysis, boardInfo);
+        console.log('🟡 [DEBUG] About to call Anthropic Claude API (claude-3-5-sonnet-latest)');
+        try {
+          const response = await axios.post('https://api.anthropic.com/v1/messages', {
+            model: 'claude-3-5-sonnet-latest',
+            max_tokens: 1000,
+            messages: [
+              {
+                role: 'user',
+                content: this.createAnalysisPrompt(visualAnalysis, boardInfo)
+              }
+            ]
+          }, {
+            headers: {
+              'x-api-key': this.anthropicKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json'
+            }
+          });
+          console.log('🟢 [DEBUG] Claude API response:', response.data);
+          result = response.data;
+        } catch (err) {
+          console.error('🔴 [DEBUG] Claude API call failed:', err);
+          throw err;
+        }
       } else {
         console.log('⚠️ No AI API configured, using rule-based system');
         console.log('🔧 Provider:', this.provider);

@@ -3016,7 +3016,10 @@ async function generateEnhancedAnalysisWithVision(url) {
   let aiRecommendations = null;
   if (visualAnalysis) {
     console.log('🎯 Starting AI recommendation generation...');
+    // After Vision API analysis, before AI music recommendations
+    console.log('🟡 [DEBUG] About to call generateAIMusicRecommendations with visualAnalysis:', visualAnalysis, 'and boardInfo:', boardInfo);
     aiRecommendations = await generateAIMusicRecommendations(visualAnalysis, boardInfo);
+    console.log('🟢 [DEBUG] Returned from generateAIMusicRecommendations, result:', aiRecommendations);
     console.log('🎯 AI recommendations result:', aiRecommendations ? 'Success' : 'Failed');
     if (aiRecommendations) {
       console.log('🎯 AI genres:', aiRecommendations.genres);
