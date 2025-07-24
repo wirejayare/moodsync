@@ -90,4 +90,46 @@ app.post('/api/analyze-pinterest-enhanced', async (req, res) => {
 });
 
 // --- Spotify Endpoints ---
-app.get('/api/spotify/auth-url', (
+// Example: Auth URL (stub, replace with real logic as needed)
+app.get('/api/spotify/auth-url', (req, res) => {
+  // TODO: Implement Spotify auth URL logic
+  res.json({ url: 'https://accounts.spotify.com/authorize?...' });
+});
+
+// Example: Spotify callback (stub)
+app.get('/api/spotify/callback', (req, res) => {
+  // TODO: Implement Spotify callback logic
+  res.json({ success: true });
+});
+
+// Example: Create playlist (stub)
+app.post('/api/create-playlist', async (req, res) => {
+  // TODO: Implement playlist creation logic using spotify.createSpotifyPlaylist
+  res.json({ success: true });
+});
+
+// --- Pinterest Endpoints ---
+app.get('/api/pinterest/auth-url', (req, res) => {
+  // TODO: Implement Pinterest auth URL logic
+  res.json({ url: 'https://www.pinterest.com/oauth/?...' });
+});
+
+app.get('/api/pinterest/callback', (req, res) => {
+  // TODO: Implement Pinterest callback logic
+  res.json({ success: true });
+});
+
+app.get('/api/pinterest/boards', async (req, res) => {
+  // TODO: Implement getUserBoards logic
+  res.json({ boards: [] });
+});
+
+app.get('/api/pinterest/boards/:boardId', async (req, res) => {
+  // TODO: Implement getBoardById logic
+  res.json({ board: {} });
+});
+
+// --- Start Server ---
+app.listen(PORT, () => {
+  console.log(`MoodSync backend running on port ${PORT}`);
+});
