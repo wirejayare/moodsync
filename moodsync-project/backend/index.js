@@ -3016,7 +3016,6 @@ async function generateEnhancedAnalysisWithVision(url) {
   let aiRecommendations = null;
   if (visualAnalysis) {
     console.log('🎯 Starting AI recommendation generation...');
-    // After Vision API analysis, before AI music recommendations
     console.log('🟡 [DEBUG] About to call generateAIMusicRecommendations with visualAnalysis:', visualAnalysis, 'and boardInfo:', boardInfo);
     aiRecommendations = await generateAIMusicRecommendations(visualAnalysis, boardInfo);
     console.log('🟢 [DEBUG] Returned from generateAIMusicRecommendations, result:', aiRecommendations);
@@ -3025,6 +3024,10 @@ async function generateEnhancedAnalysisWithVision(url) {
       console.log('🎯 AI genres:', aiRecommendations.genres);
       console.log('🎯 AI reasoning:', aiRecommendations.reasoning);
     }
+  } else {
+    console.log('🟠 [DEBUG] No visualAnalysis, calling generateAIMusicRecommendations with empty object.');
+    aiRecommendations = await generateAIMusicRecommendations({}, boardInfo);
+    console.log('🟢 [DEBUG] Returned from generateAIMusicRecommendations (fallback), result:', aiRecommendations);
   }
   
   // Combine text-based and visual analysis
