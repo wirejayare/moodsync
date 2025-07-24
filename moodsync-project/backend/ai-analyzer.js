@@ -148,12 +148,23 @@ class AIAnalyzer {
       // 🎯 CACHE THE RESULT
       setCachedAnalysis(cacheKey, result);
       
+      // If reasoning is missing or empty, add a fallback message
+      if (!result.reasoning || !Array.isArray(result.reasoning) || result.reasoning.length === 0) {
+        result.reasoning = ['AI reasoning unavailable: Claude API call failed or returned no reasoning. Check backend logs for details.'];
+      }
       return result;
       
     } catch (error) {
-      console.error('❌ AI recommendation error:', error);
-      console.log('🔄 Falling back to rule-based system');
-      return await this.generateRuleBasedRecommendations(visualAnalysis, boardInfo);
+      console.error('❌ AI recommendation error (outer catch):', error);
+      return {
+        genres: [],
+        energyLevel: 'medium',
+        tempoRange: '80-120 BPM',
+        moodCharacteristics: [],
+        searchTerms: [],
+        audioFeatures: {},
+        reasoning: ['AI reasoning unavailable: Exception occurred in generateRecommendations. ' + (error.message || error.toString())]
+      };
     }
   }
 
@@ -258,12 +269,13 @@ IMPORTANT: The reasoning array should contain 3-5 cool, conversational lines exp
         const recommendations = JSON.parse(jsonMatch[0]);
         return this.validateAndEnhanceRecommendations(recommendations);
       } else {
-        throw new Error('No valid JSON found in Claude response');
+        console.error('❌ No valid JSON found in Claude response:', aiResponse);
+        return { reasoning: ['AI reasoning unavailable: No valid JSON found in Claude response.'] };
       }
       
     } catch (error) {
-      console.error('❌ Claude API error:', error.response?.data || error.message);
-      throw error;
+      console.error('❌ Claude API error:', error.response?.data || error.message || error);
+      return { reasoning: ['AI reasoning unavailable: Claude API error: ' + (error.response?.data?.error?.message || error.message || error.toString())] };
     }
   }
 
