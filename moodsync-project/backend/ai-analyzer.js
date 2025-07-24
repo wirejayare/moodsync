@@ -102,7 +102,8 @@ function getCacheStats() {
 // AI-powered music recommendation system
 class AIAnalyzer {
   constructor() {
-    this.provider = AI_PROVIDER;
+    // Force provider to 'anthropic' for debugging
+    this.provider = 'anthropic';
     this.openaiKey = OPENAI_API_KEY;
     this.anthropicKey = ANTHROPIC_API_KEY;
   }
