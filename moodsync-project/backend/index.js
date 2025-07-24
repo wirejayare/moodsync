@@ -2984,79 +2984,31 @@ async function extractImagesFromBoardUrl(boardUrl) {
 
 // Enhanced analysis with Vision API for URL-based analysis
 async function generateEnhancedAnalysisWithVision(url) {
-  console.log('🔍 Starting enhanced analysis with Vision API for:', url);
-  
+  console.log('🔥 Claude Vision backend active!');
+  console.log('🔍 Starting enhanced analysis with Claude Vision for:', url);
   const boardInfo = await extractBoardInfo(url);
   const analysisText = [
     boardInfo.boardName,
     boardInfo.username,
     ...boardInfo.urlParts
   ].join(' ').toLowerCase();
-  
   const themeAnalysis = detectThemes(analysisText);
   const theme = themeAnalysis.themeData;
-  
   // Extract images from the board URL
   const imageUrls = await extractImagesFromBoardUrl(url);
-  
-  // Analyze images with Vision API if available
-  let visualAnalysis = null;
-  if (imageUrls.length > 0) {
-    try {
-      console.log(`🎨 Analyzing ${imageUrls.length} images with Vision API...`);
-      visualAnalysis = await visionAnalyzer.analyzeMultipleImages(imageUrls, 5);
-      console.log('Vision API analysis completed:', visualAnalysis ? 'Success' : 'Failed');
-    } catch (visionError) {
-      console.error('Vision API error:', visionError.message);
-      // Continue without vision analysis if it fails
-    }
-  }
-  
-  // Generate AI-powered music recommendations
+  // Generate AI-powered music recommendations using Claude Vision
   let aiRecommendations = null;
-  if (visualAnalysis) {
-    console.log('🎯 Starting AI recommendation generation...');
-    console.log('🟡 [DEBUG] About to call generateAIMusicRecommendations with visualAnalysis:', visualAnalysis, 'and boardInfo:', boardInfo);
-    aiRecommendations = await generateAIMusicRecommendations(visualAnalysis, boardInfo);
-    console.log('🟢 [DEBUG] Returned from generateAIMusicRecommendations, result:', aiRecommendations);
-    console.log('🎯 AI recommendations result:', aiRecommendations ? 'Success' : 'Failed');
-    if (aiRecommendations) {
-      console.log('🎯 AI genres:', aiRecommendations.genres);
-      console.log('🎯 AI reasoning:', aiRecommendations.reasoning);
-    }
-  } else {
-    console.log('🟠 [DEBUG] No visualAnalysis, calling generateAIMusicRecommendations with empty object.');
-    aiRecommendations = await generateAIMusicRecommendations({}, boardInfo);
-    console.log('🟢 [DEBUG] Returned from generateAIMusicRecommendations (fallback), result:', aiRecommendations);
-  }
-  
-  // Combine text-based and visual analysis
+  console.log('🟡 [DEBUG] Calling generateAIMusicRecommendations with imageUrls:', imageUrls, 'and boardInfo:', boardInfo);
+  aiRecommendations = await generateAIMusicRecommendations(imageUrls, boardInfo);
+  console.log('🟢 [DEBUG] Returned from generateAIMusicRecommendations, result:', aiRecommendations);
+  // Combine text-based and AI analysis
   let finalMood = theme.mood;
   let finalConfidence = themeAnalysis.confidence;
-  let visualMood = null;
-  
-  if (visualAnalysis) {
-    visualMood = visualAnalysis.primaryMood;
-    const visualConfidence = visualAnalysis.confidence;
-    
-    // If visual analysis has higher confidence, use it
-    if (visualConfidence > finalConfidence) {
-      finalMood = visualMood;
-      finalConfidence = visualConfidence;
-    } else {
-      // Blend the moods if confidence is similar
-      if (Math.abs(visualConfidence - finalConfidence) < 0.2) {
-        finalMood = visualMood; // Prefer visual mood for similar confidence
-        finalConfidence = Math.max(visualConfidence, finalConfidence);
-      }
-    }
-  }
-  
   return {
     mood: {
       primary: finalMood,
       confidence: finalConfidence,
-      secondary: visualAnalysis ? [visualMood, 'Modern'] : ['Modern', 'Fresh'],
+      secondary: ['Modern', 'Fresh'],
       emotional_spectrum: [
         { name: finalMood, confidence: finalConfidence },
         { name: 'Modern', confidence: 0.7 },
@@ -3064,32 +3016,15 @@ async function generateEnhancedAnalysisWithVision(url) {
       ]
     },
     visual: {
-      color_palette: visualAnalysis ? 
-        visualAnalysis.dominantColors.map((hex, i) => ({
-          hex,
-          mood: i === 0 ? 'primary' : 'secondary',
-          name: `Color ${i + 1}`
-        })) :
-        theme.colors.map((hex, i) => ({
-          hex,
-          mood: i === 0 ? 'primary' : 'secondary',
-          name: `Color ${i + 1}`
-        })),
-      dominant_colors: visualAnalysis ? 
-        { hex: visualAnalysis.dominantColors[0], name: 'Primary' } :
-        { hex: theme.colors[0], name: 'Primary' },
+      color_palette: theme.colors.map((hex, i) => ({
+        hex,
+        mood: i === 0 ? 'primary' : 'secondary',
+        name: `Color ${i + 1}`
+      })),
+      dominant_colors: { hex: theme.colors[0], name: 'Primary' },
       aesthetic_style: themeAnalysis.primaryTheme,
       visual_complexity: 'medium',
-      visual_analysis: visualAnalysis ? {
-        images_analyzed: visualAnalysis.imagesAnalyzed,
-        total_faces: visualAnalysis.visualElements.totalFaces,
-        average_brightness: visualAnalysis.visualElements.averageBrightness,
-        color_diversity: visualAnalysis.visualElements.colorDiversity,
-        common_labels: visualAnalysis.commonLabels.slice(0, 5),
-        objects: visualAnalysis.objects || [],
-        activities: visualAnalysis.activities || [],
-        settings: visualAnalysis.settings || []
-      } : null
+      image_urls: imageUrls
     },
     content: {
       sentiment: { score: 0.7, label: 'positive' },
@@ -3113,8 +3048,8 @@ async function generateEnhancedAnalysisWithVision(url) {
       theme_confidence: finalConfidence
     },
     confidence: finalConfidence,
-    analysis_method: visualAnalysis ? 'url_vision_enhanced' : 'url_enhanced',
-    data_source: 'url_analysis' + (visualAnalysis ? '+vision_api' : ''),
+    analysis_method: 'claude_vision_enhanced',
+    data_source: 'url_analysis+claude_vision',
     timestamp: new Date().toISOString()
   };
 }
