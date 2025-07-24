@@ -3096,9 +3096,9 @@ async function generateEnhancedAnalysisWithVision(url) {
       tempo_range: aiRecommendations ? aiRecommendations.tempoRange : (finalMood === 'Energetic' ? '120-140 BPM' : '80-110 BPM'),
       mood_characteristics: aiRecommendations ? aiRecommendations.moodCharacteristics : [],
       search_terms: aiRecommendations ? aiRecommendations.searchTerms : [],
-      audio_features: aiRecommendations ? aiRecommendations.audioFeatures : {},
-      ai_reasoning: aiRecommendations ? aiRecommendations.reasoning : []
+      audio_features: aiRecommendations ? aiRecommendations.audioFeatures : {}
     },
+    ai_reasoning: aiRecommendations ? aiRecommendations.reasoning : [],
     board: {
       name: boardInfo.boardName,
       url: url,
